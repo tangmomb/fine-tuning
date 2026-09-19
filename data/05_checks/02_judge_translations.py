@@ -1,4 +1,4 @@
-"""Juge sémantiquement les traductions du pilote avec gpt-5.6-sol."""
+"""Juge sémantiquement les traductions pilot ou production avec gpt-5.6-sol."""
 
 import json
 import os
@@ -8,10 +8,7 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "data" / "04_translated_fr" / "pilot" / "train_spider.jsonl"
-WORK = ROOT / "data" / "05_checks" / "pilot"
-STATE = WORK / "judge_batch_state.json"
-OUTPUT = WORK / "sol_judgments.jsonl"
+SOURCE = WORK = STATE = OUTPUT = None
 MODEL, SIZE, CHUNK = "gpt-5.6-sol", 100, 50
 PROMPT = """Tu es le juge qualité d'un dataset text-to-SQL traduit de l'anglais vers le français.
 Évalue la fidélité de la traduction française. Le SQL et le schéma servent seulement de garde-fous. Ne reformule jamais.
@@ -66,12 +63,12 @@ def prepare():
     if not SOURCE.is_file():
         raise FileNotFoundError(f"Traductions absentes : {SOURCE}. Récupérez-les avant de lancer le juge.")
     records = rows(SOURCE)[:SIZE]
-    if len(records) != SIZE:
+    if SIZE is not None and len(records) != SIZE:
         raise ValueError(f"{SIZE} traductions requises, {len(records)} trouvées.")
     requests = [request_row(row, index) for index, row in enumerate(records)]
     target = WORK / "judge_requests"
     target.mkdir(parents=True, exist_ok=True)
-    for number, start in enumerate(range(0, SIZE, CHUNK), 1):
+    for number, start in enumerate(range(0, len(requests), CHUNK), 1):
         path = target / f"requests_{number:02d}.jsonl"
         path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in requests[start:start + CHUNK]), encoding="utf-8")
         print(f"{CHUNK} jugements écrits dans {path}")
@@ -90,9 +87,10 @@ def upload(path):
 
 
 def submit():
-    paths = [WORK / "judge_requests" / f"requests_{number:02d}.jsonl" for number in (1, 2)]
-    if not all(path.is_file() for path in paths):
+    paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
+    if not paths:
         prepare()
+        paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
     batches = []
     for path in paths:
         file = upload(path)
@@ -150,6 +148,15 @@ def collect():
 
 
 def main():
+    global SOURCE, WORK, STATE, OUTPUT, SIZE
+    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
+    if environment not in {"pilot", "production"}:
+        raise ValueError("Dossier attendu : pilot ou production.")
+    SOURCE = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
+    WORK = ROOT / "data" / "05_checks" / environment
+    STATE = WORK / "judge_batch_state.json"
+    OUTPUT = WORK / "sol_judgments.jsonl"
+    SIZE = 100 if environment == "pilot" else None
     if not STATE.is_file():
         if input("Préparer les deux lots du juge ? [o/N] ").strip().lower() in {"o", "oui"}:
             prepare()

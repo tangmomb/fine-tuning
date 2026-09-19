@@ -1,89 +1,199 @@
-"""Prépare, soumet et récupère les traductions GLM de tous les splits Spider."""
+"""Prépare, soumet et récupère les traductions Mistral pour pilot ou production."""
 
+import argparse
 import json
-import runpy
+import mimetypes
+import os
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-PILOT = runpy.run_path(ROOT / "data" / "02_batch" / "pilot" / "01_pilot_translate_to_french.py")
-SPLITS = ("train_spider", "train_others", "dev")
-REQUEST_DIR = ROOT / "data" / "02_batch" / "production"
-STATE = REQUEST_DIR / "batch_state.json"
-OUTPUT_DIR = ROOT / "data" / "04_translated_fr" / "production"
-RAW_DIR = ROOT / "data" / "03_mistral_response" / "production"
+MODEL, PILOT_SIZE, PILOT_BATCH_SIZE, MAX_OUTPUT_TOKENS = "zai-glm-5-3", 100, 50, 2048
+SYSTEM_PROMPT = """Tu traduis en français des questions anglaises text-to-SQL. Conserve exactement le sens,
+les nombres, dates, pourcentages, noms propres, comparaisons, négations, superlatifs et classements.
+N'ajoute ni ne retire aucune information. Le SQL et le schéma sont des garde-fous. Retourne uniquement
+{"id":"<id reçu>","question":"<question française traduite>"}."""
 
 
-def prepare():
-    REQUEST_DIR.mkdir(parents=True, exist_ok=True)
-    for split in SPLITS:
-        records = PILOT["load_jsonl"](ROOT / "data" / "01_processed" / f"{split}.jsonl")
-        requests = [PILOT["batch_request"](record, index) for index, record in enumerate(records)]
-        path = REQUEST_DIR / f"{split}_requests.jsonl"
-        PILOT["write_jsonl"](path, requests)
-        print(f"{split} : {len(requests)} requêtes écrites dans {path}")
+def choose_environment():
+    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
+    if environment not in {"pilot", "production"}:
+        raise ValueError("Dossier attendu : pilot ou production.")
+    return environment
 
 
-def submit():
-    if not all((REQUEST_DIR / f"{split}_requests.jsonl").is_file() for split in SPLITS):
-        prepare()
-    batches = {}
-    for split in SPLITS:
-        file = PILOT["upload"](REQUEST_DIR / f"{split}_requests.jsonl")
-        batch = PILOT["api_request"]("/batch/jobs", "POST", {
-            "input_files": [file["id"]], "model": PILOT["MODEL"],
-            "endpoint": "/v1/chat/completions",
-            "metadata": {"job": "spider-en-to-fr-production", "split": split, "model": PILOT["MODEL"]},
-        })
-        batches[split] = {"batch_id": batch["id"], "input_file_id": file["id"]}
-        print(f"{split} : Batch Mistral créé : {batch['id']}")
-    STATE.write_text(json.dumps({"model": PILOT["MODEL"], "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": batches}, indent=2) + "\n", encoding="utf-8")
+def load_jsonl(path):
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
 
 
-def load_state():
-    if not STATE.is_file():
-        raise RuntimeError("Aucun Batch de production connu.")
-    return json.loads(STATE.read_text(encoding="utf-8"))
+def write_jsonl(path, rows):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
 
 
-def status():
-    jobs = {}
-    for split, saved in load_state()["batches"].items():
-        job = PILOT["api_request"](f"/batch/jobs/{saved['batch_id']}")
-        print(f"{split} : {job['status']} — {job.get('succeeded_requests', 0)}/{job.get('total_requests', '?')}")
-        jobs[split] = job
+def key():
+    value = os.environ.get("MISTRAL_API_KEY")
+    env = ROOT / ".env"
+    if not value and env.is_file():
+        for line in env.read_text(encoding="utf-8").splitlines():
+            name, separator, candidate = line.partition("=")
+            if name.strip() == "MISTRAL_API_KEY" and separator:
+                value = candidate.strip().strip('"').strip("'")
+                break
+    if not value:
+        raise RuntimeError("MISTRAL_API_KEY n'est pas configurée.")
+    return value
+
+
+def api(path, method="GET", payload=None):
+    headers, data = {"Authorization": f"Bearer {key()}"}, None
+    if payload is not None:
+        data, headers["Content-Type"] = json.dumps(payload).encode("utf-8"), "application/json"
+    try:
+        with urlopen(Request("https://api.mistral.ai/v1" + path, data=data, headers=headers, method=method)) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as error:
+        raise RuntimeError(f"API Mistral : HTTP {error.code} — {error.read().decode(errors='replace')}") from error
+
+
+def upload(path):
+    boundary = "----MistralBatch" + uuid.uuid4().hex
+    mime = mimetypes.guess_type(path.name)[0] or "application/jsonl"
+    body = b"".join((
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"purpose\"\r\n\r\nbatch\r\n".encode(),
+        f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"{path.name}\"\r\nContent-Type: {mime}\r\n\r\n".encode(),
+        path.read_bytes(), f"\r\n--{boundary}--\r\n".encode(),
+    ))
+    request = Request("https://api.mistral.ai/v1/files", data=body, headers={"Authorization": f"Bearer {key()}", "Content-Type": f"multipart/form-data; boundary={boundary}"}, method="POST")
+    with urlopen(request) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def download(file_id):
+    with urlopen(Request(f"https://api.mistral.ai/v1/files/{file_id}/content", headers={"Authorization": f"Bearer {key()}"})) as response:
+        return response.read().decode("utf-8")
+
+
+def config(environment):
+    if environment == "pilot":
+        return ("train_spider",), PILOT_SIZE, PILOT_BATCH_SIZE
+    return ("train_spider", "train_others", "dev"), None, 0
+
+
+def request_row(record, split, index):
+    fields = ("question_original_en", "sql", "schema")
+    if not all(isinstance(record.get(field), str) and record[field].strip() for field in fields):
+        raise ValueError(f"{split}:{index} : question, SQL ou schéma invalide.")
+    identifier = f"{split}:{index}"
+    return {"custom_id": identifier, "body": {"max_tokens": MAX_OUTPUT_TOKENS, "temperature": 0, "response_format": {"type": "json_object"}, "messages": [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": json.dumps({"id": identifier, **{field: record[field] for field in fields}}, ensure_ascii=False)},
+    ]}}
+
+
+def state_path(environment):
+    return ROOT / "data" / "02_batch" / environment / "batch_state.json"
+
+
+def prepare(environment):
+    splits, limit, chunk_size = config(environment)
+    work, batches = state_path(environment).parent, []
+    for split in splits:
+        requests = [request_row(row, split, index) for index, row in enumerate(load_jsonl(ROOT / "data" / "01_processed" / f"{split}.jsonl")[:limit])]
+        if not requests:
+            raise ValueError(f"Aucune donnée source pour {split}.")
+        chunks = [requests] if not chunk_size else [requests[start:start + chunk_size] for start in range(0, len(requests), chunk_size)]
+        for number, chunk in enumerate(chunks, 1):
+            suffix = f"_{number:02d}" if len(chunks) > 1 else ""
+            path = work / f"{split}_requests{suffix}.jsonl"
+            write_jsonl(path, chunk)
+            batches.append({"split": split, "request_file": path.name})
+            print(f"{split} : {len(chunk)} requêtes écrites dans {path}")
+    return batches
+
+
+def submit(environment, batches):
+    work, submitted = state_path(environment).parent, []
+    for item in batches:
+        file = upload(work / item["request_file"])
+        batch = api("/batch/jobs", "POST", {"input_files": [file["id"]], "model": MODEL, "endpoint": "/v1/chat/completions", "metadata": {"job": f"spider-en-to-fr-{environment}", "split": item["split"], "model": MODEL}})
+        submitted.append({**item, "batch_id": batch["id"], "input_file_id": file["id"]})
+        print(f"{item['split']} : Batch Mistral créé : {batch['id']}")
+    state_path(environment).write_text(json.dumps({"environment": environment, "model": MODEL, "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": submitted}, indent=2) + "\n", encoding="utf-8")
+
+
+def load_state(environment):
+    path = state_path(environment)
+    if not path.is_file():
+        raise RuntimeError(f"Aucun Batch {environment} connu.")
+    state = json.loads(path.read_text(encoding="utf-8"))
+    if isinstance(state.get("batches"), dict):
+        state["batches"] = [{"split": split, **item} for split, item in state["batches"].items()]
+    if environment == "pilot":
+        for item in state.get("batches", []):
+            item.setdefault("split", "train_spider")
+    return state
+
+
+def status(environment):
+    jobs = []
+    for item in load_state(environment)["batches"]:
+        job = api(f"/batch/jobs/{item['batch_id']}")
+        print(f"{item['split']} : {job['status']} — {job.get('succeeded_requests', 0)}/{job.get('total_requests', '?')}")
+        jobs.append((item, job))
     return jobs
 
 
-def collect():
-    for split, job in status().items():
+def extract_question(line):
+    body = line.get("response", {}).get("body", {})
+    content = body.get("choices", [{}])[0].get("message", {}).get("content", "")
+    answer = json.loads(content)
+    if not isinstance(answer.get("id"), str) or not isinstance(answer.get("question"), str):
+        raise RuntimeError(f"Réponse Mistral invalide : {answer!r}")
+    return answer["id"], answer["question"]
+
+
+def collect(environment, jobs):
+    questions = {}
+    for number, (item, job) in enumerate(jobs, 1):
         if job.get("status") != "SUCCESS" or not isinstance(job.get("output_file"), str):
-            raise RuntimeError(f"{split} n'est pas prêt : {job.get('status')}")
-        raw = PILOT["download_output"](job["output_file"])
-        raw_path = RAW_DIR / f"{split}.jsonl"
+            raise RuntimeError(f"{item['split']} n'est pas prêt : {job.get('status')}")
+        raw = download(job["output_file"])
+        raw_path = ROOT / "data" / "03_mistral_response" / environment / f"output_{number:02d}.jsonl"
         raw_path.parent.mkdir(parents=True, exist_ok=True)
         raw_path.write_text(raw, encoding="utf-8")
-        questions = {}
         for line in raw.splitlines():
-            identifier, question = PILOT["extract_question"](json.loads(line))
-            questions[identifier] = question
-        records = PILOT["load_jsonl"](ROOT / "data" / "01_processed" / f"{split}.jsonl")
-        translated = [{**record, "question": questions[f"train_spider:{index}"]} for index, record in enumerate(records)]
-        output = OUTPUT_DIR / f"{split}.jsonl"
-        PILOT["write_jsonl"](output, translated)
+            identifier, question = extract_question(json.loads(line))
+            split, _ = identifier.split(":", 1)
+            questions.setdefault(split, {})[identifier] = question
+    splits, limit, _ = config(environment)
+    for split in splits:
+        records = load_jsonl(ROOT / "data" / "01_processed" / f"{split}.jsonl")[:limit]
+        translated = [{**record, "question": questions.get(split, {})[f"{split}:{index}"]} for index, record in enumerate(records)]
+        output = ROOT / "data" / "04_translated_fr" / environment / f"{split}.jsonl"
+        write_jsonl(output, translated)
         print(f"{split} : {len(translated)} traductions écrites dans {output}")
 
 
 def main():
-    if not STATE.is_file():
-        if input("Préparer et envoyer les trois lots Mistral ? [o/N] ").strip().lower() in {"o", "oui"}:
-            prepare()
-            submit()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--resubmit", action="store_true", help="prépare et soumet de nouveaux lots après confirmation")
+    args = parser.parse_args()
+    environment = choose_environment()
+    if args.resubmit:
+        if input("Préparer et soumettre de nouveaux lots Mistral ? [o/N] ").strip().lower() in {"o", "oui"}:
+            submit(environment, prepare(environment))
         return
-    jobs = status()
-    if all(job.get("status") == "SUCCESS" for job in jobs.values()):
-        if input("Les traductions sont prêtes. Les récupérer ? [o/N] ").strip().lower() in {"o", "oui"}:
-            collect()
+    if not state_path(environment).is_file():
+        if input("Préparer et envoyer les lots Mistral ? [o/N] ").strip().lower() in {"o", "oui"}:
+            submit(environment, prepare(environment))
+        return
+    jobs = status(environment)
+    if all(job.get("status") == "SUCCESS" for _, job in jobs) and input("Les traductions sont prêtes. Les récupérer ? [o/N] ").strip().lower() in {"o", "oui"}:
+        collect(environment, jobs)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Produit les contrôles mécaniques gratuits des traductions Luna."""
+"""Produit les contrôles mécaniques gratuits des traductions."""
 
 import json
 import re
@@ -7,9 +7,6 @@ from pathlib import Path
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
-SOURCE_PATH = PROJECT_DIR / "data" / "04_translated_fr" / "pilot" / "train_spider.jsonl"
-OUTPUT_DIR = PROJECT_DIR / "data" / "05_checks" / "pilot"
-OUTPUT_PATH = OUTPUT_DIR / "deterministic_checks.jsonl"
 REQUIRED_FIELDS = ("db_id", "question_original_en", "question", "sql", "schema")
 NUMBER_PATTERN = re.compile(r"(?<![\w])\d+(?:[.,]\d+)?(?![\w])")
 SQL_PATTERN = re.compile(
@@ -64,22 +61,25 @@ def check_record(record: object, index: int) -> dict[str, object]:
 
 
 def main() -> None:
-    if not SOURCE_PATH.is_file():
-        raise FileNotFoundError(
-            f"Traductions absentes : {SOURCE_PATH}. Récupérez d'abord le Batch Luna."
-        )
-    with SOURCE_PATH.open("r", encoding="utf-8") as source_file:
-        records = [json.loads(line) for line in source_file if line.strip()]
-
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    checks = [check_record(record, index) for index, record in enumerate(records)]
-    with OUTPUT_PATH.open("w", encoding="utf-8", newline="\n") as output_file:
-        for check in checks:
-            output_file.write(json.dumps(check, ensure_ascii=False) + "\n")
-
-    failed = sum(check["status"] == "fail" for check in checks)
-    print(f"{len(checks)} contrôles écrits dans {OUTPUT_PATH}")
-    print(f"pass={len(checks) - failed}, fail={failed}")
+    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
+    if environment not in {"pilot", "production"}:
+        raise ValueError("Dossier attendu : pilot ou production.")
+    source_dir = PROJECT_DIR / "data" / "04_translated_fr" / environment
+    output_dir = PROJECT_DIR / "data" / "05_checks" / environment
+    sources = sorted(source_dir.glob("*.jsonl"))
+    if not sources:
+        raise FileNotFoundError(f"Traductions absentes dans {source_dir}. Récupérez d'abord les Batchs.")
+    for source_path in sources:
+        with source_path.open("r", encoding="utf-8") as source_file:
+            records = [json.loads(line) for line in source_file if line.strip()]
+        checks = [{**check_record(record, index), "id": f"{source_path.stem}:{index}"} for index, record in enumerate(records)]
+        output_path = output_dir / f"{source_path.stem}_deterministic_checks.jsonl"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        with output_path.open("w", encoding="utf-8", newline="\n") as output_file:
+            for check in checks:
+                output_file.write(json.dumps(check, ensure_ascii=False) + "\n")
+        failed = sum(check["status"] == "fail" for check in checks)
+        print(f"{len(checks)} contrôles écrits dans {output_path} — pass={len(checks) - failed}, fail={failed}")
 
 
 if __name__ == "__main__":

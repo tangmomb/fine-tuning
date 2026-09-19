@@ -1,13 +1,9 @@
-"""Construit le JSONL text-to-SQL de fine-tuning à partir du pilote validé."""
+"""Construit le JSONL text-to-SQL de fine-tuning depuis pilot ou production."""
 
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-TRANSLATIONS = ROOT / "data" / "04_translated_fr" / "pilot" / "train_spider.jsonl"
-JUDGMENTS = ROOT / "data" / "05_checks" / "pilot" / "sol_judgments.jsonl"
-OUTPUT = ROOT / "data" / "06_fine_tuning_ready" / "pilot" / "train.jsonl"
-MANIFEST = ROOT / "data" / "06_fine_tuning_ready" / "pilot" / "manifest.json"
 SYSTEM_PROMPT = """Tu génères une requête SQL SQLite à partir d'une question en français et du schéma fourni.
 Retourne uniquement la requête SQL valide, sans explication ni balise Markdown."""
 
@@ -80,7 +76,14 @@ def validate_examples(examples, accepted_translations):
 
 
 def main():
-    translations, judgments = load(TRANSLATIONS), load(JUDGMENTS)
+    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
+    if environment not in {"pilot", "production"}:
+        raise ValueError("Dossier attendu : pilot ou production.")
+    translations_path = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
+    judgments_path = ROOT / "data" / "05_checks" / environment / "sol_judgments.jsonl"
+    output = ROOT / "data" / "06_fine_tuning_ready" / environment / "train.jsonl"
+    manifest = ROOT / "data" / "06_fine_tuning_ready" / environment / "manifest.json"
+    translations, judgments = load(translations_path), load(judgments_path)
     if len(translations) != len(judgments):
         raise ValueError(f"Traductions ({len(translations)}) et jugements ({len(judgments)}) ne correspondent pas.")
     examples, accepted, rejected = [], [], []
@@ -104,15 +107,15 @@ def main():
         ]})
         accepted.append(translation)
     validate_examples(examples, accepted)
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    OUTPUT.write_text("".join(json.dumps(example, ensure_ascii=False) + "\n" for example in examples), encoding="utf-8")
-    MANIFEST.write_text(json.dumps({
-        "source_translations": str(TRANSLATIONS.relative_to(ROOT)),
-        "source_judgments": str(JUDGMENTS.relative_to(ROOT)),
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text("".join(json.dumps(example, ensure_ascii=False) + "\n" for example in examples), encoding="utf-8")
+    manifest.write_text(json.dumps({
+        "source_translations": str(translations_path.relative_to(ROOT)),
+        "source_judgments": str(judgments_path.relative_to(ROOT)),
         "total_candidates": len(translations), "accepted_pass": len(examples),
         "rejected": rejected, "format": "chat_messages_jsonl_text_to_sql",
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"{len(examples)} exemples validés écrits dans {OUTPUT}")
+    print(f"{len(examples)} exemples validés écrits dans {output}")
 
 
 if __name__ == "__main__":

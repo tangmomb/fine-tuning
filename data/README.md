@@ -17,18 +17,23 @@ L'ordre d'exécution est le suivant :
 ```powershell
 python data/01_processed/01_check_original_dataset.py
 python data/01_processed/02_prepare_english_dataset.py
-python data/02_batch/pilot/01_pilot_translate_to_french.py
+python data/02_batch/02_translate_all.py
 python data/05_checks/01_check_translations.py
+python data/05_checks/02_judge_translations.py
+python data/06_fine_tuning_ready/01_build_dataset.py
 ```
 
-Le troisième script prépare localement le pilote Z.ai GLM 5.3 hébergé par Mistral (deux lots de 50 requêtes), puis demande explicitement avant de l'envoyer. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Après l'envoi, le même script affiche le statut des derniers Batch et propose de récupérer les traductions lorsqu'ils sont terminés.
+Les scripts des étapes 02, 05 et 06 demandent au démarrage le dossier cible : `pilot` ou
+`production`. Les artefacts restent isolés dans le sous-dossier choisi.
+
+Le troisième script prépare localement les lots Z.ai GLM 5.3 hébergés par Mistral, puis demande explicitement avant de les envoyer. Le mode `pilot` prépare deux lots de 50 requêtes ; le mode `production` prépare les trois splits. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Après l'envoi, le même script affiche le statut des derniers Batch et propose de récupérer les traductions lorsqu'ils sont terminés.
 
 Si un lot est tronqué avant sa réponse finale, relancez-le explicitement avec :
 
 \`\`\`powershell
-python data/02_batch/pilot/01_pilot_translate_to_french.py --resubmit
+python data/02_batch/02_translate_all.py
 \`\`\`
 
-Le quatrième script produit `05_checks/pilot/deterministic_checks.jsonl`. Il vérifie localement les champs obligatoires, les nombres, les pourcentages et l'absence apparente de SQL dans la traduction.
+Le quatrième script produit un fichier `05_checks/<dossier>/<split>_deterministic_checks.jsonl`. Il vérifie localement les champs obligatoires, les nombres, les pourcentages et l'absence apparente de SQL dans la traduction.
 
 Le script `data/05_checks/02_judge_translations.py` remet en place le juge sémantique Batch avec `gpt-5.6-sol`. Il prépare deux lots, demande confirmation avant l'envoi, puis écrit les verdicts dans `05_checks/pilot/sol_judgments.jsonl`.
