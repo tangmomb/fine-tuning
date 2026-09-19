@@ -30,3 +30,5 @@ python data/02_batch/pilot/01_pilot_translate_to_french.py --resubmit
 \`\`\`
 
 Le quatrième script produit `05_checks/pilot/deterministic_checks.jsonl`. Il vérifie localement les champs obligatoires, les nombres, les pourcentages et l'absence apparente de SQL dans la traduction.
+
+Le script `data/05_checks/02_judge_translations.py` remet en place le juge sémantique Batch avec `gpt-5.6-sol`. Il prépare deux lots, demande confirmation avant l'envoi, puis écrit les verdicts dans `05_checks/pilot/sol_judgments.jsonl`.

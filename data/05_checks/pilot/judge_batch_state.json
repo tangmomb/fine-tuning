@@ -1,0 +1,15 @@
+{
+  "model": "gpt-5.6-sol",
+  "source": "data\\04_translated_fr\\pilot\\train_spider.jsonl",
+  "submitted_at": "2026-09-19T19:21:48.871529+00:00",
+  "batches": [
+    {
+      "batch_id": "batch_6aaee0caa5a88190a6ddf15816658a9e",
+      "input_file_id": "file-XmaLoZj41uEzu1omy2iY2B"
+    },
+    {
+      "batch_id": "batch_6aaee0cbe90c8190b5844581cd857e87",
+      "input_file_id": "file-SA9yfHEmu2u9jDDfCjqvVh"
+    }
+  ]
+}
