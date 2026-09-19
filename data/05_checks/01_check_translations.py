@@ -9,6 +9,8 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 REQUIRED_FIELDS = ("db_id", "question_original_en", "question", "sql", "schema")
 NUMBER_PATTERN = re.compile(r"(?<![\w])\d+(?:[.,]\d+)?(?![\w])")
+ONE_IN_COMPARISON_PATTERN = re.compile(r"\b(?:plus|moins)\s+d[’'](?:un|une)\b", re.IGNORECASE)
+ONE_IN_ENGLISH_COMPARISON_PATTERN = re.compile(r"\b(?:more|less)\s+than\s+one\b", re.IGNORECASE)
 SQL_PATTERN = re.compile(
     r"\b(?:SELECT|FROM|WHERE|JOIN|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER)\b",
     re.IGNORECASE,
@@ -18,7 +20,11 @@ LETTER_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿ]")
 
 def normalize_numbers(text: str) -> Counter[str]:
     """Compare les nombres sans distinguer 3,5 de 3.5."""
-    return Counter(match.group().replace(",", ".") for match in NUMBER_PATTERN.finditer(text))
+    numbers = Counter(match.group().replace(",", ".") for match in NUMBER_PATTERN.finditer(text))
+    # Une traduction naturelle peut rendre « more/less than 1 » par « plus/moins d'un ».
+    numbers.update("1" for _ in ONE_IN_COMPARISON_PATTERN.finditer(text))
+    numbers.update("1" for _ in ONE_IN_ENGLISH_COMPARISON_PATTERN.finditer(text))
+    return numbers
 
 
 def check_record(record: object, index: int) -> dict[str, object]:
