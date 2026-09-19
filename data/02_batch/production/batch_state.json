@@ -1,18 +1,40 @@
 {
+  "environment": "production",
   "model": "zai-glm-5-3",
-  "submitted_at": "2026-09-19T20:41:53.033946+00:00",
-  "batches": {
-    "train_spider": {
+  "submitted_at": "2026-09-19T21:22:42.658814+00:00",
+  "batches": [
+    {
+      "split": "train_spider",
       "batch_id": "7d05e3c2-7686-4a92-aadb-68a0b8c8aee2",
       "input_file_id": "25810043-99b9-4f11-82e1-6120596d9cfb"
     },
-    "train_others": {
+    {
+      "split": "train_others",
       "batch_id": "39d6ea35-9c6c-4594-9771-2c1301581bd5",
       "input_file_id": "391578b2-7806-42c5-9471-903eff0548dd"
     },
-    "dev": {
+    {
+      "split": "dev",
       "batch_id": "4615e82a-cddc-413d-b85e-f14387bda306",
       "input_file_id": "f8b4b202-6b0e-42c0-af99-ab372691f87d"
+    },
+    {
+      "split": "retry_missing",
+      "request_file": "retry_missing_requests.jsonl",
+      "batch_id": "ec57d32b-50f5-42b4-83d7-b83888eec213",
+      "input_file_id": "16d0df80-19f8-4fa1-8c18-f6f2db8474c0"
+    },
+    {
+      "split": "retry_missing",
+      "request_file": "retry_missing_requests.jsonl",
+      "batch_id": "70faf4a2-0d46-4ea1-ae6c-6ac342c25822",
+      "input_file_id": "3f82609d-1626-4c87-bc98-93926b43b96f"
+    },
+    {
+      "split": "retry_missing",
+      "request_file": "retry_missing_requests.jsonl",
+      "batch_id": "0489bf94-345f-4627-bee1-c5e5c623c0cc",
+      "input_file_id": "3f67404e-bc74-4295-8ac4-31b23f87ae2e"
     }
-  }
+  ]
 }
