@@ -11,7 +11,7 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-MODEL, PILOT_SIZE, PILOT_BATCH_SIZE, MAX_OUTPUT_TOKENS = "zai-glm-5-3", 100, 50, 2048
+MODEL, PILOT_SIZE, PILOT_BATCH_SIZE, MAX_OUTPUT_TOKENS = "zai-glm-5-3", 100, 50, 4096
 SYSTEM_PROMPT = """Tu traduis en français des questions anglaises text-to-SQL. Conserve exactement le sens,
 les nombres, dates, pourcentages, noms propres, comparaisons, négations, superlatifs et classements.
 N'ajoute ni ne retire aucune information. Le SQL et le schéma sont des garde-fous.
