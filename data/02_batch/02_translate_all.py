@@ -115,14 +115,15 @@ def prepare(environment):
     return batches
 
 
-def submit(environment, batches):
+def submit(environment, batches, append=False):
     work, submitted = state_path(environment).parent, []
     for item in batches:
         file = upload(work / item["request_file"])
         batch = api("/batch/jobs", "POST", {"input_files": [file["id"]], "model": MODEL, "endpoint": "/v1/chat/completions", "metadata": {"job": f"spider-en-to-fr-{environment}", "split": item["split"], "model": MODEL}})
         submitted.append({**item, "batch_id": batch["id"], "input_file_id": file["id"]})
         print(f"{item['split']} : Batch Mistral créé : {batch['id']}")
-    state_path(environment).write_text(json.dumps({"environment": environment, "model": MODEL, "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": submitted}, indent=2) + "\n", encoding="utf-8")
+    existing = load_state(environment)["batches"] if append and state_path(environment).is_file() else []
+    state_path(environment).write_text(json.dumps({"environment": environment, "model": MODEL, "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": [*existing, *submitted]}, indent=2) + "\n", encoding="utf-8")
 
 
 def load_state(environment):
@@ -150,14 +151,54 @@ def status(environment):
 def extract_question(line):
     body = line.get("response", {}).get("body", {})
     content = body.get("choices", [{}])[0].get("message", {}).get("content", "")
+    if isinstance(content, list):
+        content = "".join(
+            block.get("text", "")
+            for block in content
+            if isinstance(block, dict) and block.get("type") == "text" and isinstance(block.get("text"), str)
+        )
+    if not isinstance(content, str):
+        raise RuntimeError(f"Contenu Mistral invalide : {content!r}")
     answer = json.loads(content)
     if not isinstance(answer.get("id"), str) or not isinstance(answer.get("question"), str):
         raise RuntimeError(f"Réponse Mistral invalide : {answer!r}")
     return answer["id"], answer["question"]
 
 
+def missing_response_ids(environment):
+    missing = set()
+    raw_dir = ROOT / "data" / "03_mistral_response" / environment
+    for path in raw_dir.glob("output_*.jsonl"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            response = json.loads(line)
+            try:
+                extract_question(response)
+            except (json.JSONDecodeError, RuntimeError):
+                identifier = response.get("custom_id")
+                if isinstance(identifier, str):
+                    missing.add(identifier)
+    return sorted(missing)
+
+
+def retry_missing(environment):
+    identifiers = missing_response_ids(environment)
+    if not identifiers:
+        raise RuntimeError("Aucune réponse incomplète n'a été trouvée dans les sorties brutes téléchargées.")
+    rows_by_split = {}
+    for identifier in identifiers:
+        split, separator, index_text = identifier.partition(":")
+        if not separator or not index_text.isdigit():
+            raise RuntimeError(f"Identifiant de réponse invalide : {identifier}")
+        rows_by_split.setdefault(split, load_jsonl(ROOT / "data" / "01_processed" / f"{split}.jsonl"))
+    requests = [request_row(rows_by_split[identifier.partition(":")[0]][int(identifier.partition(":")[2])], identifier.partition(":")[0], int(identifier.partition(":")[2])) for identifier in identifiers]
+    path = state_path(environment).parent / "retry_missing_requests.jsonl"
+    write_jsonl(path, requests)
+    print(f"{len(requests)} requêtes incomplètes écrites dans {path}")
+    submit(environment, [{"split": "retry_missing", "request_file": path.name}], append=True)
+
+
 def collect(environment, jobs):
-    questions = {}
+    questions, invalid_responses = {}, []
     for number, (item, job) in enumerate(jobs, 1):
         if job.get("status") != "SUCCESS" or not isinstance(job.get("output_file"), str):
             raise RuntimeError(f"{item['split']} n'est pas prêt : {job.get('status')}")
@@ -166,13 +207,33 @@ def collect(environment, jobs):
         raw_path.parent.mkdir(parents=True, exist_ok=True)
         raw_path.write_text(raw, encoding="utf-8")
         for line in raw.splitlines():
-            identifier, question = extract_question(json.loads(line))
+            response = json.loads(line)
+            try:
+                identifier, question = extract_question(response)
+            except (json.JSONDecodeError, RuntimeError) as error:
+                invalid_responses.append((response.get("custom_id"), str(error)))
+                continue
             split, _ = identifier.split(":", 1)
             questions.setdefault(split, {})[identifier] = question
+    unresolved = []
+    for identifier, error in invalid_responses:
+        if not isinstance(identifier, str) or ":" not in identifier:
+            unresolved.append(f"{identifier or '<id inconnu>'} ({error})")
+            continue
+        split, _ = identifier.split(":", 1)
+        if identifier not in questions.get(split, {}):
+            unresolved.append(f"{identifier} ({error})")
+    if unresolved:
+        details = "; ".join(unresolved[:20])
+        suffix = "" if len(unresolved) <= 20 else f" ; … ({len(unresolved)} au total)"
+        raise RuntimeError(f"{len(unresolved)} réponses Mistral ne contiennent pas de JSON final : {details}{suffix}")
     splits, limit, _ = config(environment)
     for split in splits:
         records = load_jsonl(ROOT / "data" / "01_processed" / f"{split}.jsonl")[:limit]
-        translated = [{**record, "question": questions.get(split, {})[f"{split}:{index}"]} for index, record in enumerate(records)]
+        missing = [f"{split}:{index}" for index in range(len(records)) if f"{split}:{index}" not in questions.get(split, {})]
+        if missing:
+            raise RuntimeError(f"Traductions absentes pour {split} : {', '.join(missing[:20])}")
+        translated = [{**record, "question": questions[split][f"{split}:{index}"]} for index, record in enumerate(records)]
         output = ROOT / "data" / "04_translated_fr" / environment / f"{split}.jsonl"
         write_jsonl(output, translated)
         print(f"{split} : {len(translated)} traductions écrites dans {output}")
@@ -181,11 +242,16 @@ def collect(environment, jobs):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--resubmit", action="store_true", help="prépare et soumet de nouveaux lots après confirmation")
+    parser.add_argument("--retry-missing", action="store_true", help="renvoie uniquement les réponses sans JSON final déjà téléchargées")
     args = parser.parse_args()
     environment = choose_environment()
     if args.resubmit:
         if input("Préparer et soumettre de nouveaux lots Mistral ? [o/N] ").strip().lower() in {"o", "oui"}:
             submit(environment, prepare(environment))
+        return
+    if args.retry_missing:
+        if input("Renvoyer uniquement les réponses incomplètes déjà téléchargées ? [o/N] ").strip().lower() in {"o", "oui"}:
+            retry_missing(environment)
         return
     if not state_path(environment).is_file():
         if input("Préparer et envoyer les lots Mistral ? [o/N] ").strip().lower() in {"o", "oui"}:
