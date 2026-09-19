@@ -75,6 +75,19 @@ def check_record(record: object, index: int) -> dict[str, object]:
     }
 
 
+def manual_corrections(environment: str) -> dict[str, str]:
+    path = PROJECT_DIR / "data" / "05_checks" / environment / "manual_corrections.jsonl"
+    if not path.is_file():
+        return {}
+    corrections = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        row = json.loads(line)
+        if not isinstance(row.get("id"), str) or not isinstance(row.get("question"), str) or not row["question"].strip():
+            raise ValueError(f"Correction manuelle invalide : {row!r}")
+        corrections[row["id"]] = row["question"].strip()
+    return corrections
+
+
 def main() -> None:
     choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
     environments = {"1": "pilot", "2": "production"}
@@ -83,13 +96,19 @@ def main() -> None:
     environment = environments[choice]
     source_dir = PROJECT_DIR / "data" / "04_translated_fr" / environment
     output_dir = PROJECT_DIR / "data" / "05_checks" / environment
+    corrections = manual_corrections(environment)
     sources = sorted(source_dir.glob("*.jsonl"))
     if not sources:
         raise FileNotFoundError(f"Traductions absentes dans {source_dir}. Récupérez d'abord les Batchs.")
     for source_path in sources:
         with source_path.open("r", encoding="utf-8") as source_file:
             records = [json.loads(line) for line in source_file if line.strip()]
-        checks = [{**check_record(record, index), "id": f"{source_path.stem}:{index}"} for index, record in enumerate(records)]
+        checks = []
+        for index, record in enumerate(records):
+            identifier = f"{source_path.stem}:{index}"
+            if identifier in corrections and isinstance(record, dict):
+                record = {**record, "question": corrections[identifier]}
+            checks.append({**check_record(record, index), "id": identifier})
         output_path = output_dir / f"{source_path.stem}_deterministic_checks.jsonl"
         output_dir.mkdir(parents=True, exist_ok=True)
         with output_path.open("w", encoding="utf-8", newline="\n") as output_file:

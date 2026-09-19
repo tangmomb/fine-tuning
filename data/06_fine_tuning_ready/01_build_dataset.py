@@ -75,6 +75,26 @@ def validate_examples(examples, accepted_translations):
             raise ValueError(f"Exemple {index} : assistant ne contient pas uniquement le SQL gold.")
 
 
+def correction_map(environment):
+    path = ROOT / "data" / "05_checks" / environment / "manual_corrections.jsonl"
+    if not path.is_file():
+        return {}
+    return {
+        row["id"]: row["question"]
+        for row in load(path)
+        if isinstance(row.get("id"), str) and isinstance(row.get("question"), str) and row["question"].strip()
+    }
+
+
+def example_from_translation(translation):
+    user = json.dumps({"question": translation["question"], "schema": translation["schema"]}, ensure_ascii=False)
+    return {"messages": [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user},
+        {"role": "assistant", "content": normalize_sql(translation["sql"])},
+    ]}
+
+
 def main():
     choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
     environments = {"1": "pilot", "2": "production"}
@@ -85,6 +105,34 @@ def main():
     judgments_path = ROOT / "data" / "05_checks" / environment / "sol_judgments.jsonl"
     output = ROOT / "data" / "06_fine_tuning_ready" / environment / "train.jsonl"
     manifest = ROOT / "data" / "06_fine_tuning_ready" / environment / "manifest.json"
+    if environment == "production":
+        corrections = correction_map(environment)
+        judgments = {row["id"]: row for row in load(judgments_path)}
+        accepted, rejected = [], []
+        for split in ("train_spider", "train_others", "dev"):
+            translations = load(ROOT / "data" / "04_translated_fr" / environment / f"{split}.jsonl")
+            checks = {row["id"]: row for row in load(ROOT / "data" / "05_checks" / environment / f"{split}_deterministic_checks.jsonl")}
+            for index, translation in enumerate(translations):
+                identifier = f"{split}:{index}"
+                if identifier in corrections:
+                    translation = {**translation, "question": corrections[identifier]}
+                judgment = judgments.get(identifier)
+                accepted_by_judge = judgment and judgment.get("verdict") == "pass"
+                corrected = identifier in corrections
+                if not corrected and judgment and judgment.get("verdict") != "pass":
+                    rejected.append({"id": identifier, "reason": f"judge_{judgment.get('verdict')}"})
+                    continue
+                if not corrected and checks[identifier].get("status") != "pass" and not accepted_by_judge:
+                    rejected.append({"id": identifier, "reason": "deterministic_fail"})
+                    continue
+                accepted.append(translation)
+        examples = [example_from_translation(translation) for translation in accepted]
+        validate_examples(examples, accepted)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("".join(json.dumps(example, ensure_ascii=False) + "\n" for example in examples), encoding="utf-8")
+        manifest.write_text(json.dumps({"source_translations": "data/04_translated_fr/production/*.jsonl", "source_judgments": str(judgments_path.relative_to(ROOT)), "total_candidates": len(accepted) + len(rejected), "accepted": len(accepted), "rejected": rejected, "manual_corrections": sorted(corrections), "format": "chat_messages_jsonl_text_to_sql"}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"{len(accepted)} exemples validés écrits dans {output}")
+        return
     translations, judgments = load(translations_path), load(judgments_path)
     if len(translations) != len(judgments):
         raise ValueError(f"Traductions ({len(translations)}) et jugements ({len(judgments)}) ne correspondent pas.")
@@ -97,16 +145,7 @@ def main():
         if judgment.get("verdict") != "pass":
             rejected.append({"id": identifier, "verdict": judgment.get("verdict")})
             continue
-        user = json.dumps(
-            {"question": translation["question"], "schema": translation["schema"]},
-            ensure_ascii=False,
-        )
-        assistant = normalize_sql(translation["sql"])
-        examples.append({"messages": [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user},
-            {"role": "assistant", "content": assistant},
-        ]})
+        examples.append(example_from_translation(translation))
         accepted.append(translation)
     validate_examples(examples, accepted)
     output.parent.mkdir(parents=True, exist_ok=True)

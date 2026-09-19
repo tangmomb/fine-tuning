@@ -1,0 +1,2 @@
+{"id":"train_spider:2528","question":"Comptez le nombre de pays.","reason":"countries avait été traduit à tort par comtés."}
+{"id":"train_spider:6335","question":"Donnez l'État correspondant au numéro de bâtiment de la ligne « 6862 Kaitlyn Knolls ».","reason":"ligne 1 avait été ajouté alors qu'il est absent de la question source."}
