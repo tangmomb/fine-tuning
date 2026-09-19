@@ -1,0 +1,18 @@
+{
+  "model": "zai-glm-5-3",
+  "submitted_at": "2026-09-19T20:41:53.033946+00:00",
+  "batches": {
+    "train_spider": {
+      "batch_id": "7d05e3c2-7686-4a92-aadb-68a0b8c8aee2",
+      "input_file_id": "25810043-99b9-4f11-82e1-6120596d9cfb"
+    },
+    "train_others": {
+      "batch_id": "39d6ea35-9c6c-4594-9771-2c1301581bd5",
+      "input_file_id": "391578b2-7806-42c5-9471-903eff0548dd"
+    },
+    "dev": {
+      "batch_id": "4615e82a-cddc-413d-b85e-f14387bda306",
+      "input_file_id": "f8b4b202-6b0e-42c0-af99-ab372691f87d"
+    }
+  }
+}
