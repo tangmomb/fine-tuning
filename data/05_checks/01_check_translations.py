@@ -76,9 +76,11 @@ def check_record(record: object, index: int) -> dict[str, object]:
 
 
 def main() -> None:
-    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
-    if environment not in {"pilot", "production"}:
-        raise ValueError("Dossier attendu : pilot ou production.")
+    choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
+    environments = {"1": "pilot", "2": "production"}
+    if choice not in environments:
+        raise ValueError("Choix attendu : 1 (pilot) ou 2 (production).")
+    environment = environments[choice]
     source_dir = PROJECT_DIR / "data" / "04_translated_fr" / environment
     output_dir = PROJECT_DIR / "data" / "05_checks" / environment
     sources = sorted(source_dir.glob("*.jsonl"))

@@ -76,9 +76,11 @@ def validate_examples(examples, accepted_translations):
 
 
 def main():
-    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
-    if environment not in {"pilot", "production"}:
-        raise ValueError("Dossier attendu : pilot ou production.")
+    choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
+    environments = {"1": "pilot", "2": "production"}
+    if choice not in environments:
+        raise ValueError("Choix attendu : 1 (pilot) ou 2 (production).")
+    environment = environments[choice]
     translations_path = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
     judgments_path = ROOT / "data" / "05_checks" / environment / "sol_judgments.jsonl"
     output = ROOT / "data" / "06_fine_tuning_ready" / environment / "train.jsonl"

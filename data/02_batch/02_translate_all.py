@@ -19,10 +19,11 @@ Retourne uniquement la traduction française, sans JSON, SQL, commentaire ni bal
 
 
 def choose_environment():
-    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
-    if environment not in {"pilot", "production"}:
-        raise ValueError("Dossier attendu : pilot ou production.")
-    return environment
+    choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
+    environments = {"1": "pilot", "2": "production"}
+    if choice not in environments:
+        raise ValueError("Choix attendu : 1 (pilot) ou 2 (production).")
+    return environments[choice]
 
 
 def load_jsonl(path):

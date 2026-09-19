@@ -185,9 +185,11 @@ def collect():
 
 def main():
     global SOURCE, WORK, STATE, OUTPUT, SELECTION, ENVIRONMENT, SIZE
-    environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
-    if environment not in {"pilot", "production"}:
-        raise ValueError("Dossier attendu : pilot ou production.")
+    choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
+    environments = {"1": "pilot", "2": "production"}
+    if choice not in environments:
+        raise ValueError("Choix attendu : 1 (pilot) ou 2 (production).")
+    environment = environments[choice]
     ENVIRONMENT = environment
     SOURCE = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
     WORK = ROOT / "data" / "05_checks" / environment
@@ -196,6 +198,12 @@ def main():
     SELECTION = WORK / "judge_selection.jsonl"
     SIZE = 100 if environment == "pilot" else None
     if not STATE.is_file():
+        prepared_paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
+        if prepared_paths:
+            print(f"{len(prepared_paths)} lots du juge sont déjà préparés.")
+            if input("Envoyer ces lots ? [o/N] ").strip().lower() in {"o", "oui"}:
+                submit()
+            return
         if input("Préparer les lots du juge ? [o/N] ").strip().lower() in {"o", "oui"}:
             prepare()
             if input("Envoyer ces lots ? [o/N] ").strip().lower() in {"o", "oui"}:
