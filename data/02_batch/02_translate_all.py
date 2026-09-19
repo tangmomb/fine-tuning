@@ -225,6 +225,14 @@ def collect(environment, jobs):
             except (json.JSONDecodeError, RuntimeError) as error:
                 invalid_responses.append((response.get("custom_id"), str(error)))
                 continue
+            # Les trois lots de production créés avant la mutualisation
+            # portaient tous le préfixe train_spider. Le lot concerné reste
+            # la source de vérité pour remettre chaque traduction dans son split.
+            expected_split = item["split"]
+            if expected_split in {"train_spider", "train_others", "dev"}:
+                _, separator, index = identifier.partition(":")
+                if separator and index.isdigit():
+                    identifier = f"{expected_split}:{index}"
             split, _ = identifier.split(":", 1)
             questions.setdefault(split, {})[identifier] = question
     unresolved = []
