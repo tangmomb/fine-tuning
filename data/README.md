@@ -26,7 +26,7 @@ python data/06_fine_tuning_ready/01_build_dataset.py
 Les scripts des étapes 02, 05 et 06 demandent au démarrage le dossier cible : `pilot` ou
 `production`. Les artefacts restent isolés dans le sous-dossier choisi.
 
-Le troisième script prépare localement les lots Z.ai GLM 5.3 hébergés par Mistral, puis demande explicitement avant de les envoyer. Le mode `pilot` prépare deux lots de 50 requêtes ; le mode `production` prépare les trois splits. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Après l'envoi, le même script affiche le statut des derniers Batch et propose de récupérer les traductions lorsqu'ils sont terminés.
+Le troisième script prépare localement les lots Z.ai GLM 5.3 hébergés par Mistral, puis demande explicitement avant de les envoyer. Le mode `pilot` prépare deux lots de 50 requêtes ; le mode `production` prépare les trois splits. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Chaque requête demande uniquement la phrase française : l'identifiant est porté par `custom_id` du Batch, pas par la réponse du modèle. Après l'envoi, le même script affiche le statut des derniers Batch et propose de récupérer les traductions lorsqu'ils sont terminés.
 
 Si un lot est tronqué avant sa réponse finale, relancez-le explicitement avec :
 

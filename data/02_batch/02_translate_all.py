@@ -14,8 +14,8 @@ ROOT = Path(__file__).resolve().parents[2]
 MODEL, PILOT_SIZE, PILOT_BATCH_SIZE, MAX_OUTPUT_TOKENS = "zai-glm-5-3", 100, 50, 2048
 SYSTEM_PROMPT = """Tu traduis en français des questions anglaises text-to-SQL. Conserve exactement le sens,
 les nombres, dates, pourcentages, noms propres, comparaisons, négations, superlatifs et classements.
-N'ajoute ni ne retire aucune information. Le SQL et le schéma sont des garde-fous. Retourne uniquement
-{"id":"<id reçu>","question":"<question française traduite>"}."""
+N'ajoute ni ne retire aucune information. Le SQL et le schéma sont des garde-fous.
+Retourne uniquement la traduction française, sans JSON, SQL, commentaire ni balise Markdown."""
 
 
 def choose_environment():
@@ -88,7 +88,7 @@ def request_row(record, split, index):
     if not all(isinstance(record.get(field), str) and record[field].strip() for field in fields):
         raise ValueError(f"{split}:{index} : question, SQL ou schéma invalide.")
     identifier = f"{split}:{index}"
-    return {"custom_id": identifier, "body": {"max_tokens": MAX_OUTPUT_TOKENS, "temperature": 0, "response_format": {"type": "json_object"}, "messages": [
+    return {"custom_id": identifier, "body": {"max_tokens": MAX_OUTPUT_TOKENS, "temperature": 0, "messages": [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": json.dumps({"id": identifier, **{field: record[field] for field in fields}}, ensure_ascii=False)},
     ]}}
@@ -149,6 +149,9 @@ def status(environment):
 
 
 def extract_question(line):
+    identifier = line.get("custom_id")
+    if not isinstance(identifier, str) or not identifier:
+        raise RuntimeError("Réponse Mistral sans custom_id.")
     body = line.get("response", {}).get("body", {})
     content = body.get("choices", [{}])[0].get("message", {}).get("content", "")
     if isinstance(content, list):
@@ -159,10 +162,18 @@ def extract_question(line):
         )
     if not isinstance(content, str):
         raise RuntimeError(f"Contenu Mistral invalide : {content!r}")
-    answer = json.loads(content)
-    if not isinstance(answer.get("id"), str) or not isinstance(answer.get("question"), str):
-        raise RuntimeError(f"Réponse Mistral invalide : {answer!r}")
-    return answer["id"], answer["question"]
+    question = content.strip()
+    if not question:
+        raise RuntimeError("Réponse Mistral sans texte final.")
+    # Compatibilité avec les lots déjà soumis avant le passage en texte simple.
+    if question.startswith("{"):
+        answer = json.loads(question)
+        if not isinstance(answer.get("id"), str) or not isinstance(answer.get("question"), str):
+            raise RuntimeError(f"Réponse JSON Mistral invalide : {answer!r}")
+        if answer["id"] != identifier:
+            raise RuntimeError(f"id JSON incohérent : {answer['id']} au lieu de {identifier}.")
+        question = answer["question"].strip()
+    return identifier, question
 
 
 def missing_response_ids(environment):
