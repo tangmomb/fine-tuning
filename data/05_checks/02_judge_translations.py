@@ -2,14 +2,16 @@
 
 import json
 import os
+import random
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = WORK = STATE = OUTPUT = None
+SOURCE = WORK = STATE = OUTPUT = SELECTION = ENVIRONMENT = None
 MODEL, SIZE, CHUNK = "gpt-5.6-sol", 100, 50
+PRODUCTION_SAMPLE_SIZE, RANDOM_SEED = 200, 20260919
 PROMPT = """Tu es le juge qualité d'un dataset text-to-SQL traduit de l'anglais vers le français.
 Évalue la fidélité de la traduction française. Le SQL et le schéma servent seulement de garde-fous. Ne reformule jamais.
 Un verdict pass conserve le sens ; fail ajoute, retire ou change une information ; uncertain ne permet pas de décider.
@@ -46,12 +48,11 @@ def api(path, method="GET", payload=None):
         return json.loads(response.read().decode())
 
 
-def request_row(record, index):
+def request_row(record, identifier):
     fields = ("question_original_en", "question", "sql", "schema")
     bad = [field for field in fields if not isinstance(record.get(field), str) or not record[field].strip()]
     if bad:
-        raise ValueError(f"Ligne {index + 1} : champs invalides : {', '.join(bad)}")
-    identifier = f"train_spider:{index}"
+        raise ValueError(f"{identifier} : champs invalides : {', '.join(bad)}")
     return {"custom_id": f"judge:{identifier}", "method": "POST", "url": "/v1/responses", "body": {
         "model": MODEL, "reasoning": {"effort": "low"}, "instructions": PROMPT,
         "input": json.dumps({"id": identifier, **{field: record[field] for field in fields}}, ensure_ascii=False),
@@ -59,19 +60,54 @@ def request_row(record, index):
     }}
 
 
+def selection_records():
+    if ENVIRONMENT == "pilot":
+        records = rows(SOURCE)[:SIZE]
+        if len(records) != SIZE:
+            raise ValueError(f"{SIZE} traductions requises, {len(records)} trouvées.")
+        return [{"id": f"train_spider:{index}", "selection_reason": "pilot_full", **record} for index, record in enumerate(records)]
+
+    selected, passing = [], {}
+    for split in ("train_spider", "train_others", "dev"):
+        translations = rows(ROOT / "data" / "04_translated_fr" / "production" / f"{split}.jsonl")
+        checks = {row["id"]: row for row in rows(WORK / f"{split}_deterministic_checks.jsonl")}
+        if len(checks) != len(translations):
+            raise ValueError(f"Contrôles incomplets pour {split}.")
+        passing[split] = []
+        for index, record in enumerate(translations):
+            identifier = f"{split}:{index}"
+            check = checks.get(identifier)
+            if not check:
+                raise ValueError(f"Contrôle absent : {identifier}")
+            entry = {"id": identifier, **record}
+            if check["status"] == "fail":
+                selected.append({"selection_reason": "deterministic_fail", **entry})
+            else:
+                passing[split].append(entry)
+
+    total = sum(map(len, passing.values()))
+    quotas = {split: len(candidates) * PRODUCTION_SAMPLE_SIZE // total for split, candidates in passing.items()}
+    for split in sorted(passing, key=lambda name: len(passing[name]) * PRODUCTION_SAMPLE_SIZE % total, reverse=True)[:PRODUCTION_SAMPLE_SIZE - sum(quotas.values())]:
+        quotas[split] += 1
+    generator = random.Random(RANDOM_SEED)
+    for split, candidates in passing.items():
+        selected.extend({"selection_reason": "random_pass", **entry} for entry in generator.sample(candidates, quotas[split]))
+    return sorted(selected, key=lambda row: (row["id"].split(":")[0], int(row["id"].split(":")[1])))
+
+
 def prepare():
-    if not SOURCE.is_file():
-        raise FileNotFoundError(f"Traductions absentes : {SOURCE}. Récupérez-les avant de lancer le juge.")
-    records = rows(SOURCE)[:SIZE]
-    if SIZE is not None and len(records) != SIZE:
-        raise ValueError(f"{SIZE} traductions requises, {len(records)} trouvées.")
-    requests = [request_row(row, index) for index, row in enumerate(records)]
+    records = selection_records()
+    SELECTION.parent.mkdir(parents=True, exist_ok=True)
+    SELECTION.write_text("".join(json.dumps(record, ensure_ascii=False) + "\n" for record in records), encoding="utf-8")
+    failures = sum(record["selection_reason"] == "deterministic_fail" for record in records)
+    print(f"{len(records)} traductions sélectionnées : {failures} signaux mécaniques + {len(records) - failures} échantillons aléatoires.")
+    requests = [request_row(row, row["id"]) for row in records]
     target = WORK / "judge_requests"
     target.mkdir(parents=True, exist_ok=True)
     for number, start in enumerate(range(0, len(requests), CHUNK), 1):
         path = target / f"requests_{number:02d}.jsonl"
         path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in requests[start:start + CHUNK]), encoding="utf-8")
-        print(f"{CHUNK} jugements écrits dans {path}")
+        print(f"{len(requests[start:start + CHUNK])} jugements écrits dans {path}")
 
 
 def upload(path):
@@ -94,11 +130,11 @@ def submit():
     batches = []
     for path in paths:
         file = upload(path)
-        batch = api("/batches", "POST", {"input_file_id": file["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"job": "spider-judge-pilot", "model": MODEL}})
+        batch = api("/batches", "POST", {"input_file_id": file["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"job": f"spider-judge-{ENVIRONMENT}", "model": MODEL}})
         batches.append({"batch_id": batch["id"], "input_file_id": file["id"]})
         print(f"Batch de jugement créé : {batch['id']}")
     WORK.mkdir(parents=True, exist_ok=True)
-    STATE.write_text(json.dumps({"model": MODEL, "source": str(SOURCE.relative_to(ROOT)), "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": batches}, indent=2) + "\n", encoding="utf-8")
+    STATE.write_text(json.dumps({"environment": ENVIRONMENT, "model": MODEL, "selection": str(SELECTION.relative_to(ROOT)), "submitted_at": datetime.now(timezone.utc).isoformat(), "batches": batches}, indent=2) + "\n", encoding="utf-8")
 
 
 def state():
@@ -140,25 +176,27 @@ def collect():
         raw_path.write_text(raw, encoding="utf-8")
         verdicts.update({identifier: (verdict, issues) for identifier, verdict, issues in map(extract, map(json.loads, filter(None, raw.splitlines())))})
     judged = []
-    for index, record in enumerate(rows(SOURCE)[:SIZE]):
-        verdict, issues = verdicts[f"train_spider:{index}"]
+    for record in rows(SELECTION):
+        verdict, issues = verdicts[record["id"]]
         judged.append({**record, "verdict": verdict, "issues": issues})
     OUTPUT.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in judged), encoding="utf-8")
     print(f"{len(judged)} jugements écrits dans {OUTPUT}")
 
 
 def main():
-    global SOURCE, WORK, STATE, OUTPUT, SIZE
+    global SOURCE, WORK, STATE, OUTPUT, SELECTION, ENVIRONMENT, SIZE
     environment = input("Dossier à traiter [pilot/production] : ").strip().lower()
     if environment not in {"pilot", "production"}:
         raise ValueError("Dossier attendu : pilot ou production.")
+    ENVIRONMENT = environment
     SOURCE = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
     WORK = ROOT / "data" / "05_checks" / environment
     STATE = WORK / "judge_batch_state.json"
     OUTPUT = WORK / "sol_judgments.jsonl"
+    SELECTION = WORK / "judge_selection.jsonl"
     SIZE = 100 if environment == "pilot" else None
     if not STATE.is_file():
-        if input("Préparer les deux lots du juge ? [o/N] ").strip().lower() in {"o", "oui"}:
+        if input("Préparer les lots du juge ? [o/N] ").strip().lower() in {"o", "oui"}:
             prepare()
             if input("Envoyer ces lots ? [o/N] ").strip().lower() in {"o", "oui"}:
                 submit()
