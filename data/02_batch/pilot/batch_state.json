@@ -1,19 +1,20 @@
 {
-  "objective": "Traduire directement avec Terra 100 questions anglaises Spider en français naturel sans changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous.",
-  "model": "gpt-5.6-terra",
+  "provider": "mistral",
+  "objective": "Traduire directement avec Z.ai GLM 5.3, hébergé par Mistral, 100 questions anglaises Spider en français naturel sans changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous.",
+  "model": "zai-glm-5-3",
   "source": "data\\01_processed\\train_spider.jsonl",
   "examples": 100,
   "requests_per_batch": 50,
   "schema_included": true,
-  "submitted_at": "2026-09-19T18:39:29.838353+00:00",
+  "submitted_at": "2026-09-19T19:02:11.536396+00:00",
   "batches": [
     {
-      "batch_id": "batch_6aaed6df4a94819092367960679262e4",
-      "input_file_id": "file-5WeqC7vYjU6rHPZ6WqKJKp"
+      "batch_id": "dfe1e867-bb7b-4921-a812-a94fb0137fa6",
+      "input_file_id": "582affb5-e637-41a9-99ca-c11819c05bcc"
     },
     {
-      "batch_id": "batch_6aaed6e0cf908190ad8dd28d6e989654",
-      "input_file_id": "file-WPSKC7c8Rrp6ojQzNG2TXN"
+      "batch_id": "28698408-d77f-405a-bde4-3cf66d585550",
+      "input_file_id": "dc1e6497-0a41-4a1e-88a1-65792a03bf43"
     }
   ]
 }
