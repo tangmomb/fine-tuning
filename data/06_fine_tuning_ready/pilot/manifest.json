@@ -1,0 +1,8 @@
+{
+  "source_translations": "data\\04_translated_fr\\pilot\\train_spider.jsonl",
+  "source_judgments": "data\\05_checks\\pilot\\sol_judgments.jsonl",
+  "total_candidates": 100,
+  "accepted_pass": 100,
+  "rejected": [],
+  "format": "chat_messages_jsonl_text_to_sql"
+}
