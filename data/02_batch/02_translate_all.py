@@ -177,18 +177,19 @@ def extract_question(line):
 
 
 def missing_response_ids(environment):
-    missing = set()
+    missing, completed = set(), set()
     raw_dir = ROOT / "data" / "03_mistral_response" / environment
     for path in raw_dir.glob("output_*.jsonl"):
         for line in path.read_text(encoding="utf-8").splitlines():
             response = json.loads(line)
             try:
-                extract_question(response)
+                identifier, _ = extract_question(response)
+                completed.add(identifier)
             except (json.JSONDecodeError, RuntimeError):
                 identifier = response.get("custom_id")
                 if isinstance(identifier, str):
                     missing.add(identifier)
-    return sorted(missing)
+    return sorted(missing - completed)
 
 
 def retry_missing(environment):
