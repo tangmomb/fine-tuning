@@ -1,37 +1,31 @@
-# Données Spider-FR préparées
+# Étape 01 — données Spider anglaises préparées
 
-Ces fichiers JSONL sont générés par `prepare_dataset.py` à partir des sources
-brutes de `BRUT_spider-fr/` :
+Ces fichiers JSONL sont produits depuis les trois splits anglais originaux :
 
-- `train_spider.json` → `train_spider.jsonl`
-- `train_others.json` → `train_others.jsonl`
-- `dev.json` → `dev.jsonl`
+```text
+BRUT_spider-original/data/spider_data/
+├── train_spider.json
+├── train_others.json
+└── dev.json
+```
 
-Pour chaque exemple, le script conserve la question française source et la
-requête SQL, puis lit le schéma de la base SQLite correspondant au `db_id` dans
-`BRUT_spider-original/data/spider_data/database/<db_id>/<db_id>.sqlite`.
-Le schéma est construit depuis `sqlite_master` avec les instructions
-`CREATE TABLE`, en ignorant les tables internes dont le nom commence par
-`sqlite_`.
+La commande de génération est :
 
-Chaque ligne JSONL contient exactement ces champs :
+```powershell
+python data/01_processed/02_prepare_english_dataset.py
+```
+
+Pour chaque exemple, le script vérifie que `db_id`, `question` et `query` sont présents et non vides, vérifie la présence de la base SQLite correspondante, puis extrait les instructions `CREATE TABLE` depuis SQLite. Les tables internes `sqlite_%` sont exclues.
+
+Chaque ligne contient exactement :
 
 ```json
 {
   "db_id": "department_management",
-  "question_original": "Combien de chefs des départements sont plus âgés que 56?",
+  "question_original_en": "How many heads of departments are older than 56 ?",
   "schema": "CREATE TABLE ...",
   "sql": "SELECT count(*) FROM head WHERE age > 56"
 }
 ```
 
-Les fichiers source ne sont jamais modifiés. Avant écriture, le script vérifie
-la présence de `db_id`, `question`, `query` et de la base SQLite associée. Les
-doublons exacts selon `db_id + question_original + sql` sont retirés dans chaque
-split, en conservant la première occurrence.
-
-Pour les régénérer :
-
-```powershell
-python data/preparation_scripts/02_prepare_dataset.py
-```
+Les doublons exacts `(db_id, question_original_en, sql)` sont éliminés à l'intérieur de chaque split. Les fichiers sources ne sont jamais modifiés. Cette étape constitue l'entrée de la traduction directe anglais → français de l'étape 02.

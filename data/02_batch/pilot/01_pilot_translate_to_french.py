@@ -1,4 +1,4 @@
-"""Lance et récupère un pilote Batch de 100 reformulations Spider-FR."""
+"""Lance et récupère un pilote Batch Terra de 100 traductions vers le français."""
 
 import json
 import mimetypes
@@ -10,23 +10,23 @@ from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 
-PROJECT_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = Path(__file__).resolve().parents[3]
 ENV_PATH = PROJECT_DIR / ".env"
 SOURCE_PATH = PROJECT_DIR / "data" / "01_processed" / "train_spider.jsonl"
 PILOT_DIR = PROJECT_DIR / "data" / "02_batch" / "pilot"
 STATE_PATH = PILOT_DIR / "batch_state.json"
 RAW_OUTPUT_DIR = PROJECT_DIR / "data" / "03_open_ai_response" / "pilot"
-OUTPUT_DIR = PROJECT_DIR / "data" / "04_cleaned" / "pilot"
-MODEL = "gpt-5.6-luna"
+OUTPUT_DIR = PROJECT_DIR / "data" / "04_translated_fr" / "pilot"
+MODEL = "gpt-5.6-terra"
 PILOT_SIZE = 100
 BATCH_SIZE = 50
 OBJECTIVE = (
-    "Réécrire 100 questions Spider-FR en français naturel sans changer le sens SQL, "
-    "en utilisant le SQL et le schéma comme garde-fous."
+    "Traduire directement avec Terra 100 questions anglaises Spider en français naturel sans "
+    "changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous."
 )
-SYSTEM_PROMPT = """Tu es chargé de corriger linguistiquement des questions françaises issues d'un dataset text-to-SQL.
+SYSTEM_PROMPT = """Tu es chargé de traduire en français des questions anglaises issues d'un dataset text-to-SQL.
 
-Ton unique tâche est de reformuler chaque question en français naturel, grammaticalement correct et fluide, SANS modifier son sens.
+Ton unique tâche est de produire une traduction française naturelle, grammaticalement correcte et fluide, SANS modifier le sens de la question anglaise.
 
 Règles impératives :
 
@@ -51,13 +51,13 @@ Règles impératives :
 6. Ne supprime aucune information.
 7. Ne réponds jamais à la question.
 8. Ne produis jamais de SQL.
-9. Le SQL cible et le schéma sont fournis uniquement pour vérifier que ta reformulation conserve le sens. Utilise-les pour corriger les traductions littérales manifestement absurdes de noms d'entités, mais ne les utilise jamais pour ajouter des précisions absentes de la question originale.
-10. Si la question est déjà correcte et naturelle, conserve-la avec seulement les éventuelles corrections typographiques nécessaires.
+9. Le SQL cible et le schéma sont fournis uniquement pour vérifier que ta traduction conserve le sens. Utilise-les pour traduire correctement les noms d'entités, mais ne les utilise jamais pour ajouter des précisions absentes de la question originale.
+10. Ne traduis pas les requêtes SQL ; ne produis que la question française.
 11. Utilise un français naturel et moderne, sans chercher à rendre la phrase inutilement sophistiquée.
 12. Préserve le niveau de précision de la question originale.
 
 Pour chaque élément, retourne uniquement un objet JSON valide de cette forme :
-{"id": "<id reçu>", "question": "<question française corrigée>"}
+{"id": "<id reçu>", "question": "<question française traduite>"}
 
 N'ajoute aucun commentaire, explication ou texte supplémentaire."""
 
@@ -74,11 +74,11 @@ def write_jsonl(path: Path, records: list[dict[str, object]]) -> None:
 
 
 def batch_request(record: dict[str, object], index: int) -> dict[str, object]:
-    question = record.get("question_original")
+    question = record.get("question_original_en")
     sql = record.get("sql")
     schema = record.get("schema")
     if not isinstance(question, str) or not question.strip():
-        raise ValueError(f"Ligne {index + 1} : question_original invalide.")
+        raise ValueError(f"Ligne {index + 1} : question_original_en invalide.")
     if not isinstance(sql, str) or not sql.strip():
         raise ValueError(f"Ligne {index + 1} : sql invalide.")
     if not isinstance(schema, str) or not schema.strip():
@@ -87,7 +87,7 @@ def batch_request(record: dict[str, object], index: int) -> dict[str, object]:
     request_id = f"train_spider:{index}"
     user_input = {
         "id": request_id,
-        "question_original": question,
+        "question_original_en": question,
         "sql": sql,
         "schema": schema,
     }
@@ -198,7 +198,7 @@ def submit() -> None:
                 "input_file_id": uploaded_file["id"],
                 "endpoint": "/v1/responses",
                 "completion_window": "24h",
-                "metadata": {"job": "spider-fr-rewrite-pilot", "model": MODEL},
+                "metadata": {"job": "spider-en-to-fr-terra-pilot", "model": MODEL},
             },
         )
         batches.append({"batch_id": batch["id"], "input_file_id": uploaded_file["id"]})
@@ -267,7 +267,7 @@ def extract_question(batch_line: dict[str, object]) -> tuple[str, str]:
     if not isinstance(answer, dict) or set(answer) != {"id", "question"}:
         raise RuntimeError(f"Réponse JSON inattendue : {answer!r}")
     if not isinstance(answer["id"], str) or not isinstance(answer["question"], str) or not answer["question"].strip():
-        raise RuntimeError(f"Réponse de reformulation invalide : {answer!r}")
+        raise RuntimeError(f"Réponse de traduction invalide : {answer!r}")
     return answer["id"], answer["question"].strip()
 
 

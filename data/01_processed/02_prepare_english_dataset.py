@@ -1,4 +1,4 @@
-"""Prépare les splits Spider-FR en JSONL pour le pipeline text-to-SQL."""
+"""Prépare les splits Spider originaux anglais en JSONL pour traduction."""
 
 import json
 import sqlite3
@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
-SOURCE_DIR = PROJECT_DIR / "BRUT_spider-fr"
+SOURCE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data"
 DATABASE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data" / "database"
 OUTPUT_DIR = PROJECT_DIR / "data" / "01_processed"
 SPLITS = ("train_spider", "train_others", "dev")
@@ -24,7 +24,9 @@ def validate_example(example: object, source_path: Path, index: int) -> dict[str
         raise ValueError(f"{source_path} : l'exemple {index} manque : {fields}.")
 
     invalid_fields = [
-        field for field in REQUIRED_FIELDS if not isinstance(example[field], str)
+        field
+        for field in REQUIRED_FIELDS
+        if not isinstance(example[field], str) or not example[field].strip()
     ]
     if invalid_fields:
         fields = ", ".join(invalid_fields)
@@ -75,6 +77,10 @@ def prepare_split(split_name: str, schema_cache: dict[str, str]) -> tuple[int, d
             )
         if db_id not in schema_cache:
             schema_cache[db_id] = extract_schema(database_path)
+            if not schema_cache[db_id].strip():
+                raise ValueError(
+                    f"Schéma SQLite vide pour db_id={db_id!r} : {database_path}"
+                )
 
     first_output_example: dict[str, str] | None = None
     seen_examples: set[tuple[str, str, str]] = set()
@@ -88,7 +94,7 @@ def prepare_split(split_name: str, schema_cache: dict[str, str]) -> tuple[int, d
 
             output_example = {
                 "db_id": example["db_id"],
-                "question_original": example["question"],
+                "question_original_en": example["question"],
                 "schema": schema_cache[example["db_id"]],
                 "sql": example["query"],
             }

@@ -1,19 +1,19 @@
 {
-  "objective": "Réécrire 100 questions Spider-FR en français naturel sans changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous.",
-  "model": "gpt-5.6-luna",
-  "source": "data/01_processed/train_spider.jsonl",
+  "objective": "Traduire directement avec Terra 100 questions anglaises Spider en français naturel sans changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous.",
+  "model": "gpt-5.6-terra",
+  "source": "data\\01_processed\\train_spider.jsonl",
   "examples": 100,
   "requests_per_batch": 50,
   "schema_included": true,
-  "submitted_at": "2026-09-19 (heure non enregistrée)",
+  "submitted_at": "2026-09-19T18:39:29.838353+00:00",
   "batches": [
     {
-      "batch_id": "batch_6aae800d3144819088e1989aa21aeb9e",
-      "input_file_id": "file-Pz6nU3ywfs8M2MpEeMfvXe"
+      "batch_id": "batch_6aaed6df4a94819092367960679262e4",
+      "input_file_id": "file-5WeqC7vYjU6rHPZ6WqKJKp"
     },
     {
-      "batch_id": "batch_6aae800eafe48190a114f49339fb77a0",
-      "input_file_id": "file-UzXoALbu4PrshxDNw1iAjA"
+      "batch_id": "batch_6aaed6e0cf908190ad8dd28d6e989654",
+      "input_file_id": "file-WPSKC7c8Rrp6ojQzNG2TXN"
     }
   ]
 }

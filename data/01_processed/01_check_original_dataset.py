@@ -1,4 +1,4 @@
-"""Vérifie la cohérence entre Spider-FR et les bases Spider originales."""
+"""Vérifie la cohérence entre les splits Spider anglais et les bases SQLite."""
 
 import json
 import sqlite3
@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 PROJECT_DIR = Path(__file__).resolve().parents[2]
-DATASET_PATH = PROJECT_DIR / "BRUT_spider-fr" / "train_spider.json"
+DATASET_PATH = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data" / "train_spider.json"
 DATABASE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data" / "database"
 
 
