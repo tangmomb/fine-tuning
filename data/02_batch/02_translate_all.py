@@ -176,20 +176,39 @@ def extract_question(line):
     return identifier, question
 
 
+def normalize_identifier(identifier, expected_split):
+    """Corrige le préfixe erroné des lots de production historiques."""
+    if expected_split in {"train_spider", "train_others", "dev"}:
+        _, separator, index = identifier.partition(":")
+        if separator and index.isdigit():
+            return f"{expected_split}:{index}"
+    return identifier
+
+
 def missing_response_ids(environment):
     missing, completed = set(), set()
     raw_dir = ROOT / "data" / "03_mistral_response" / environment
-    for path in raw_dir.glob("output_*.jsonl"):
+    batches = load_state(environment)["batches"]
+    for number, item in enumerate(batches, 1):
+        path = raw_dir / f"output_{number:02d}.jsonl"
+        if not path.is_file():
+            continue
         for line in path.read_text(encoding="utf-8").splitlines():
             response = json.loads(line)
             try:
                 identifier, _ = extract_question(response)
-                completed.add(identifier)
+                completed.add(normalize_identifier(identifier, item["split"]))
             except (json.JSONDecodeError, RuntimeError):
                 identifier = response.get("custom_id")
                 if isinstance(identifier, str):
-                    missing.add(identifier)
-    return sorted(missing - completed)
+                    missing.add(normalize_identifier(identifier, item["split"]))
+    overrides_path = state_path(environment).parent / "manual_translations.jsonl"
+    overridden = {
+        row.get("id")
+        for row in load_jsonl(overrides_path)
+        if isinstance(row.get("id"), str)
+    } if overrides_path.is_file() else set()
+    return sorted(missing - completed - overridden)
 
 
 def retry_missing(environment):
@@ -220,21 +239,25 @@ def collect(environment, jobs):
         raw_path.write_text(raw, encoding="utf-8")
         for line in raw.splitlines():
             response = json.loads(line)
+            expected_split = item["split"]
             try:
                 identifier, question = extract_question(response)
             except (json.JSONDecodeError, RuntimeError) as error:
-                invalid_responses.append((response.get("custom_id"), str(error)))
+                raw_identifier = response.get("custom_id")
+                identifier = normalize_identifier(raw_identifier, expected_split) if isinstance(raw_identifier, str) else raw_identifier
+                invalid_responses.append((identifier, str(error)))
                 continue
-            # Les trois lots de production créés avant la mutualisation
-            # portaient tous le préfixe train_spider. Le lot concerné reste
-            # la source de vérité pour remettre chaque traduction dans son split.
-            expected_split = item["split"]
-            if expected_split in {"train_spider", "train_others", "dev"}:
-                _, separator, index = identifier.partition(":")
-                if separator and index.isdigit():
-                    identifier = f"{expected_split}:{index}"
+            identifier = normalize_identifier(identifier, expected_split)
             split, _ = identifier.split(":", 1)
             questions.setdefault(split, {})[identifier] = question
+    overrides_path = state_path(environment).parent / "manual_translations.jsonl"
+    if overrides_path.is_file():
+        for row in load_jsonl(overrides_path):
+            identifier, question = row.get("id"), row.get("question")
+            if not isinstance(identifier, str) or not isinstance(question, str) or not question.strip() or ":" not in identifier:
+                raise ValueError(f"Exception manuelle invalide : {row!r}")
+            split, _ = identifier.split(":", 1)
+            questions.setdefault(split, {})[identifier] = question.strip()
     unresolved = []
     for identifier, error in invalid_responses:
         if not isinstance(identifier, str) or ":" not in identifier:
