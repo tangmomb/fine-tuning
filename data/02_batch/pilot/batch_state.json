@@ -1,0 +1,19 @@
+{
+  "objective": "Réécrire 100 questions Spider-FR en français naturel sans changer le sens SQL, en utilisant le SQL et le schéma comme garde-fous.",
+  "model": "gpt-5.6-luna",
+  "source": "data/01_processed/train_spider.jsonl",
+  "examples": 100,
+  "requests_per_batch": 50,
+  "schema_included": true,
+  "submitted_at": "2026-09-19 (heure non enregistrée)",
+  "batches": [
+    {
+      "batch_id": "batch_6aae800d3144819088e1989aa21aeb9e",
+      "input_file_id": "file-Pz6nU3ywfs8M2MpEeMfvXe"
+    },
+    {
+      "batch_id": "batch_6aae800eafe48190a114f49339fb77a0",
+      "input_file_id": "file-UzXoALbu4PrshxDNw1iAjA"
+    }
+  ]
+}

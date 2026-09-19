@@ -1,10 +1,10 @@
 """Lance et récupère un pilote Batch de 100 reformulations Spider-FR."""
 
-import argparse
 import json
 import mimetypes
 import os
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
@@ -20,6 +20,10 @@ OUTPUT_DIR = PROJECT_DIR / "data" / "04_cleaned" / "pilot"
 MODEL = "gpt-5.6-luna"
 PILOT_SIZE = 100
 BATCH_SIZE = 50
+OBJECTIVE = (
+    "Réécrire 100 questions Spider-FR en français naturel sans changer le sens SQL, "
+    "en utilisant le SQL et le schéma comme garde-fous."
+)
 SYSTEM_PROMPT = """Tu es chargé de corriger linguistiquement des questions françaises issues d'un dataset text-to-SQL.
 
 Ton unique tâche est de reformuler chaque question en français naturel, grammaticalement correct et fluide, SANS modifier son sens.
@@ -199,21 +203,48 @@ def submit() -> None:
         )
         batches.append({"batch_id": batch["id"], "input_file_id": uploaded_file["id"]})
         print(f"Batch créé : {batch['id']}")
-    STATE_PATH.write_text(json.dumps({"batches": batches}, indent=2) + "\n", encoding="utf-8")
+    state = {
+        "objective": OBJECTIVE,
+        "model": MODEL,
+        "source": str(SOURCE_PATH.relative_to(PROJECT_DIR)),
+        "examples": PILOT_SIZE,
+        "requests_per_batch": BATCH_SIZE,
+        "schema_included": True,
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "batches": batches,
+    }
+    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def load_state() -> list[dict[str, str]]:
+def load_state() -> dict[str, object]:
     if not STATE_PATH.is_file():
         raise RuntimeError("Aucun batch pilote connu. Exécutez d'abord submit.")
     state = json.loads(STATE_PATH.read_text(encoding="utf-8"))
-    return state["batches"]
+    if not isinstance(state, dict) or not isinstance(state.get("batches"), list):
+        raise RuntimeError(f"État Batch invalide : {STATE_PATH}")
+    return state
 
 
-def status() -> None:
-    """Affiche le statut des deux Batch pilotes."""
-    for batch_number, state in enumerate(load_state(), start=1):
-        batch = api_request(f"/batches/{state['batch_id']}")
-        print(f"{batch['id']} : {batch['status']} — {batch.get('request_counts')}")
+def status() -> list[dict[str, object]]:
+    """Affiche et retourne le statut des deux Batch pilotes."""
+    saved_state = load_state()
+    print("Dernier envoi Batch :")
+    print(f"- Objectif : {saved_state.get('objective', OBJECTIVE)}")
+    print(f"- Modèle : {saved_state.get('model', MODEL)}")
+    print(f"- Source : {saved_state.get('source', SOURCE_PATH.relative_to(PROJECT_DIR))}")
+    print(f"- Schéma envoyé : {saved_state.get('schema_included', True)}")
+    print(f"- Envoyé le : {saved_state.get('submitted_at', 'date non enregistrée')}")
+    batches: list[dict[str, object]] = []
+    for batch_number, batch_state in enumerate(saved_state["batches"], start=1):
+        if not isinstance(batch_state, dict):
+            raise RuntimeError("Entrée Batch invalide dans l'état local.")
+        batch = api_request(f"/batches/{batch_state['batch_id']}")
+        print(
+            f"- Lot {batch_number} : {batch['id']} — {batch['status']} — "
+            f"{batch.get('request_counts')}"
+        )
+        batches.append(batch)
+    return batches
 
 
 def extract_question(batch_line: dict[str, object]) -> tuple[str, str]:
@@ -253,8 +284,11 @@ def collect() -> None:
     """Construit le JSONL pilote nettoyé quand les deux lots sont terminés."""
     RAW_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     questions: dict[str, str] = {}
-    for batch_number, state in enumerate(load_state(), start=1):
-        batch = api_request(f"/batches/{state['batch_id']}")
+    saved_state = load_state()
+    for batch_number, batch_state in enumerate(saved_state["batches"], start=1):
+        if not isinstance(batch_state, dict):
+            raise RuntimeError("Entrée Batch invalide dans l'état local.")
+        batch = api_request(f"/batches/{batch_state['batch_id']}")
         if batch.get("status") != "completed":
             raise RuntimeError(f"Le batch {batch['id']} n'est pas terminé : {batch.get('status')}")
         output_file_id = batch.get("output_file_id")
@@ -285,10 +319,24 @@ def collect() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("prepare", "submit", "status", "collect"))
-    args = parser.parse_args()
-    {"prepare": prepare, "submit": submit, "status": status, "collect": collect}[args.command]()
+    """Affiche le dernier lot et propose l'action adaptée à son état."""
+    if not STATE_PATH.is_file():
+        print("Aucun Batch pilote n'a encore été envoyé.")
+        choice = input("Préparer les deux lots de 50 requêtes ? [o/N] ").strip().lower()
+        if choice in {"o", "oui"}:
+            prepare()
+            send_choice = input("Envoyer ces lots à OpenAI ? [o/N] ").strip().lower()
+            if send_choice in {"o", "oui"}:
+                submit()
+        return
+
+    batches = status()
+    if all(batch.get("status") == "completed" for batch in batches):
+        choice = input("Les résultats sont prêts. Les récupérer ? [o/N] ").strip().lower()
+        if choice in {"o", "oui"}:
+            collect()
+    else:
+        print("Le traitement est toujours en cours. Relancez ce script plus tard.")
 
 
 if __name__ == "__main__":
