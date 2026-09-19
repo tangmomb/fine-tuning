@@ -2,7 +2,8 @@
   "source_translations": "data/04_translated_fr/production/*.jsonl",
   "source_judgments": "data\\05_checks\\production\\sol_judgments.jsonl",
   "total_candidates": 9685,
-  "accepted": 9685,
+  "train_examples": 8651,
+  "validation_examples": 1034,
   "rejected": [],
   "manual_corrections": [
     "train_spider:2528",

@@ -108,7 +108,7 @@ def main():
     if environment == "production":
         corrections = correction_map(environment)
         judgments = {row["id"]: row for row in load(judgments_path)}
-        accepted, rejected = [], []
+        accepted_by_split, rejected = {"train_spider": [], "train_others": [], "dev": []}, []
         for split in ("train_spider", "train_others", "dev"):
             translations = load(ROOT / "data" / "04_translated_fr" / environment / f"{split}.jsonl")
             checks = {row["id"]: row for row in load(ROOT / "data" / "05_checks" / environment / f"{split}_deterministic_checks.jsonl")}
@@ -125,13 +125,20 @@ def main():
                 if not corrected and checks[identifier].get("status") != "pass" and not accepted_by_judge:
                     rejected.append({"id": identifier, "reason": "deterministic_fail"})
                     continue
-                accepted.append(translation)
-        examples = [example_from_translation(translation) for translation in accepted]
-        validate_examples(examples, accepted)
+                accepted_by_split[split].append(translation)
+        train_translations = [*accepted_by_split["train_spider"], *accepted_by_split["train_others"]]
+        validation_translations = accepted_by_split["dev"]
+        examples = [example_from_translation(translation) for translation in train_translations]
+        validation_examples = [example_from_translation(translation) for translation in validation_translations]
+        validate_examples(examples, train_translations)
+        validate_examples(validation_examples, validation_translations)
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text("".join(json.dumps(example, ensure_ascii=False) + "\n" for example in examples), encoding="utf-8")
-        manifest.write_text(json.dumps({"source_translations": "data/04_translated_fr/production/*.jsonl", "source_judgments": str(judgments_path.relative_to(ROOT)), "total_candidates": len(accepted) + len(rejected), "accepted": len(accepted), "rejected": rejected, "manual_corrections": sorted(corrections), "format": "chat_messages_jsonl_text_to_sql"}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"{len(accepted)} exemples validés écrits dans {output}")
+        validation_output = output.parent / "validation.jsonl"
+        validation_output.write_text("".join(json.dumps(example, ensure_ascii=False) + "\n" for example in validation_examples), encoding="utf-8")
+        manifest.write_text(json.dumps({"source_translations": "data/04_translated_fr/production/*.jsonl", "source_judgments": str(judgments_path.relative_to(ROOT)), "total_candidates": len(train_translations) + len(validation_translations) + len(rejected), "train_examples": len(train_translations), "validation_examples": len(validation_translations), "rejected": rejected, "manual_corrections": sorted(corrections), "format": "chat_messages_jsonl_text_to_sql"}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"{len(train_translations)} exemples d'entraînement écrits dans {output}")
+        print(f"{len(validation_translations)} exemples de validation écrits dans {validation_output}")
         return
     translations, judgments = load(translations_path), load(judgments_path)
     if len(translations) != len(judgments):
