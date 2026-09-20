@@ -1,0 +1,28 @@
+{
+  "environment": "production",
+  "model": "gpt-5.6-sol",
+  "selection": "data\\05_quality_control\\03_production\\03_judge_selection\\judge_selection.jsonl",
+  "submitted_at": "2026-09-19T21:49:53.827419+00:00",
+  "batches": [
+    {
+      "batch_id": "batch_6aaf037c8fb881908504f58435650511",
+      "input_file_id": "file-49UJSP4JkQS4D91rXGLMPK"
+    },
+    {
+      "batch_id": "batch_6aaf037e3a5c81908f53dd619cf00744",
+      "input_file_id": "file-HcmJZjS8Ydm42hx93J6tdK"
+    },
+    {
+      "batch_id": "batch_6aaf037f1e088190b74c6cb16a9cd69c",
+      "input_file_id": "file-RdWVGRCDWdb9MXNkMSoCuv"
+    },
+    {
+      "batch_id": "batch_6aaf03806cb08190b5826cbc2cc4ba7d",
+      "input_file_id": "file-DMyywvwzK5KUj2f7cdxa1y"
+    },
+    {
+      "batch_id": "batch_6aaf03812948819089fb8a21896b6024",
+      "input_file_id": "file-4ipanP7ELcGzr2RVhAQSyv"
+    }
+  ]
+}
