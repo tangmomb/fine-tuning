@@ -64,7 +64,7 @@ def request_row(record: dict, split: str, index: int) -> dict:
     identifier = f"{split}:{index}"
     return {"custom_id": identifier, "body": {"max_tokens": MAX_OUTPUT_TOKENS, "temperature": 0, "messages": [
         {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": json.dumps({"id": identifier, **{field: record[field] for field in fields}}, ensure_ascii=False)},
+        {"role": "user", "content": json.dumps({field: record[field] for field in fields}, ensure_ascii=False)},
     ]}}
 
 

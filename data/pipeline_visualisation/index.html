@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pipeline text-to-SQL</title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d162d'/%3E%3Cpath d='M8 11h16M8 16h10M8 21h13' stroke='%236ee7d8' stroke-width='2.5' stroke-linecap='round'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">fine-tuning · text-to-SQL</p>
+          <h1>Pipeline de données</h1>
+          <p class="intro">
+            De Spider anglais aux données de fine-tuning, puis à l’évaluation
+            française indépendante.
+          </p>
+        </div>
+      </header>
+
+      <section class="canvas" aria-label="Schéma du pipeline">
+        <article class="node source-node raw" tabindex="0">
+          <span class="node-index">source</span>
+          <h2>Spider brut</h2>
+          <p>Les fichiers qui alimentent le pipeline.</p>
+          <ul class="source-files">
+            <li>
+              <code>train_spider.json</code><span>entraînement principal</span>
+            </li>
+            <li>
+              <code>train_others.json</code
+              ><span>autres exemples d’entraînement</span>
+            </li>
+            <li><code>dev.json</code><span>validation</span></li>
+            <li><code>test.json</code><span>évaluation finale</span></li>
+            <li>
+              <code>database/</code
+              ><span>166 bases SQLite avec leurs schémas, pour train/dev</span>
+            </li>
+            <li>
+              <code>test_database/</code
+              ><span
+                >206 bases SQLite avec leurs schémas, les 166 identiques aux
+                bases de train/dev + 40 bases test du test.json</span
+              >
+            </li>
+          </ul>
+        </article>
+
+        <article class="node process" tabindex="0">
+          <span class="node-index">01_processed</span>
+          <h2>Préparer</h2>
+          <p>
+            Vérifie qu'il y a toutes les bases (correspondances entre les json
+            et les bases SQLite), retire les clés inutiles des fichiers json
+            precedemment cités et ajoute le schéma SQLite. On obtient les 4
+            jsonl avec les clés suivantes : question_original_en, db_id, sql,
+            schema.
+          </p>
+          <ul class="script-list">
+            <li>
+              <code>01_check_original_dataset.py</code
+              ><span>contrôle les JSON et les bases SQLite</span>
+            </li>
+            <li>
+              <code>02_prepare_english_dataset.py</code
+              ><span
+                >lit les CREATE TABLE dans SQLite et les copie dans le champ
+                schema</span
+              >
+            </li>
+          </ul>
+          <p class="mode-note">Même traitement pour tous les splits.</p>
+        </article>
+
+        <article class="node process batch" tabindex="0">
+          <span class="node-index">02_batch</span>
+          <h2>Traduire</h2>
+          <p>
+            Crée et envoie les batches Mistral avec un identifiant par exemple.
+            Cette étape ne fait que préparer et soumettre les requêtes de
+            traduction, elle ne récupère pas les réponses. On envoie dans le
+            prompt la question originale en anglais, le sql attendu pour la
+            question et le schéma SQLite, et on récupère la traduction
+            française.
+          </p>
+          <ul class="script-list">
+            <li>
+              <code>01_create_and_send_batches.py</code
+              ><span>prépare et soumet les requêtes de traduction</span>
+            </li>
+          </ul>
+          <p class="mode-note">
+            <b>Pilot :</b> 100 exemples train_spider, en 2 lots.
+            <b>Production :</b> train, train_others, dev et test complets.
+          </p>
+        </article>
+
+        <article class="node process response" tabindex="0">
+          <span class="node-index">03_mistral_response</span>
+          <h2>Récupérer</h2>
+          <p>Télécharge les réponses brutes une fois les batches terminés.</p>
+          <ul class="script-list">
+            <li>
+              <code>01_download_batch_responses.py</code
+              ><span>vérifie le statut et télécharge les sorties</span>
+            </li>
+          </ul>
+          <p class="mode-note">
+            Télécharge exactement les lots envoyés dans le mode choisi.
+          </p>
+        </article>
+
+        <article class="node process merge" tabindex="0">
+          <span class="node-index">04_translated_fr</span>
+          <h2>Fusionner</h2>
+          <p>
+            Associe chaque traduction à sa question, son SQL et son schéma
+            source. On obtient les 4 jsonl avec les clés suivantes :
+            question_original_en, db_id, sql, schema, question.
+          </p>
+          <ul class="script-list">
+            <li>
+              <code>01_merge_translations.py</code
+              ><span>écrit les exemples français complets</span>
+            </li>
+          </ul>
+          <ul class="key-map">
+            <li>
+              <code>db_id, question_original_en, schema, sql</code
+              ><span>repris depuis <code>01_processed/*.jsonl</code></span>
+            </li>
+            <li>
+              <code>question</code
+              ><span>réponse de <code>03_mistral_response</code></span>
+            </li>
+          </ul>
+          <p class="mode-note">
+            <b>Pilot :</b> 100 exemples. <b>Production :</b> tous les exemples
+            des splits traduits.
+          </p>
+        </article>
+
+        <article class="node process checks" tabindex="0">
+          <span class="node-index">05_checks</span>
+          <h2>Contrôler</h2>
+          <p>2 juges : 1- Contrôles mécaniques 2- Jugement par gpt 5.6 Sol.</p>
+          <ul class="script-list">
+            <li>
+              <code>01_check_translations.py</code
+              ><span>repère par exemple <em class="example">plus de 56 ans</em> traduit par <em class="example">plus de 55 ans</em>, <em class="example">en 1999</em> devenu <em class="example">en 2000</em>, un <em class="example">12 %</em> oublié, ou une réponse qui contient <em class="example">SELECT</em> au lieu d’une phrase française</span>
+            </li>
+            <li>
+              <code>02_judge_translations.py</code
+              ><span>repère par exemple <em class="example">plus de 3</em> traduit par <em class="example">au moins 3</em>, <em class="example">pas né en Californie</em> sans négation, <em class="example">budget le plus élevé</em> devenu le plus bas, ou un tri <em class="example">par âge</em> oublié</span>
+            </li>
+          </ul>
+          <p class="mode-note">
+            <b>Pilot :</b> juge les 100 exemples. <b>Production :</b> contrôle
+            tout et juge un échantillon, dont le test séparément.
+          </p>
+        </article>
+
+        <article class="node output-node fine-tune" tabindex="0">
+          <span class="node-index">06_fine_tuning_ready</span>
+          <h2>Fine-tuning</h2>
+          <p>
+            Construit les conversations d’entraînement train/dev avec SQL
+            normalisé.
+          </p>
+          <ul class="script-list">
+            <li>
+              <code>01_build_dataset.py</code
+              ><span>construit train.jsonl et validation.jsonl</span>
+            </li>
+          </ul>
+          <div class="route-label">route train · dev</div>
+          <p class="mode-note">
+            <b>Pilot :</b> train_spider seulement. <b>Production :</b> train +
+            validation dev. Le test est exclu.
+          </p>
+        </article>
+
+        <article class="node output-node evaluation" tabindex="0">
+          <span class="node-index">07_evaluation</span>
+          <h2>Évaluer</h2>
+          <p>Sépare les prompts de test des SQL gold normalisés.</p>
+          <ul class="script-list">
+            <li>
+              <code>01_prepare_test.py</code
+              ><span>crée les entrées et gold de test séparés</span>
+            </li>
+          </ul>
+          <div class="route-label">route test · sans apprentissage</div>
+          <p class="mode-note">
+            Production uniquement : le test ne sert jamais au pilot ni au
+            fine-tuning.
+          </p>
+        </article>
+      </section>
+
+      <section class="summary" aria-label="Résumé des artefacts">
+        <div>
+          <span>Entrée modèle test</span
+          ><code>07_evaluation/production/test_inputs.jsonl</code>
+        </div>
+        <div>
+          <span>Référence d’évaluation</span
+          ><code>07_evaluation/production/test_gold.jsonl</code>
+        </div>
+        <div>
+          <span>Contrat SFT</span><code>question + schema → SQL SQLite</code>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

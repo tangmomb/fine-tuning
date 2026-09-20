@@ -5,3 +5,5 @@ __pycache__/
 *.py[cod]
 BRUT_spider-fr/
 BRUT_spider-original/
+models/Qwen3.5-*/
+.hf/
