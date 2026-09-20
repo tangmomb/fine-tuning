@@ -8,8 +8,14 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[2]
 SOURCE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data"
 DATABASE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data" / "database"
+TEST_DATABASE_DIR = PROJECT_DIR / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
 OUTPUT_DIR = PROJECT_DIR / "data" / "01_processed"
-SPLITS = ("train_spider", "train_others", "dev")
+SPLITS = (
+    ("train_spider", DATABASE_DIR),
+    ("train_others", DATABASE_DIR),
+    ("dev", DATABASE_DIR),
+    ("test", TEST_DATABASE_DIR),
+)
 REQUIRED_FIELDS = ("db_id", "question", "query")
 
 
@@ -52,7 +58,9 @@ def extract_schema(database_path: Path) -> str:
     return ";\n\n".join(create_statements) + ";" if create_statements else ""
 
 
-def prepare_split(split_name: str, schema_cache: dict[str, str]) -> tuple[int, dict[str, str]]:
+def prepare_split(
+    split_name: str, database_dir: Path, schema_cache: dict[str, str]
+) -> tuple[int, dict[str, str]]:
     """Transforme un split source en JSONL et retourne son premier exemple."""
     source_path = SOURCE_DIR / f"{split_name}.json"
     output_path = OUTPUT_DIR / f"{split_name}.jsonl"
@@ -70,7 +78,7 @@ def prepare_split(split_name: str, schema_cache: dict[str, str]) -> tuple[int, d
 
     for example in validated_examples:
         db_id = example["db_id"]
-        database_path = DATABASE_DIR / db_id / f"{db_id}.sqlite"
+        database_path = database_dir / db_id / f"{db_id}.sqlite"
         if not database_path.is_file():
             raise FileNotFoundError(
                 f"Base SQLite introuvable pour db_id={db_id!r} : {database_path}"
@@ -114,11 +122,11 @@ def main() -> None:
     schema_cache: dict[str, str] = {}
     results: dict[str, tuple[int, dict[str, str]]] = {}
 
-    for split_name in SPLITS:
-        results[split_name] = prepare_split(split_name, schema_cache)
+    for split_name, database_dir in SPLITS:
+        results[split_name] = prepare_split(split_name, database_dir, schema_cache)
 
     print("Fichiers générés :")
-    for split_name in SPLITS:
+    for split_name, _ in SPLITS:
         count, example = results[split_name]
         output_path = OUTPUT_DIR / f"{split_name}.jsonl"
         print(f"- {split_name} : {count} exemples — {output_path}")

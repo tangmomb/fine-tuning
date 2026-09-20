@@ -9,7 +9,8 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = WORK = STATE = OUTPUT = SELECTION = ENVIRONMENT = None
+SOURCE = WORK = STATE = OUTPUT = SELECTION = ENVIRONMENT = REQUESTS_DIR = RAW_DIR = None
+SELECTED_SPLITS: tuple[str, ...] | None = None
 MODEL, SIZE, CHUNK = "gpt-5.6-sol", 100, 50
 PRODUCTION_SAMPLE_SIZE, RANDOM_SEED = 200, 20260919
 PROMPT = """Tu es le juge qualité d'un dataset text-to-SQL traduit de l'anglais vers le français.
@@ -68,7 +69,8 @@ def selection_records():
         return [{"id": f"train_spider:{index}", "selection_reason": "pilot_full", **record} for index, record in enumerate(records)]
 
     selected, passing = [], {}
-    for split in ("train_spider", "train_others", "dev"):
+    splits = SELECTED_SPLITS or ("train_spider", "train_others", "dev")
+    for split in splits:
         translations = rows(ROOT / "data" / "04_translated_fr" / "production" / f"{split}.jsonl")
         checks = {row["id"]: row for row in rows(WORK / f"{split}_deterministic_checks.jsonl")}
         if len(checks) != len(translations):
@@ -102,10 +104,9 @@ def prepare():
     failures = sum(record["selection_reason"] == "deterministic_fail" for record in records)
     print(f"{len(records)} traductions sélectionnées : {failures} signaux mécaniques + {len(records) - failures} échantillons aléatoires.")
     requests = [request_row(row, row["id"]) for row in records]
-    target = WORK / "judge_requests"
-    target.mkdir(parents=True, exist_ok=True)
+    REQUESTS_DIR.mkdir(parents=True, exist_ok=True)
     for number, start in enumerate(range(0, len(requests), CHUNK), 1):
-        path = target / f"requests_{number:02d}.jsonl"
+        path = REQUESTS_DIR / f"requests_{number:02d}.jsonl"
         path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in requests[start:start + CHUNK]), encoding="utf-8")
         print(f"{len(requests[start:start + CHUNK])} jugements écrits dans {path}")
 
@@ -123,10 +124,10 @@ def upload(path):
 
 
 def submit():
-    paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
+    paths = sorted(REQUESTS_DIR.glob("requests_*.jsonl"))
     if not paths:
         prepare()
-        paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
+        paths = sorted(REQUESTS_DIR.glob("requests_*.jsonl"))
     batches = []
     for path in paths:
         file = upload(path)
@@ -171,7 +172,7 @@ def collect():
         request = Request(f"https://api.openai.com/v1/files/{batch['output_file_id']}/content", headers={"Authorization": f"Bearer {key()}"})
         with urlopen(request) as response:
             raw = response.read().decode()
-        raw_path = WORK / "judge_raw_response" / f"output_{number:02d}.jsonl"
+        raw_path = RAW_DIR / f"output_{number:02d}.jsonl"
         raw_path.parent.mkdir(parents=True, exist_ok=True)
         raw_path.write_text(raw, encoding="utf-8")
         verdicts.update({identifier: (verdict, issues) for identifier, verdict, issues in map(extract, map(json.loads, filter(None, raw.splitlines())))})
@@ -184,21 +185,32 @@ def collect():
 
 
 def main():
-    global SOURCE, WORK, STATE, OUTPUT, SELECTION, ENVIRONMENT, SIZE
+    global SOURCE, WORK, STATE, OUTPUT, SELECTION, ENVIRONMENT, SIZE, SELECTED_SPLITS, REQUESTS_DIR, RAW_DIR
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--splits", nargs="+", choices=("train_spider", "train_others", "dev", "test"), help="juge uniquement les splits indiqués en production")
+    args = parser.parse_args()
     choice = input("Dossier à traiter — 1) pilot  2) production [1/2] : ").strip()
     environments = {"1": "pilot", "2": "production"}
     if choice not in environments:
         raise ValueError("Choix attendu : 1 (pilot) ou 2 (production).")
     environment = environments[choice]
+    if environment == "pilot" and args.splits:
+        raise ValueError("--splits est réservé au mode production.")
     ENVIRONMENT = environment
+    SELECTED_SPLITS = tuple(args.splits) if args.splits else None
     SOURCE = ROOT / "data" / "04_translated_fr" / environment / "train_spider.jsonl"
     WORK = ROOT / "data" / "05_checks" / environment
-    STATE = WORK / "judge_batch_state.json"
-    OUTPUT = WORK / "sol_judgments.jsonl"
-    SELECTION = WORK / "judge_selection.jsonl"
+    suffix = "" if not SELECTED_SPLITS else "_" + "_".join(SELECTED_SPLITS)
+    STATE = WORK / f"judge_batch_state{suffix}.json"
+    OUTPUT = WORK / f"sol_judgments{suffix}.jsonl"
+    SELECTION = WORK / f"judge_selection{suffix}.jsonl"
+    REQUESTS_DIR = WORK / f"judge_requests{suffix}"
+    RAW_DIR = WORK / f"judge_raw_response{suffix}"
     SIZE = 100 if environment == "pilot" else None
     if not STATE.is_file():
-        prepared_paths = sorted((WORK / "judge_requests").glob("requests_*.jsonl"))
+        prepared_paths = sorted(REQUESTS_DIR.glob("requests_*.jsonl"))
         if prepared_paths:
             print(f"{len(prepared_paths)} lots du juge sont déjà préparés.")
             if input("Envoyer ces lots ? [o/N] ").strip().lower() in {"o", "oui"}:

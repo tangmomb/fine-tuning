@@ -37,7 +37,7 @@ def write_jsonl(path: Path, rows: list[dict]) -> None:
 def config(environment: str) -> tuple[tuple[str, ...], int | None, int]:
     if environment == "pilot":
         return ("train_spider",), PILOT_SIZE, PILOT_BATCH_SIZE
-    return ("train_spider", "train_others", "dev"), None, 0
+    return ("train_spider", "train_others", "dev", "test"), None, 0
 
 
 def state_path(environment: str) -> Path:
@@ -90,7 +90,7 @@ def extract_question(line: dict) -> tuple[str, str]:
 
 def normalize_identifier(identifier: str, expected_split: str) -> str:
     """Corrige le préfixe erroné des lots de production historiques."""
-    if expected_split in {"train_spider", "train_others", "dev"}:
+    if expected_split in {"train_spider", "train_others", "dev", "test"}:
         _, separator, index = identifier.partition(":")
         if separator and index.isdigit():
             return f"{expected_split}:{index}"

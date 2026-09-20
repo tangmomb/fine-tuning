@@ -10,8 +10,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from translation_common import MODEL, ROOT, choose_environment, config, extract_question, load_jsonl, load_state, normalize_identifier, request_row, state_path, upload, api, write_jsonl
 
 
-def prepare(environment: str) -> list[dict]:
+def prepare(environment: str, selected_splits: tuple[str, ...] | None = None) -> list[dict]:
     splits, limit, chunk_size = config(environment)
+    if selected_splits is not None:
+        unknown = set(selected_splits) - set(splits)
+        if unknown:
+            raise ValueError(f"Splits indisponibles pour {environment} : {', '.join(sorted(unknown))}")
+        splits = tuple(split for split in splits if split in selected_splits)
     work, batches = state_path(environment).parent, []
     for split in splits:
         records = load_jsonl(ROOT / "data" / "01_processed" / f"{split}.jsonl")[:limit]
@@ -77,6 +82,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--resubmit", action="store_true", help="ajoute de nouveaux lots à l'état existant")
     parser.add_argument("--retry-missing", action="store_true", help="renvoie les réponses invalides des sorties brutes téléchargées")
+    parser.add_argument("--splits", nargs="+", metavar="SPLIT", help="soumet uniquement les splits indiqués, par exemple : --splits test")
     args = parser.parse_args()
     environment = choose_environment()
     if args.retry_missing:
@@ -84,11 +90,11 @@ def main() -> None:
             retry_missing(environment)
         return
     exists = state_path(environment).is_file()
-    if exists and not args.resubmit:
-        raise RuntimeError("Des lots existent déjà. Utilisez --resubmit pour en créer de nouveaux.")
+    if exists and not args.resubmit and not args.splits:
+        raise RuntimeError("Des lots existent déjà. Utilisez --splits pour en ajouter un, ou --resubmit pour tout recréer.")
     if input("Préparer et envoyer les lots Mistral ? [o/N] ").strip().lower() not in {"o", "oui"}:
         return
-    submit(environment, prepare(environment), append=exists)
+    submit(environment, prepare(environment, tuple(args.splits) if args.splits else None), append=exists)
 
 
 if __name__ == "__main__":

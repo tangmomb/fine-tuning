@@ -1,7 +1,11 @@
 """Construit le JSONL text-to-SQL de fine-tuning depuis pilot ou production."""
 
 import json
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from sql_utils import normalize_sql
 
 ROOT = Path(__file__).resolve().parents[2]
 SYSTEM_PROMPT = """Tu génères une requête SQL SQLite à partir d'une question en français et du schéma fourni.
@@ -10,44 +14,6 @@ Retourne uniquement la requête SQL valide, sans explication ni balise Markdown.
 
 def load(path):
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line]
-
-
-def normalize_sql(sql):
-    """Compacte les blancs hors chaînes et identifiants SQL quotés."""
-    output = []
-    quote = None
-    pending_space = False
-    index = 0
-    while index < len(sql):
-        character = sql[index]
-        if quote:
-            output.append(character)
-            if character == quote:
-                if index + 1 < len(sql) and sql[index + 1] == quote:
-                    output.append(sql[index + 1])
-                    index += 1
-                else:
-                    quote = None
-        elif character in {"'", '"', chr(96)}:
-            if pending_space and output:
-                output.append(" ")
-            pending_space = False
-            output.append(character)
-            quote = character
-        elif character == ",":
-            if output and output[-1] == " ":
-                output.pop()
-            pending_space = False
-            output.append(character)
-        elif character.isspace():
-            pending_space = True
-        else:
-            if pending_space and output:
-                output.append(" ")
-            pending_space = False
-            output.append(character)
-        index += 1
-    return "".join(output).strip()
 
 
 def validate_examples(examples, accepted_translations):

@@ -1,0 +1,8 @@
+{
+  "source": "data\\04_translated_fr\\production\\test.jsonl",
+  "inputs": "data\\07_evaluation\\production\\test_inputs.jsonl",
+  "gold": "data\\07_evaluation\\production\\test_gold.jsonl",
+  "examples": 2147,
+  "prompt_contains_gold_sql": false,
+  "gold_sql_normalized": true
+}

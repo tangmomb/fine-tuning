@@ -1,0 +1,19 @@
+{
+  "environment": "pilot",
+  "model": "zai-glm-5-3",
+  "submitted_at": "2026-09-20T10:48:25.607800+00:00",
+  "batches": [
+    {
+      "split": "train_spider",
+      "request_file": "train_spider_requests_01.jsonl",
+      "batch_id": "b4a01ba7-7547-46a1-b677-9dc451f1c804",
+      "input_file_id": "25f22fe9-4a27-4e2b-95c2-e02938877d99"
+    },
+    {
+      "split": "train_spider",
+      "request_file": "train_spider_requests_02.jsonl",
+      "batch_id": "37723b72-37f9-49e1-b5e1-00ab959c3896",
+      "input_file_id": "18834bcf-a8f9-4e70-8f51-7de536b23183"
+    }
+  ]
+}

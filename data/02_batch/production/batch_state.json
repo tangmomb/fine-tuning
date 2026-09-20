@@ -1,7 +1,7 @@
 {
   "environment": "production",
   "model": "zai-glm-5-3",
-  "submitted_at": "2026-09-19T21:22:42.658814+00:00",
+  "submitted_at": "2026-09-20T00:25:57.236307+00:00",
   "batches": [
     {
       "split": "train_spider",
@@ -35,6 +35,12 @@
       "request_file": "retry_missing_requests.jsonl",
       "batch_id": "0489bf94-345f-4627-bee1-c5e5c623c0cc",
       "input_file_id": "3f67404e-bc74-4295-8ac4-31b23f87ae2e"
+    },
+    {
+      "split": "test",
+      "request_file": "test_requests.jsonl",
+      "batch_id": "69fc911d-f9e8-4ebf-80d0-2a9cc315c13e",
+      "input_file_id": "a1a4772f-b385-45b0-b02e-9dc1c6228c2f"
     }
   ]
 }
