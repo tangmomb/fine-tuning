@@ -17,22 +17,28 @@ L'ordre d'exécution est le suivant :
 ```powershell
 python data/01_processed/01_check_original_dataset.py
 python data/01_processed/02_prepare_english_dataset.py
-python data/02_batch/02_translate_all.py
+python data/02_batch/01_create_and_send_batches.py
+python data/03_mistral_response/01_download_batch_responses.py
+python data/04_translated_fr/01_merge_translations.py
 python data/05_checks/01_check_translations.py
 python data/05_checks/02_judge_translations.py
 python data/06_fine_tuning_ready/01_build_dataset.py
 ```
 
-Les scripts des étapes 02, 05 et 06 demandent au démarrage le dossier cible : `pilot` ou
+Les scripts des étapes 02, 03, 04, 05 et 06 demandent au démarrage le dossier cible : `pilot` ou
 `production`. Les artefacts restent isolés dans le sous-dossier choisi.
 
-Le troisième script prépare localement les lots Z.ai GLM 5.3 hébergés par Mistral, puis demande explicitement avant de les envoyer. Le mode `pilot` prépare deux lots de 50 requêtes ; le mode `production` prépare les trois splits. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Chaque requête demande uniquement la phrase française : l'identifiant est porté par `custom_id` du Batch, pas par la réponse du modèle. Après l'envoi, le même script affiche le statut des derniers Batch et propose de récupérer les traductions lorsqu'ils sont terminés.
+Le script `02_batch/01_create_and_send_batches.py` prépare localement les lots Z.ai GLM 5.3 hébergés par Mistral, puis demande explicitement avant de les envoyer. Le mode `pilot` prépare deux lots de 50 requêtes ; le mode `production` prépare les trois splits. Il utilise \`MISTRAL_API_KEY\`, le modèle \`zai-glm-5-3\` et l'endpoint Batch Mistral. Chaque requête demande uniquement la phrase française : l'identifiant est porté par `custom_id` du Batch.
 
-Si un lot est tronqué avant sa réponse finale, relancez-le explicitement avec :
+Le script `03_mistral_response/01_download_batch_responses.py` affiche l'état des lots puis télécharge leurs sorties JSONL brutes lorsqu'ils sont terminés. Le script `04_translated_fr/01_merge_translations.py` valide les réponses, applique les éventuelles corrections de `02_batch/<dossier>/manual_translations.jsonl`, puis les fusionne avec les données sources enrichies (question anglaise, SQL et schéma).
+
+Pour soumettre volontairement de nouveaux lots alors qu'un état existe déjà, utilisez :
 
 \`\`\`powershell
-python data/02_batch/02_translate_all.py
+python data/02_batch/01_create_and_send_batches.py --resubmit
 \`\`\`
+
+Pour renvoyer uniquement les réponses brutes invalides ou incomplètes déjà téléchargées, utilisez `--retry-missing` avec ce même script.
 
 Le quatrième script produit un fichier `05_checks/<dossier>/<split>_deterministic_checks.jsonl`. Il vérifie localement les champs obligatoires, les nombres, les pourcentages et l'absence apparente de SQL dans la traduction.
 
