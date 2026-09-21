@@ -45,7 +45,6 @@ python data/05_quality_control/01_scripts/01_check_translations.py
 python data/05_quality_control/01_scripts/02_judge_translations.py
 python data/06_training_dataset/01_scripts/01_build_dataset.py
 python data/07_evaluation_dataset/01_scripts/01_prepare_test.py
-python data/00_documentation/dataset_statistics/01_generate_dataset_stats.py
 ```
 
 Les artefacts existants ont été déplacés sans être recalculés. `test` passe par la traduction et les contrôles, mais ne rejoint pas le dataset de fine-tuning ; il est réservé à l’évaluation.
