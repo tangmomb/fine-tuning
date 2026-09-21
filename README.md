@@ -1,5 +1,9 @@
 # Fine-tuning text-to-SQL
 
+Le dossier `data/` est réservé à la préparation et aux jeux de données. Les
+scripts, sorties et synthèses de benchmark des modèles bruts se trouvent dans
+`evaluation_brut_models/`.
+
 ## Contenu brut de Spider original
 
 Le dataset original est conservé dans `BRUT_spider-original/data/spider_data/` :
