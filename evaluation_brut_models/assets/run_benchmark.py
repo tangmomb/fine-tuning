@@ -65,8 +65,26 @@ def choose_batch_size(default: int) -> int:
     return batch_size
 
 
+def describe_execution_device(requested_device: str) -> str:
+    """Return a human-readable confirmation of the device used by a run."""
+    if requested_device == "cpu":
+        return "CPU (demandé explicitement)"
+    try:
+        import torch
+    except ImportError:
+        return f"{requested_device} (PyTorch indisponible : vérification GPU impossible)"
+    if torch.cuda.is_available():
+        return f"CUDA — {torch.cuda.get_device_name(0)}"
+    if requested_device == "cuda":
+        raise RuntimeError("--device cuda a été demandé, mais aucune GPU CUDA n'est détectée.")
+    return "CPU (aucune GPU CUDA détectée)"
+
+
 def main(default_model_names: tuple[str, ...], default_device: str, environment: str, default_batch_size: int) -> None:
     args = parse_args(default_device)
+    execution_device = describe_execution_device(args.device)
+    print(f"\nPériphérique détecté : {execution_device}")
+    print(f"Les évaluations vont se lancer sur : {execution_device}")
     available = [ROOT / "models" / name for name in default_model_names if (ROOT / "models" / name).is_dir()]
     models = args.models or choose_models(available)
     modes = ("zero-shot", "few-shot") if args.mode == "both" else (args.mode,) if args.mode else choose_modes()
@@ -86,5 +104,6 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
         for mode in modes:
             run_name = f"baseline-{stamp}/{model.name}-{mode}"
             command = [sys.executable, str(RUNNER), "--model", str(model), "--mode", mode, "--run-name", run_name, *common]
-            print("\n> " + subprocess.list2cmdline(command), flush=True)
+            print(f"\nLancement sur : {execution_device}")
+            print("> " + subprocess.list2cmdline(command), flush=True)
             subprocess.run(command, check=True, cwd=ROOT)

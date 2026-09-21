@@ -9,6 +9,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import platform
+import socket
 import re
 import sqlite3
 import sys
@@ -217,7 +219,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-new-tokens", type=int, default=256)
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--temperature", type=float, default=0.0, help="0 impose une génération déterministe.")
-    parser.add_argument("--environment", choices=("local", "scaleway"), default="local")
+    parser.add_argument("--environment", choices=("auto", "local", "scaleway"), default="auto")
     parser.add_argument("--limit", type=int, help="Limite utile pour un smoke test.")
     parser.add_argument("--predictions", type=Path, help="JSONL existant (id, sql ou raw_output) à scorer sans modèle.")
     parser.add_argument("--run-name", help="Nom de dossier ; défaut : modèle-mode-date.")
@@ -266,6 +268,8 @@ def main() -> None:
         "few_shot_k": args.few_shot_k if args.mode == "few-shot" else 0, "seed": args.seed,
         "temperature": args.temperature, "max_new_tokens": args.max_new_tokens, "batch_size": args.batch_size,
         "environment": args.environment,
+        "execution_hostname": socket.gethostname(),
+        "execution_platform": platform.platform(),
         "inputs": str(INPUTS.relative_to(ROOT)), "inputs_sha256": file_hash(INPUTS),
         "gold": str(GOLD.relative_to(ROOT)),
         "few_shot_source": str(FEW_SHOT_SOURCE.relative_to(ROOT)),
