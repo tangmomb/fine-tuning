@@ -237,7 +237,8 @@ def main() -> None:
     inputs, gold = load_jsonl(INPUTS), load_jsonl(GOLD)
     if args.limit:
         inputs, gold = inputs[:args.limit], gold[:args.limit]
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # UTC, lisible dans les noms de dossiers et sans caractères interdits sous Windows.
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%SZ")
     model_name = args.model.name if args.model else args.predictions.stem
     run_name = args.run_name or f"{model_name}-{args.mode}-{timestamp}"
     run_dir = OUTPUT_ROOT / run_name

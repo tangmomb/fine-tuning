@@ -91,7 +91,8 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
     batch_size = args.batch_size if args.batch_size is not None else choose_batch_size(default_batch_size)
     if batch_size < 1:
         raise ValueError("--batch-size doit être au moins 1.")
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    # UTC, lisible dans les noms de dossiers et sans caractères interdits sous Windows.
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%SZ")
     common = ["--few-shot-k", str(args.few_shot_k), "--seed", str(args.seed), "--device", args.device,
               "--max-new-tokens", str(args.max_new_tokens), "--batch-size", str(batch_size),
               "--temperature", "0", "--environment", environment]
