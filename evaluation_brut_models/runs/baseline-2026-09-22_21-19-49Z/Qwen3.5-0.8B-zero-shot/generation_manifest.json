@@ -1,0 +1,81 @@
+{
+  "artifact": {
+    "type": "text_to_sql_predictions",
+    "created_at_utc": "2026-09-22_21-19-49Z",
+    "phase": "generate"
+  },
+  "model": {
+    "path": "E:\\cooking\\fine-tuning\\models\\Qwen3.5-0.8B",
+    "config_sha256": "b90b86f35c8e6925ef74ee04d0e758f0a845c83a42089ad82bbaa948de9b4204"
+  },
+  "configuration": {
+    "mode": "zero-shot",
+    "few_shot_k": 0,
+    "seed": 42,
+    "temperature": 0.0,
+    "max_new_tokens": 1024,
+    "thinking_enabled": false,
+    "batch_size": 32,
+    "group_batches_by_length": false,
+    "save_prompts": false
+  },
+  "environment": {
+    "target": "auto",
+    "hostname": "DESKTOP-4D67N45",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "dataset": {
+    "inputs": "data\\07_evaluation_dataset\\03_production\\test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "examples": 2147
+  },
+  "generation": {
+    "duration_seconds": 3660.34,
+    "throughput": {
+      "examples_per_second": 0.591,
+      "active_generation_output_tokens_per_second": 73.323,
+      "active_generation_total_tokens_per_second": 325.192
+    },
+    "tokens": {
+      "input": {
+        "total": 915655,
+        "mean": 426.48,
+        "p95": 1211
+      },
+      "output": {
+        "total": 266561,
+        "mean": 124.16,
+        "p95": 1024,
+        "max": 1024
+      },
+      "padding": {
+        "tokens": 178310,
+        "rate": 0.163
+      }
+    },
+    "latency_ms": {
+      "mean": 53680.49,
+      "p95": 139916.06
+    },
+    "reliability": {
+      "truncated_generation_count": 159,
+      "truncation_rate": 0.0741,
+      "failed_generations": 0,
+      "oom_count": 0
+    }
+  },
+  "gpu": {
+    "utilization_percent": {
+      "mean": 94.15,
+      "peak": 100.0
+    },
+    "energy_wh": {
+      "total": 152.951076,
+      "per_example": 0.071239
+    },
+    "vram_mib": {
+      "mean": 4166.11,
+      "peak": 7191.65
+    }
+  }
+}

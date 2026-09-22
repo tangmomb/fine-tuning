@@ -26,7 +26,7 @@ def parse_args(default_device: str) -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default=default_device)
     parser.add_argument("--max-new-tokens", type=int,
-                        help="Plafond de sortie ; défaut : 1024 sans thinking, 2048 avec thinking.")
+                        help="Plafond de sortie ; défaut : 512 sans thinking, 2048 avec thinking.")
     parser.add_argument("--thinking", action=argparse.BooleanOptionalAction, default=None,
                         help="Active le reasoning du modèle ; sans cette option, le choix est demandé.")
     parser.add_argument("--batch-size", type=int, help="Nombre de prompts générés simultanément.")
@@ -203,7 +203,7 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
                                else choose_group_batches_by_length())
     thinking = args.thinking if args.thinking is not None else choose_thinking()
     save_prompts = args.save_prompts if args.save_prompts is not None else choose_save_prompts()
-    max_new_tokens = args.max_new_tokens if args.max_new_tokens is not None else (2048 if thinking else 1024)
+    max_new_tokens = args.max_new_tokens if args.max_new_tokens is not None else (2048 if thinking else 512)
     if batch_size < 1:
         raise ValueError("--batch-size doit être au moins 1.")
     if max_new_tokens < 1:

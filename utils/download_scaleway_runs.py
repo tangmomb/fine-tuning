@@ -1,14 +1,13 @@
-"""Remplace le contenu local de runs_scaleway par les runs d'une VM Scaleway.
+"""Télécharge les runs d'une VM Scaleway sans vider le dossier local.
 
-Le script demande l'adresse IP publique de la VM à chaque exécution. Il conserve
-le dossier ``evaluation_brut_models/runs_scaleway`` mais supprime son contenu
-avant de télécharger les résultats distants.
+Le script demande l'adresse IP publique de la VM à chaque exécution. Les fichiers
+distants dont le chemin existe déjà localement sont remplacés ; les autres sont
+ajoutés au dossier ``evaluation_brut_models/runs_scaleway``.
 """
 
 from __future__ import annotations
 
 import ipaddress
-import shutil
 import subprocess
 from pathlib import Path
 
@@ -34,23 +33,13 @@ def ask_ip_address() -> str:
         return str(address)
 
 
-def empty_directory(directory: Path) -> None:
-    """Delete all children while preserving the directory itself."""
-    directory.mkdir(parents=True, exist_ok=True)
-    for child in directory.iterdir():
-        if child.is_dir() and not child.is_symlink():
-            shutil.rmtree(child)
-        else:
-            child.unlink()
-
-
 def main() -> None:
     if not SSH_KEY.is_file():
         raise SystemExit(f"Clé SSH introuvable : {SSH_KEY}")
 
     ip_address = ask_ip_address()
-    print(f"Remplacement du contenu de {DESTINATION}…")
-    empty_directory(DESTINATION)
+    DESTINATION.mkdir(parents=True, exist_ok=True)
+    print(f"Synchronisation des runs dans {DESTINATION}…")
 
     command = [
         "scp",

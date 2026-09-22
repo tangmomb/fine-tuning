@@ -461,7 +461,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="auto", help="auto, cuda ou cpu")
     parser.add_argument("--max-new-tokens", type=int,
-                        help="Plafond de sortie ; défaut : 1024 sans thinking, 2048 avec thinking.")
+                        help="Plafond de sortie ; défaut : 512 sans thinking, 2048 avec thinking.")
     parser.add_argument("--thinking", action=argparse.BooleanOptionalAction, default=False,
                         help="Active le reasoning du modèle pendant la génération.")
     parser.add_argument("--batch-size", type=int, default=1)
@@ -496,7 +496,7 @@ def main() -> None:
     if args.temperature != 0:
         raise ValueError("Ce protocole de baseline impose --temperature 0.")
     if args.max_new_tokens is None:
-        args.max_new_tokens = 2048 if args.thinking else 1024
+        args.max_new_tokens = 2048 if args.thinking else 512
     if args.max_new_tokens < 1:
         raise ValueError("--max-new-tokens doit être au moins 1.")
     if args.batch_size < 1:
