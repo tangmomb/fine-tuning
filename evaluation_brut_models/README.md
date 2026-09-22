@@ -20,11 +20,17 @@ l'exécution : chargement des données et du modèle, génération, scoring et
 Les champs `mean_batch_latency_ms` et `p95_batch_latency_ms` mesurent la
 latence d'un batch, pas celle d'une requête isolée. La taille de batch associée
 est indiquée par `batch_size`.
-Les métriques de performance comprennent aussi `output_tokens_per_second` et
-`generated_output_tokens`. L'utilisation GPU est échantillonnée pendant la
+Les métriques de performance comprennent `generated_output_tokens`,
+`generation_examples_per_second` et `generation_output_tokens_per_second`, qui
+ne couvrent que `model.generate()`. Les champs
+`end_to_end_examples_per_second` et `end_to_end_output_tokens_per_second`
+utilisent `total_execution_seconds` et incluent donc le chargement, la
+préparation, le scoring et les écritures. L'utilisation GPU est échantillonnée pendant la
 génération via NVML et enregistrée sous `mean_gpu_utilization_percent` et
 `peak_gpu_utilization_percent`; ces deux champs valent `null` si NVML n'est pas
-disponible.
+disponible. Si le module NVML Python manque mais que `nvidia-smi` est installé,
+le script l'utilise automatiquement comme repli, avec un échantillon par
+seconde.
 
 Le score principal est `execution_accuracy` : les résultats SQLite de la
 prédiction et du SQL gold doivent être identiques. `exact_match` est une mesure
