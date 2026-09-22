@@ -14,6 +14,7 @@ import socket
 import re
 import sqlite3
 import sys
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -121,7 +122,17 @@ def make_messages(input_row: dict[str, Any], demonstrations: list[dict[str, str]
     return messages
 
 
-def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], float, float | None]:
+def collect_gpu_utilization(torch: Any, device: Any, stop_event: threading.Event, samples: list[float]) -> None:
+    """Échantillonne NVML via PyTorch pendant une génération GPU."""
+    while not stop_event.is_set():
+        try:
+            samples.append(float(torch.cuda.utilization(device)))
+        except (ImportError, OSError, RuntimeError):
+            return
+        stop_event.wait(0.2)
+
+
+def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], list[int], float, float | None, list[float]]:
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoProcessor
@@ -164,16 +175,31 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
     if cuda_active:
         torch.cuda.reset_peak_memory_stats()
         torch.cuda.synchronize()
+    gpu_utilization_samples: list[float] = []
+    sampling_stop = threading.Event()
+    sampler: threading.Thread | None = None
+    if cuda_active:
+        sampler = threading.Thread(
+            target=collect_gpu_utilization,
+            args=(torch, input_device, sampling_stop, gpu_utilization_samples),
+            daemon=True,
+        )
+        sampler.start()
     started = time.perf_counter()
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False)
     if cuda_active:
         torch.cuda.synchronize()
+        sampling_stop.set()
+        if sampler is not None:
+            sampler.join()
         peak_vram_mib: float | None = round(torch.cuda.max_memory_allocated() / 1024**2, 2)
     else:
         peak_vram_mib = None
     generated = output[:, inputs["input_ids"].shape[1]:]
-    return processor.batch_decode(generated, skip_special_tokens=True), round((time.perf_counter() - started) * 1000, 2), peak_vram_mib
+    pad_token_id = processor.tokenizer.pad_token_id
+    output_token_counts = [int(generated.shape[1])] * len(generated) if pad_token_id is None else generated.ne(pad_token_id).sum(dim=1).tolist()
+    return processor.batch_decode(generated, skip_special_tokens=True), output_token_counts, round((time.perf_counter() - started) * 1000, 2), peak_vram_mib, gpu_utilization_samples
 
 
 def score(predictions: list[dict[str, Any]], gold_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -253,6 +279,7 @@ def main() -> None:
     run_dir.mkdir(parents=True, exist_ok=False)
 
     batch_latencies: list[float] = []
+    gpu_utilization_samples: list[float] = []
     if args.predictions:
         predictions = load_jsonl(args.predictions)
     else:
@@ -260,14 +287,16 @@ def main() -> None:
         predictions = []
         for offset in range(0, len(inputs), args.batch_size):
             batch = inputs[offset:offset + args.batch_size]
-            raw_outputs, latency_ms, peak_vram_mib = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
+            raw_outputs, output_token_counts, latency_ms, peak_vram_mib, batch_gpu_utilization_samples = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
             batch_latencies.append(latency_ms)
-            for row, raw_output in zip(batch, raw_outputs):
-                predictions.append({"id": row["id"], "db_id": row["db_id"], "raw_output": raw_output, "sql": clean_sql(raw_output), "batch_latency_ms": latency_ms, "peak_vram_mib": peak_vram_mib, "batch_size": len(batch)})
+            gpu_utilization_samples.extend(batch_gpu_utilization_samples)
+            for row, raw_output, output_tokens in zip(batch, raw_outputs, output_token_counts):
+                predictions.append({"id": row["id"], "db_id": row["db_id"], "raw_output": raw_output, "sql": clean_sql(raw_output), "output_tokens": output_tokens, "batch_latency_ms": latency_ms, "peak_vram_mib": peak_vram_mib, "batch_size": len(batch)})
             print(f"[{min(offset + len(batch), len(inputs))}/{len(inputs)}]", flush=True)
         write_jsonl(run_dir / "few_shot_examples.jsonl", demonstrations)
     results, metrics = score(predictions, gold)
     batch_latency_values = [row["batch_latency_ms"] for row in predictions if isinstance(row.get("batch_latency_ms"), (int, float))]
+    output_token_values = [row["output_tokens"] for row in predictions if isinstance(row.get("output_tokens"), int)]
     vram_values = [row["peak_vram_mib"] for row in predictions if isinstance(row.get("peak_vram_mib"), (int, float))]
     write_jsonl(run_dir / "predictions.jsonl", predictions)
     write_jsonl(run_dir / "results.jsonl", results)
@@ -288,6 +317,10 @@ def main() -> None:
         "mean_batch_latency_ms": round(sum(batch_latency_values) / len(batch_latency_values), 2) if batch_latency_values else None,
         "p95_batch_latency_ms": sorted(batch_latency_values)[max(0, int(len(batch_latency_values) * .95) - 1)] if batch_latency_values else None,
         "throughput_examples_per_second": round(len(predictions) / sum(batch_latencies) * 1000, 3) if batch_latencies else None,
+        "generated_output_tokens": sum(output_token_values) if output_token_values else None,
+        "output_tokens_per_second": round(sum(output_token_values) / sum(batch_latencies) * 1000, 3) if output_token_values and batch_latencies else None,
+        "mean_gpu_utilization_percent": round(sum(gpu_utilization_samples) / len(gpu_utilization_samples), 2) if gpu_utilization_samples else None,
+        "peak_gpu_utilization_percent": max(gpu_utilization_samples) if gpu_utilization_samples else None,
         "peak_vram_mib": max(vram_values) if vram_values else None,
         **metrics,
     }

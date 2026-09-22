@@ -20,6 +20,11 @@ l'exécution : chargement des données et du modèle, génération, scoring et
 Les champs `mean_batch_latency_ms` et `p95_batch_latency_ms` mesurent la
 latence d'un batch, pas celle d'une requête isolée. La taille de batch associée
 est indiquée par `batch_size`.
+Les métriques de performance comprennent aussi `output_tokens_per_second` et
+`generated_output_tokens`. L'utilisation GPU est échantillonnée pendant la
+génération via NVML et enregistrée sous `mean_gpu_utilization_percent` et
+`peak_gpu_utilization_percent`; ces deux champs valent `null` si NVML n'est pas
+disponible.
 
 Le score principal est `execution_accuracy` : les résultats SQLite de la
 prédiction et du SQL gold doivent être identiques. `exact_match` est une mesure
@@ -33,6 +38,16 @@ est `--thinking` (ou `--no-thinking`).
 Le plafond de génération est désormais de 1 024 tokens sans thinking et de
 2 048 tokens avec thinking, afin d'éviter de tronquer des requêtes SQL longues.
 `--max-new-tokens` permet de remplacer ces valeurs pour un run donné.
+
+Pour choisir une taille de batch, l'utilitaire suivant reproduit les prompts et
+les batches du benchmark puis calcule le gaspillage de padding :
+
+```powershell
+.\.venv\Scripts\python.exe utils\measure_padding_waste.py --model models\Qwen3.5-2B --batch-sizes 1 2 4 8 16 32
+```
+
+Il ne charge que le tokenizer, pas le modèle en VRAM. Le `padding_waste` global
+est `1 - sum(longueurs) / sum(taille_batch × longueur_max_du_batch)`.
 
 ## Baseline comparable avant fine-tuning
 
