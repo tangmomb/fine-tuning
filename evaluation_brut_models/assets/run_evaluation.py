@@ -178,12 +178,16 @@ def group_inputs_by_prompt_length(
 
 
 def nvidia_smi_stats(device: Any) -> dict[str, float]:
-    """Lit les compteurs GPU disponibles via nvidia-smi."""
+    """Lit les compteurs GPU disponibles via nvidia-smi.
+
+    ``gpu_vram_used_mib`` représente toute la VRAM occupée sur la carte,
+    contrairement aux compteurs PyTorch qui ne concernent que ce processus.
+    """
     device_index = device.index if getattr(device, "index", None) is not None else 0
     try:
         result = subprocess.run(
             ["nvidia-smi", f"--id={device_index}",
-             "--query-gpu=utilization.gpu,power.draw",
+             "--query-gpu=utilization.gpu,power.draw,memory.used,memory.total",
              "--format=csv,noheader,nounits"],
             check=True,
             capture_output=True,
@@ -191,7 +195,7 @@ def nvidia_smi_stats(device: Any) -> dict[str, float]:
             timeout=3,
         )
         values = result.stdout.strip().splitlines()[0].split(",")
-        names = ("gpu_utilization_percent", "gpu_power_w")
+        names = ("gpu_utilization_percent", "gpu_power_w", "gpu_vram_used_mib", "gpu_vram_total_mib")
         return {
             name: float(value.strip())
             for name, value in zip(names, values)
@@ -199,6 +203,29 @@ def nvidia_smi_stats(device: Any) -> dict[str, float]:
         }
     except (FileNotFoundError, IndexError, OSError, subprocess.SubprocessError, ValueError):
         return {}
+
+
+def nvidia_smi_processes(device_index: int = 0) -> list[dict[str, Any]]:
+    """Capture les processus compute visibles sur une GPU, pour diagnostiquer la VRAM partagée."""
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", f"--id={device_index}",
+             "--query-compute-apps=pid,process_name,used_memory",
+             "--format=csv,noheader,nounits"],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=3,
+        )
+        processes = []
+        for line in result.stdout.strip().splitlines():
+            values = [value.strip() for value in line.split(",")]
+            if len(values) != 3 or not values[0].isdigit():
+                continue
+            processes.append({"pid": int(values[0]), "name": values[1], "vram_mib": float(values[2])})
+        return processes
+    except (FileNotFoundError, OSError, subprocess.SubprocessError, ValueError):
+        return []
 
 
 def collect_gpu_stats(device: Any, stop_event: threading.Event, samples: list[dict[str, float]]) -> None:
@@ -249,6 +276,9 @@ def organize_generation_manifest(flat: dict[str, Any]) -> dict[str, Any]:
             "utilization_percent": without_none({"mean": flat.get("mean_gpu_utilization_percent"), "peak": flat.get("peak_gpu_utilization_percent")}),
             "energy_wh": without_none({"total": flat.get("gpu_energy_wh"), "per_example": flat.get("energy_per_example_wh")}),
             "vram_mib": without_none({"mean": flat.get("mean_vram_mib"), "peak": flat.get("peak_vram_mib")}),
+            "vram_reserved_mib": without_none({"mean": flat.get("mean_vram_reserved_mib"), "peak": flat.get("peak_vram_reserved_mib")}),
+            "device_vram_used_mib": without_none({"mean": flat.get("mean_gpu_vram_used_mib"), "peak": flat.get("peak_gpu_vram_used_mib"), "total": flat.get("gpu_vram_total_mib")}),
+            "compute_processes": without_none({"at_start": flat.get("gpu_processes_at_start"), "at_end": flat.get("gpu_processes_at_end")}),
         }),
     }
 
@@ -279,7 +309,7 @@ def organize_evaluation_manifest(flat: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], list[int], list[int], int, float, float | None, list[dict[str, float]]]:
+def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], list[int], list[int], int, float, float | None, float | None, list[dict[str, float]]]:
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoProcessor
@@ -324,8 +354,8 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
     inputs = {key: value.to(input_device) for key, value in inputs.items()}
     cuda_active = torch.cuda.is_available()
     if cuda_active:
-        torch.cuda.reset_peak_memory_stats()
-        torch.cuda.synchronize()
+        torch.cuda.reset_peak_memory_stats(input_device)
+        torch.cuda.synchronize(input_device)
     gpu_samples: list[dict[str, float]] = []
     sampling_stop = threading.Event()
     sampler: threading.Thread | None = None
@@ -340,17 +370,19 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
     with torch.inference_mode():
         output = model.generate(**inputs, max_new_tokens=max_new_tokens, do_sample=False)
     if cuda_active:
-        torch.cuda.synchronize()
+        torch.cuda.synchronize(input_device)
         sampling_stop.set()
         if sampler is not None:
             sampler.join()
-        peak_vram_mib: float | None = round(torch.cuda.max_memory_allocated() / 1024**2, 2)
+        peak_vram_mib: float | None = round(torch.cuda.max_memory_allocated(input_device) / 1024**2, 2)
+        peak_vram_reserved_mib: float | None = round(torch.cuda.max_memory_reserved(input_device) / 1024**2, 2)
     else:
         peak_vram_mib = None
+        peak_vram_reserved_mib = None
     generated = output[:, inputs["input_ids"].shape[1]:]
     pad_token_id = processor.tokenizer.pad_token_id
     output_token_counts = [int(generated.shape[1])] * len(generated) if pad_token_id is None else generated.ne(pad_token_id).sum(dim=1).tolist()
-    return processor.batch_decode(generated, skip_special_tokens=True), output_token_counts, input_token_counts, padding_tokens, round((time.perf_counter() - started) * 1000, 2), peak_vram_mib, gpu_samples
+    return processor.batch_decode(generated, skip_special_tokens=True), output_token_counts, input_token_counts, padding_tokens, round((time.perf_counter() - started) * 1000, 2), peak_vram_mib, peak_vram_reserved_mib, gpu_samples
 
 
 def score(predictions: list[dict[str, Any]], gold_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -477,6 +509,7 @@ def main() -> None:
 
     batch_latencies: list[float] = []
     batch_peak_vram_mib: list[float] = []
+    batch_peak_vram_reserved_mib: list[float] = []
     gpu_samples: list[dict[str, float]] = []
     total_padding_tokens = 0
     failed_generations = 0
@@ -486,6 +519,9 @@ def main() -> None:
     source_generation_manifest_sha256: str | None = None
     source_model_path: str | None = None
     source_model_config_sha256: str | None = None
+    # Le script ne cible actuellement qu'une GPU ; cette capture permet de
+    # séparer le cache du processus d'une occupation externe de la carte.
+    gpu_processes_at_start = nvidia_smi_processes()
     if args.phase == "evaluate":
         predictions = load_jsonl(args.predictions)
         source_manifest_path = args.predictions.parent / "generation_manifest.json"
@@ -522,7 +558,7 @@ def main() -> None:
             indexed_batch = indexed_inputs[offset:offset + args.batch_size]
             batch = [row for _, row in indexed_batch]
             try:
-                raw_outputs, output_token_counts, input_token_counts, padding_tokens, latency_ms, peak_vram_mib, batch_gpu_samples = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
+                raw_outputs, output_token_counts, input_token_counts, padding_tokens, latency_ms, peak_vram_mib, peak_vram_reserved_mib, batch_gpu_samples = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
             except RuntimeError as error:
                 failed_generations += len(batch)
                 oom_count += int("out of memory" in str(error).lower())
@@ -532,6 +568,8 @@ def main() -> None:
             total_padding_tokens += padding_tokens
             if peak_vram_mib is not None:
                 batch_peak_vram_mib.append(peak_vram_mib)
+            if peak_vram_reserved_mib is not None:
+                batch_peak_vram_reserved_mib.append(peak_vram_reserved_mib)
             # Tous les exemples d'un même batch terminent ensemble : leur
             # latence observée est donc celle du batch, pas une fraction de
             # celle-ci (qui représenterait un coût de débit, pas une latence).
@@ -541,6 +579,7 @@ def main() -> None:
                               "clean_sql": clean_sql(raw_output), "input_tokens": input_tokens,
                               "output_tokens": output_tokens, "example_latency_ms": example_latency_ms,
                               "batch_latency_ms": latency_ms, "peak_vram_mib": peak_vram_mib,
+                              "peak_vram_reserved_mib": peak_vram_reserved_mib,
                               "batch_size": len(batch)}
                 if args.save_prompts:
                     prediction["messages"] = make_messages(row, demonstrations)
@@ -606,6 +645,8 @@ def main() -> None:
             "retry_count": retry_count,
             "truncated_generation_count": sum(value >= args.max_new_tokens for value in output_token_values),
             "truncation_rate": round(sum(value >= args.max_new_tokens for value in output_token_values) / len(output_token_values), 4) if output_token_values else 0,
+            "gpu_processes_at_start": gpu_processes_at_start,
+            "gpu_processes_at_end": nvidia_smi_processes(),
         }
         for output_name, source_name, aggregate in (
             ("mean_gpu_utilization_percent", "gpu_utilization_percent", mean_gpu_stat),
@@ -617,6 +658,17 @@ def main() -> None:
         if batch_peak_vram_mib:
             generation_manifest["mean_vram_mib"] = round(sum(batch_peak_vram_mib) / len(batch_peak_vram_mib), 2)
             generation_manifest["peak_vram_mib"] = max(batch_peak_vram_mib)
+        if batch_peak_vram_reserved_mib:
+            generation_manifest["mean_vram_reserved_mib"] = round(sum(batch_peak_vram_reserved_mib) / len(batch_peak_vram_reserved_mib), 2)
+            generation_manifest["peak_vram_reserved_mib"] = max(batch_peak_vram_reserved_mib)
+        for output_name, source_name, aggregate in (
+            ("mean_gpu_vram_used_mib", "gpu_vram_used_mib", mean_gpu_stat),
+            ("peak_gpu_vram_used_mib", "gpu_vram_used_mib", peak_gpu_stat),
+            ("gpu_vram_total_mib", "gpu_vram_total_mib", peak_gpu_stat),
+        ):
+            value = aggregate(source_name)
+            if value is not None:
+                generation_manifest[output_name] = value
         mean_power_w = mean_gpu_stat("gpu_power_w")
         if mean_power_w is not None and batch_latencies:
             energy_wh = mean_power_w * sum(batch_latencies) / 3_600_000
