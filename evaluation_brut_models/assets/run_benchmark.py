@@ -22,7 +22,8 @@ def parse_args(default_device: str) -> argparse.Namespace:
                         help="Phase à lancer ; sans cette option, un choix interactif est proposé.")
     parser.add_argument("--predictions", type=Path,
                         help="Prédictions JSONL à scorer ; requis avec --phase evaluate.")
-    parser.add_argument("--few-shot-k", type=int, default=4)
+    parser.add_argument("--few-shot-k", type=int,
+                        help="Nombre de démonstrations few-shot ; sans cette option, un choix interactif est proposé.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default=default_device)
     parser.add_argument("--max-new-tokens", type=int,
@@ -64,6 +65,18 @@ def choose_modes() -> tuple[str, ...]:
     if choice not in modes:
         raise ValueError("Choisissez 1, 2 ou 3.")
     return modes[choice]
+
+
+def choose_few_shot_k() -> int:
+    """Demande la quantité de démonstrations, seulement si le few-shot est utilisé."""
+    value = input("Nombre d'exemples few-shot [2] : ").strip() or "2"
+    try:
+        count = int(value)
+    except ValueError as error:
+        raise ValueError("Le nombre d'exemples few-shot doit être un entier positif.") from error
+    if count < 1:
+        raise ValueError("Le nombre d'exemples few-shot doit être au moins 1.")
+    return count
 
 
 def choose_phase() -> str:
@@ -198,6 +211,15 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
     available = [ROOT / "models" / name for name in default_model_names if (ROOT / "models" / name).is_dir()]
     models = args.models or choose_models(available)
     modes = ("zero-shot", "few-shot") if args.mode == "both" else (args.mode,) if args.mode else choose_modes()
+    few_shot_k = args.few_shot_k
+    if few_shot_k is None and "few-shot" in modes:
+        few_shot_k = choose_few_shot_k()
+    if few_shot_k is None:
+        few_shot_k = 0
+    if few_shot_k < 0:
+        raise ValueError("--few-shot-k doit être positif.")
+    if "few-shot" in modes and few_shot_k < 1:
+        raise ValueError("--few-shot-k doit être au moins 1 en mode few-shot.")
     batch_size = args.batch_size if args.batch_size is not None else choose_batch_size(default_batch_size)
     group_batches_by_length = (args.group_batches_by_length if args.group_batches_by_length is not None
                                else choose_group_batches_by_length())
@@ -210,7 +232,7 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
         raise ValueError("--max-new-tokens doit être au moins 1.")
     # UTC : lisible, sans ambiguïté et disponible sur toutes les plateformes.
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%SZ")
-    common = ["--phase", phase, "--few-shot-k", str(args.few_shot_k), "--seed", str(args.seed), "--device", args.device,
+    common = ["--phase", phase, "--few-shot-k", str(few_shot_k), "--seed", str(args.seed), "--device", args.device,
               "--max-new-tokens", str(max_new_tokens), "--batch-size", str(batch_size),
               "--temperature", "0", "--environment", environment]
     common += ["--thinking" if thinking else "--no-thinking"]
