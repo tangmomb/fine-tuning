@@ -309,7 +309,7 @@ def organize_evaluation_manifest(flat: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], list[int], list[int], int, float, float | None, float | None, list[dict[str, float]]]:
+def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool, save_prompts: bool) -> tuple[list[str], list[int], list[int], int, float, float | None, float | None, list[dict[str, float]], list[str] | None]:
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoProcessor
@@ -337,6 +337,11 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
         generate_batch.cache_key, generate_batch.processor, generate_batch.model = cache_key, processor, model
     processor, model = generate_batch.processor, generate_batch.model
     processor.tokenizer.padding_side = "left"
+    rendered_prompts = (
+        [str(processor.apply_chat_template(messages, add_generation_prompt=True, tokenize=False,
+                                           enable_thinking=thinking)) for messages in message_batches]
+        if save_prompts else None
+    )
     inputs = processor.apply_chat_template(
         message_batches, add_generation_prompt=True, tokenize=True, return_dict=True,
         return_tensors="pt", enable_thinking=thinking, processor_kwargs={"padding": True},
@@ -382,7 +387,7 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
     generated = output[:, inputs["input_ids"].shape[1]:]
     pad_token_id = processor.tokenizer.pad_token_id
     output_token_counts = [int(generated.shape[1])] * len(generated) if pad_token_id is None else generated.ne(pad_token_id).sum(dim=1).tolist()
-    return processor.batch_decode(generated, skip_special_tokens=True), output_token_counts, input_token_counts, padding_tokens, round((time.perf_counter() - started) * 1000, 2), peak_vram_mib, peak_vram_reserved_mib, gpu_samples
+    return processor.batch_decode(generated, skip_special_tokens=True), output_token_counts, input_token_counts, padding_tokens, round((time.perf_counter() - started) * 1000, 2), peak_vram_mib, peak_vram_reserved_mib, gpu_samples, rendered_prompts
 
 
 def score(predictions: list[dict[str, Any]], gold_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -470,7 +475,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--predictions", type=Path,
                         help="JSONL existant (id, clean_sql ou raw_output) à scorer ; requis avec --phase evaluate.")
     parser.add_argument("--save-prompts", action="store_true",
-                        help="Inclut les messages effectivement envoyés au modèle dans predictions.jsonl.")
+                        help="Inclut les messages et le prompt final rendu dans predictions.jsonl.")
     parser.add_argument("--output-dir", type=Path,
                         help="Dossier de sortie explicite. Utile pour écrire les métriques dans un run copié.")
     parser.add_argument("--run-name", help="Nom de dossier ; défaut : modèle-mode-date.")
@@ -558,7 +563,7 @@ def main() -> None:
             indexed_batch = indexed_inputs[offset:offset + args.batch_size]
             batch = [row for _, row in indexed_batch]
             try:
-                raw_outputs, output_token_counts, input_token_counts, padding_tokens, latency_ms, peak_vram_mib, peak_vram_reserved_mib, batch_gpu_samples = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
+                raw_outputs, output_token_counts, input_token_counts, padding_tokens, latency_ms, peak_vram_mib, peak_vram_reserved_mib, batch_gpu_samples, batch_prompts = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking, args.save_prompts)
             except RuntimeError as error:
                 failed_generations += len(batch)
                 oom_count += int("out of memory" in str(error).lower())
@@ -574,7 +579,8 @@ def main() -> None:
             # latence observée est donc celle du batch, pas une fraction de
             # celle-ci (qui représenterait un coût de débit, pas une latence).
             example_latency_ms = latency_ms
-            for (input_index, row), raw_output, output_tokens, input_tokens in zip(indexed_batch, raw_outputs, output_token_counts, input_token_counts):
+            prompt_values = batch_prompts if batch_prompts is not None else [None] * len(batch)
+            for (input_index, row), raw_output, output_tokens, input_tokens, prompt in zip(indexed_batch, raw_outputs, output_token_counts, input_token_counts, prompt_values):
                 prediction = {"id": row["id"], "db_id": row["db_id"], "raw_output": raw_output,
                               "clean_sql": clean_sql(raw_output), "input_tokens": input_tokens,
                               "output_tokens": output_tokens, "example_latency_ms": example_latency_ms,
@@ -583,6 +589,7 @@ def main() -> None:
                               "batch_size": len(batch)}
                 if args.save_prompts:
                     prediction["messages"] = make_messages(row, demonstrations)
+                    prediction["prompt"] = prompt
                 predictions_by_index[input_index] = prediction
             print(f"[{min(offset + len(batch), len(indexed_inputs))}/{len(indexed_inputs)}]", flush=True)
         predictions = [prediction for prediction in predictions_by_index if prediction is not None]

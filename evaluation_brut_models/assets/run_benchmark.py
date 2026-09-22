@@ -32,6 +32,8 @@ def parse_args(default_device: str) -> argparse.Namespace:
     parser.add_argument("--batch-size", type=int, help="Nombre de prompts générés simultanément.")
     parser.add_argument("--group-batches-by-length", action=argparse.BooleanOptionalAction, default=None,
                         help="Regroupe les prompts de longueur proche pour réduire le padding.")
+    parser.add_argument("--save-prompts", action=argparse.BooleanOptionalAction, default=None,
+                        help="Conserve les messages et le prompt final rendu dans predictions.jsonl.")
     parser.add_argument("--limit", type=int, help="Smoke test seulement ; à omettre pour la baseline complète.")
     return parser.parse_args()
 
@@ -132,6 +134,18 @@ def choose_thinking() -> bool:
     raise ValueError("Choisissez 1 ou 2.")
 
 
+def choose_save_prompts() -> bool:
+    print("\nConserver les prompts envoyés au modèle dans predictions.jsonl ?")
+    print("  1) Non — sorties et métriques seulement (défaut)")
+    print("  2) Oui — messages et prompt final, utile pour l'audit")
+    choice = input("Conserver les prompts [1] : ").strip() or "1"
+    if choice == "1":
+        return False
+    if choice == "2":
+        return True
+    raise ValueError("Choisissez 1 ou 2.")
+
+
 def describe_execution_device(requested_device: str) -> str:
     """Return a human-readable confirmation of the device used by a run."""
     if requested_device == "cpu":
@@ -188,6 +202,7 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
     group_batches_by_length = (args.group_batches_by_length if args.group_batches_by_length is not None
                                else choose_group_batches_by_length())
     thinking = args.thinking if args.thinking is not None else choose_thinking()
+    save_prompts = args.save_prompts if args.save_prompts is not None else choose_save_prompts()
     max_new_tokens = args.max_new_tokens if args.max_new_tokens is not None else (2048 if thinking else 1024)
     if batch_size < 1:
         raise ValueError("--batch-size doit être au moins 1.")
@@ -200,6 +215,8 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
               "--temperature", "0", "--environment", environment]
     common += ["--thinking" if thinking else "--no-thinking"]
     common += ["--group-batches-by-length" if group_batches_by_length else "--no-group-batches-by-length"]
+    if save_prompts:
+        common += ["--save-prompts"]
     if limit is not None:
         common += ["--limit", str(limit)]
     for model in models:
