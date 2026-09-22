@@ -121,7 +121,7 @@ def make_messages(input_row: dict[str, Any], demonstrations: list[dict[str, str]
     return messages
 
 
-def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str) -> tuple[list[str], float, float | None]:
+def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]], max_new_tokens: int, device: str, thinking: bool) -> tuple[list[str], float, float | None]:
     try:
         import torch
         from transformers import AutoModelForCausalLM, AutoProcessor
@@ -151,7 +151,7 @@ def generate_batch(model_path: Path, message_batches: list[list[dict[str, str]]]
     processor.tokenizer.padding_side = "left"
     inputs = processor.apply_chat_template(
         message_batches, add_generation_prompt=True, tokenize=True, return_dict=True,
-        return_tensors="pt", enable_thinking=False, processor_kwargs={"padding": True},
+        return_tensors="pt", enable_thinking=thinking, processor_kwargs={"padding": True},
     )
     # Le processeur multimodal Qwen ajoute ce champ même pour un prompt texte,
     # mais le modèle text-to-SQL ne l'accepte pas dans generate().
@@ -216,7 +216,10 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--few-shot-k", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default="auto", help="auto, cuda ou cpu")
-    parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument("--max-new-tokens", type=int,
+                        help="Plafond de sortie ; défaut : 1024 sans thinking, 2048 avec thinking.")
+    parser.add_argument("--thinking", action=argparse.BooleanOptionalAction, default=False,
+                        help="Active le reasoning du modèle pendant la génération.")
     parser.add_argument("--batch-size", type=int, default=1)
     parser.add_argument("--temperature", type=float, default=0.0, help="0 impose une génération déterministe.")
     parser.add_argument("--environment", choices=("auto", "local", "scaleway"), default="auto")
@@ -228,10 +231,15 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    run_started = time.perf_counter()
     if not args.predictions and not args.model:
         raise ValueError("--model est requis pour générer des prédictions.")
     if args.temperature != 0:
         raise ValueError("Ce protocole de baseline impose --temperature 0.")
+    if args.max_new_tokens is None:
+        args.max_new_tokens = 2048 if args.thinking else 1024
+    if args.max_new_tokens < 1:
+        raise ValueError("--max-new-tokens doit être au moins 1.")
     if args.batch_size < 1:
         raise ValueError("--batch-size doit être au moins 1.")
     inputs, gold = load_jsonl(INPUTS), load_jsonl(GOLD)
@@ -252,14 +260,14 @@ def main() -> None:
         predictions = []
         for offset in range(0, len(inputs), args.batch_size):
             batch = inputs[offset:offset + args.batch_size]
-            raw_outputs, latency_ms, peak_vram_mib = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device)
+            raw_outputs, latency_ms, peak_vram_mib = generate_batch(args.model, [make_messages(row, demonstrations) for row in batch], args.max_new_tokens, args.device, args.thinking)
             batch_latencies.append(latency_ms)
             for row, raw_output in zip(batch, raw_outputs):
-                predictions.append({"id": row["id"], "db_id": row["db_id"], "raw_output": raw_output, "sql": clean_sql(raw_output), "latency_ms": latency_ms, "peak_vram_mib": peak_vram_mib, "batch_size": len(batch)})
+                predictions.append({"id": row["id"], "db_id": row["db_id"], "raw_output": raw_output, "sql": clean_sql(raw_output), "batch_latency_ms": latency_ms, "peak_vram_mib": peak_vram_mib, "batch_size": len(batch)})
             print(f"[{min(offset + len(batch), len(inputs))}/{len(inputs)}]", flush=True)
         write_jsonl(run_dir / "few_shot_examples.jsonl", demonstrations)
     results, metrics = score(predictions, gold)
-    latency_values = [row["latency_ms"] for row in predictions if isinstance(row.get("latency_ms"), (int, float))]
+    batch_latency_values = [row["batch_latency_ms"] for row in predictions if isinstance(row.get("batch_latency_ms"), (int, float))]
     vram_values = [row["peak_vram_mib"] for row in predictions if isinstance(row.get("peak_vram_mib"), (int, float))]
     write_jsonl(run_dir / "predictions.jsonl", predictions)
     write_jsonl(run_dir / "results.jsonl", results)
@@ -267,7 +275,8 @@ def main() -> None:
         "created_at_utc": timestamp, "mode": args.mode, "model": str(args.model) if args.model else None,
         "predictions_source": str(args.predictions) if args.predictions else None,
         "few_shot_k": args.few_shot_k if args.mode == "few-shot" else 0, "seed": args.seed,
-        "temperature": args.temperature, "max_new_tokens": args.max_new_tokens, "batch_size": args.batch_size,
+        "temperature": args.temperature, "max_new_tokens": args.max_new_tokens, "thinking_enabled": args.thinking,
+        "batch_size": args.batch_size,
         "environment": args.environment,
         "execution_hostname": socket.gethostname(),
         "execution_platform": platform.platform(),
@@ -275,8 +284,9 @@ def main() -> None:
         "gold": str(GOLD.relative_to(ROOT)),
         "few_shot_source": str(FEW_SHOT_SOURCE.relative_to(ROOT)),
         "few_shot_source_sha256": file_hash(FEW_SHOT_SOURCE), "examples": len(inputs),
-        "mean_latency_ms": round(sum(latency_values) / len(latency_values), 2) if latency_values else None,
-        "p95_latency_ms": sorted(latency_values)[max(0, int(len(latency_values) * .95) - 1)] if latency_values else None,
+        "total_execution_seconds": round(time.perf_counter() - run_started, 2),
+        "mean_batch_latency_ms": round(sum(batch_latency_values) / len(batch_latency_values), 2) if batch_latency_values else None,
+        "p95_batch_latency_ms": sorted(batch_latency_values)[max(0, int(len(batch_latency_values) * .95) - 1)] if batch_latency_values else None,
         "throughput_examples_per_second": round(len(predictions) / sum(batch_latencies) * 1000, 3) if batch_latencies else None,
         "peak_vram_mib": max(vram_values) if vram_values else None,
         **metrics,

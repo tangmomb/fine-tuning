@@ -14,10 +14,25 @@ Chaque exécution écrit dans `runs/<run-name>/` :
 - `results.jsonl` : comparaison détaillée par exemple ;
 - `metrics.json` : paramètres et métriques agrégées.
 
+`metrics.json` contient aussi `total_execution_seconds`, la durée complète de
+l'exécution : chargement des données et du modèle, génération, scoring et
+écriture des artefacts (hors écriture finale de `metrics.json`, négligeable).
+Les champs `mean_batch_latency_ms` et `p95_batch_latency_ms` mesurent la
+latence d'un batch, pas celle d'une requête isolée. La taille de batch associée
+est indiquée par `batch_size`.
+
 Le score principal est `execution_accuracy` : les résultats SQLite de la
 prédiction et du SQL gold doivent être identiques. `exact_match` est une mesure
 secondaire, basée sur une normalisation des espaces et de la casse. Les requêtes
 sont exécutées en lecture seule contre `test_database`.
+
+Le lanceur interactif demande si le thinking du modèle doit être autorisé. Le
+défaut est non, pour garder une baseline directe comparable. Ce choix est
+enregistré dans `metrics.json` sous `thinking_enabled`; l'option non interactive
+est `--thinking` (ou `--no-thinking`).
+Le plafond de génération est désormais de 1 024 tokens sans thinking et de
+2 048 tokens avec thinking, afin d'éviter de tronquer des requêtes SQL longues.
+`--max-new-tokens` permet de remplacer ces valeurs pour un run donné.
 
 ## Baseline comparable avant fine-tuning
 

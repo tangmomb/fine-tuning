@@ -20,7 +20,10 @@ def parse_args(default_device: str) -> argparse.Namespace:
     parser.add_argument("--few-shot-k", type=int, default=4)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--device", default=default_device)
-    parser.add_argument("--max-new-tokens", type=int, default=256)
+    parser.add_argument("--max-new-tokens", type=int,
+                        help="Plafond de sortie ; défaut : 1024 sans thinking, 2048 avec thinking.")
+    parser.add_argument("--thinking", action=argparse.BooleanOptionalAction, default=None,
+                        help="Active le reasoning du modèle ; sans cette option, le choix est demandé.")
     parser.add_argument("--batch-size", type=int, help="Nombre de prompts générés simultanément.")
     parser.add_argument("--limit", type=int, help="Smoke test seulement ; à omettre pour la baseline complète.")
     return parser.parse_args()
@@ -65,6 +68,18 @@ def choose_batch_size(default: int) -> int:
     return batch_size
 
 
+def choose_thinking() -> bool:
+    print("\nAutoriser le thinking / reasoning du modèle ?")
+    print("  1) Non — baseline directe question → SQL (défaut)")
+    print("  2) Oui — plus lent, budget de tokens potentiellement plus élevé")
+    choice = input("Thinking [1] : ").strip() or "1"
+    if choice == "1":
+        return False
+    if choice == "2":
+        return True
+    raise ValueError("Choisissez 1 ou 2.")
+
+
 def describe_execution_device(requested_device: str) -> str:
     """Return a human-readable confirmation of the device used by a run."""
     if requested_device == "cpu":
@@ -89,13 +104,18 @@ def main(default_model_names: tuple[str, ...], default_device: str, environment:
     models = args.models or choose_models(available)
     modes = ("zero-shot", "few-shot") if args.mode == "both" else (args.mode,) if args.mode else choose_modes()
     batch_size = args.batch_size if args.batch_size is not None else choose_batch_size(default_batch_size)
+    thinking = args.thinking if args.thinking is not None else choose_thinking()
+    max_new_tokens = args.max_new_tokens if args.max_new_tokens is not None else (2048 if thinking else 1024)
     if batch_size < 1:
         raise ValueError("--batch-size doit être au moins 1.")
+    if max_new_tokens < 1:
+        raise ValueError("--max-new-tokens doit être au moins 1.")
     # UTC, lisible dans les noms de dossiers et sans caractères interdits sous Windows.
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%SZ")
     common = ["--few-shot-k", str(args.few_shot_k), "--seed", str(args.seed), "--device", args.device,
-              "--max-new-tokens", str(args.max_new_tokens), "--batch-size", str(batch_size),
+              "--max-new-tokens", str(max_new_tokens), "--batch-size", str(batch_size),
               "--temperature", "0", "--environment", environment]
+    common += ["--thinking" if thinking else "--no-thinking"]
     if args.limit:
         common += ["--limit", str(args.limit)]
     for model in models:
