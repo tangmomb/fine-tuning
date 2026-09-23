@@ -8,6 +8,31 @@ run à `assets/run_evaluation.py`.
 Les SQL gold ne sont jamais lus pendant la génération : ils sont utilisés
 uniquement au moment du scoring.
 
+## Évaluation Batch API OpenAI
+
+`run_openai.py` applique le même protocole à un modèle OpenAI : mêmes entrées
+de test, messages système/utilisateur, démonstrations few-shot déterministes et
+scoring SQLite. Il demande l'ID du modèle (par exemple `gpt-5.6-luna` ou
+`gpt-5.6-terra`) et soumet un batch asynchrone ; OpenAI le termine dans une
+fenêtre pouvant aller jusqu'à 24 heures. Ce chemin ne mesure pas la VRAM, le
+débit GPU ni la latence de génération, car ils ne sont pas exposés par l'API.
+
+Installez le SDK puis définissez `OPENAI_API_KEY` (la clé peut aussi être dans
+le fichier `.env`, qui n'est pas versionné) :
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install openai
+.\.venv\Scripts\python.exe evaluation_brut_models\run_openai.py
+```
+
+La première exécution crée `runs_openai/<horodatage>/<modèle>-<mode>/`, y
+compris `batch_input.jsonl` et `generation_manifest.json`, puis affiche la
+commande de récupération. Exécutez-la ultérieurement lorsque le batch est
+`completed` : elle télécharge les sorties, écrit `predictions.jsonl`,
+`results.jsonl` et `metrics.json`, et applique le scoring local. Les sorties
+sont associées aux exemples avec `custom_id`, jamais par l'ordre du fichier de
+retour OpenAI.
+
 Chaque exécution écrit dans `runs/<run-name>/` :
 
 - `predictions.jsonl` : sortie brute (`raw_output`), SQL nettoyé (`clean_sql`) et, avec `--save-prompts`, le prompt réellement employé ;

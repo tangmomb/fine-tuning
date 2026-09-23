@@ -1,0 +1,88 @@
+{
+  "artifact": {
+    "type": "openai_batch_text_to_sql",
+    "created_at_utc": "2026-09-23_12-21-42Z",
+    "phase": "completed"
+  },
+  "model": {
+    "path": "openai/gpt-5.6-luna"
+  },
+  "configuration": {
+    "mode": "few-shot",
+    "few_shot_k": 2,
+    "seed": 42,
+    "temperature": null,
+    "max_new_tokens": 512,
+    "thinking_enabled": false,
+    "batch_size": null,
+    "group_batches_by_length": false,
+    "save_prompts": false
+  },
+  "environment": {
+    "target": "openai-batch",
+    "hostname": "DESKTOP-4D67N45",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "dataset": {
+    "inputs": "data\\07_evaluation_dataset\\03_production\\test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "examples": 2147
+  },
+  "generation": {
+    "duration_seconds": null,
+    "throughput": {},
+    "tokens": {
+      "input": {
+        "total": 1732059
+      },
+      "output": {
+        "total": 72135
+      },
+      "padding": {
+        "tokens": 0,
+        "rate": 0
+      }
+    },
+    "latency_ms": {},
+    "reliability": {
+      "truncated_generation_count": 0,
+      "truncation_rate": 0,
+      "failed_generations": 0,
+      "oom_count": 0
+    }
+  },
+  "gpu": {
+    "utilization_percent": {},
+    "energy_wh": {},
+    "vram_mib": {},
+    "vram_reserved_mib": {},
+    "device_vram_used_mib": {},
+    "compute_processes": {}
+  },
+  "openai_batch": {
+    "id": "batch_6ab3c45746d08190a1b9511bc88aa44d",
+    "status": "completed",
+    "input_file_id": "file-MoqxfSXZfgHDrsPSauCXSS",
+    "endpoint": "/v1/chat/completions",
+    "completion_window": "24h",
+    "reasoning_effort": "none",
+    "output_file_id": "file-BvJF3mQu9bnJWKg6F5xPPQ",
+    "error_file_id": null,
+    "request_counts": {
+      "completed": 2147,
+      "failed": 0,
+      "total": 2147
+    },
+    "usage": {
+      "input_tokens": 1732059,
+      "input_tokens_details": {
+        "cached_tokens": 1124
+      },
+      "output_tokens": 72135,
+      "output_tokens_details": {
+        "reasoning_tokens": 0
+      },
+      "total_tokens": 1804194
+    }
+  }
+}

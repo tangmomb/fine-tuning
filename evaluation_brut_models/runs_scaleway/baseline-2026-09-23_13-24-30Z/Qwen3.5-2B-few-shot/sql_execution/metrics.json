@@ -1,0 +1,76 @@
+{
+  "artifact": {
+    "created_at_utc": "2026-09-23_14-46-24Z",
+    "phase": "evaluate"
+  },
+  "source": {
+    "predictions": "E:\\cooking\\fine-tuning\\evaluation_brut_models\\runs_scaleway\\baseline-2026-09-23_13-24-30Z\\Qwen3.5-2B-few-shot\\predictions.jsonl",
+    "generation": {
+      "manifest_sha256": "911f9f349e756ac2ace3cc96c99730c3e2ea7b31b39143e6a062122cbba8f13c",
+      "model_path": "/root/fine-tuning/models/Qwen3.5-2B",
+      "model_config_sha256": "ed1c1723241f23f7f4e23430759cbd7dcfb4103cbdfe052bfe7626b57c2615b4"
+    }
+  },
+  "configuration": {
+    "mode": "zero-shot",
+    "few_shot_k": 0,
+    "seed": 42,
+    "temperature": 0.0,
+    "max_new_tokens": 512,
+    "thinking_enabled": false,
+    "batch_size": 1,
+    "group_batches_by_length": false,
+    "environment": "auto"
+  },
+  "environment": {
+    "hostname": "DESKTOP-4D67N45",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "dataset": {
+    "inputs": "data\\07_evaluation_dataset\\03_production\\test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "gold": "data\\07_evaluation_dataset\\03_production\\test_gold.jsonl",
+    "few_shot_source": "data\\06_training_dataset\\03_production\\train.jsonl",
+    "few_shot_source_sha256": "491768ac0d67e679604f9191b7d7268f7f7d6ae8503501ceb09768043203806d"
+  },
+  "evaluation": {
+    "examples": 2147,
+    "duration_seconds": 11.97,
+    "examples_per_second": 179.326,
+    "total_execution_seconds": 11.97,
+    "accuracy": {
+      "exact_match": {
+        "rate": 0.06520726595249185,
+        "count": 140
+      },
+      "execution": {
+        "rate": 0.25244527247321846,
+        "correct_count": 542,
+        "success_rate": 0.8127619934792734,
+        "success_count": 1745
+      },
+      "syntax": {
+        "valid_rate": 0.9804378202142524,
+        "valid_count": 2105,
+        "invalid_count": 42
+      }
+    },
+    "errors": {
+      "execution_error_count": 402,
+      "timeout_count": 1,
+      "empty_prediction_count": 0
+    },
+    "predicted_sql": {
+      "mean_length_chars": 195.35,
+      "tokens": {
+        "mean": 41.91,
+        "p95": 79
+      }
+    },
+    "execution_time_ms": {
+      "median": 0.18,
+      "p95": 0.35,
+      "max": 5000.12
+    }
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "artifact": {
+    "type": "openai_batch_text_to_sql",
+    "created_at_utc": "2026-09-23_12-21-51Z",
+    "phase": "submitted"
+  },
+  "model": {
+    "path": "openai/gpt-5.6-luna"
+  },
+  "configuration": {
+    "mode": "few-shot",
+    "few_shot_k": 4,
+    "seed": 42,
+    "temperature": null,
+    "max_new_tokens": 512,
+    "thinking_enabled": false,
+    "batch_size": null,
+    "group_batches_by_length": false,
+    "save_prompts": false
+  },
+  "environment": {
+    "target": "openai-batch",
+    "hostname": "DESKTOP-4D67N45",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "dataset": {
+    "inputs": "data\\07_evaluation_dataset\\03_production\\test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "examples": 2147
+  },
+  "generation": {
+    "duration_seconds": null,
+    "throughput": {},
+    "tokens": {
+      "input": {},
+      "output": {},
+      "padding": {
+        "tokens": 0,
+        "rate": 0
+      }
+    },
+    "latency_ms": {},
+    "reliability": {
+      "truncated_generation_count": 0,
+      "truncation_rate": 0,
+      "failed_generations": 0,
+      "oom_count": 0
+    }
+  },
+  "gpu": {
+    "utilization_percent": {},
+    "energy_wh": {},
+    "vram_mib": {},
+    "vram_reserved_mib": {},
+    "device_vram_used_mib": {},
+    "compute_processes": {}
+  },
+  "openai_batch": {
+    "id": "batch_6ab3c4600aac81909fb1a32dd03defb3",
+    "status": "validating",
+    "input_file_id": "file-MAhRiYwK55FbcX9t6ei4t3",
+    "endpoint": "/v1/chat/completions",
+    "completion_window": "24h",
+    "reasoning_effort": "none"
+  }
+}

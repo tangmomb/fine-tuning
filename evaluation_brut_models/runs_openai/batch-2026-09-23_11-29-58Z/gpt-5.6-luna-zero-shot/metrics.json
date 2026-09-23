@@ -1,0 +1,82 @@
+{
+  "artifact": {
+    "created_at_utc": "2026-09-23_12-20-02Z",
+    "phase": "evaluate"
+  },
+  "source": {
+    "predictions": "evaluation_brut_models\\runs_openai\\batch-2026-09-23_11-29-58Z\\gpt-5.6-luna-zero-shot\\predictions.jsonl",
+    "generation": {
+      "manifest_sha256": "6d6f5432b4a45e53e4c82cfc280686e30890ee05c16a223c1eed8b5e7c82851d",
+      "model_path": "openai/gpt-5.6-luna"
+    }
+  },
+  "configuration": {
+    "mode": "zero-shot",
+    "few_shot_k": 0,
+    "seed": 42,
+    "temperature": null,
+    "max_new_tokens": 512,
+    "thinking_enabled": false,
+    "batch_size": null,
+    "group_batches_by_length": false,
+    "environment": "openai-batch"
+  },
+  "environment": {
+    "hostname": "DESKTOP-4D67N45",
+    "platform": "Windows-10-10.0.19045-SP0"
+  },
+  "dataset": {
+    "inputs": "data\\07_evaluation_dataset\\03_production\\test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "gold": "data\\07_evaluation_dataset\\03_production\\test_gold.jsonl",
+    "few_shot_source": "data\\06_training_dataset\\03_production\\train.jsonl",
+    "few_shot_source_sha256": "491768ac0d67e679604f9191b7d7268f7f7d6ae8503501ceb09768043203806d"
+  },
+  "evaluation": {
+    "examples": 2147,
+    "duration_seconds": 9.08,
+    "examples_per_second": 236.341,
+    "total_execution_seconds": 9.08,
+    "accuracy": {
+      "exact_match": {
+        "rate": 0.16068933395435492,
+        "count": 345
+      },
+      "execution": {
+        "rate": 0.6776897997205403,
+        "correct_count": 1455,
+        "success_rate": 0.9911504424778761,
+        "success_count": 2128
+      },
+      "syntax": {
+        "valid_rate": 0.992081974848626,
+        "valid_count": 2130,
+        "invalid_count": 17
+      }
+    },
+    "errors": {
+      "execution_error_count": 19,
+      "timeout_count": 0,
+      "empty_prediction_count": 0
+    },
+    "predicted_sql": {
+      "mean_length_chars": 122.48,
+      "tokens": {
+        "mean": 25.32,
+        "p95": 57
+      }
+    },
+    "execution_time_ms": {
+      "median": 0.17,
+      "p95": 1.23,
+      "max": 496.23
+    }
+  },
+  "openai_batch": {
+    "id": "batch_6ab3b83b86bc81908c0f2f17d53d8c2f",
+    "status": "completed",
+    "input_tokens": 873259,
+    "output_tokens": 79783,
+    "failed_requests": 0
+  }
+}

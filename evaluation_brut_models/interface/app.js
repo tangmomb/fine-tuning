@@ -7,6 +7,11 @@
   const totalExamples = 2147;
   const percent = value => Number.isFinite(value) ? `${(value * 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} %` : "—";
   const count = value => Number.isFinite(value) ? value.toLocaleString("fr-FR") : "—";
+  const modelSize = model => Number.parseFloat((model || "").match(/Qwen3\.5-([\d.]+)B/)?.[1]) || Number.POSITIVE_INFINITY;
+  const runOrder = run => run.mode === "zero-shot" ? 0 : Number.isFinite(run.fewShotK) ? run.fewShotK : Number.POSITIVE_INFINITY;
+  const compareRuns = (left, right) => modelSize(left.model) - modelSize(right.model)
+    || runOrder(left) - runOrder(right)
+    || left.model.localeCompare(right.model, "fr");
 
   function makeRun(manifest, metrics, source = "") {
     const evaluation = metrics?.evaluation || {};
@@ -45,7 +50,7 @@
   ];
 
   function render() {
-    const runs = state.runs;
+    const runs = [...state.runs].sort(compareRuns);
     const models = [...new Set(runs.map(run => run.model))];
     head.innerHTML = `<tr><th>Métrique SQL</th>${runs.map(run => {
       const shots = Number.isFinite(run.fewShotK) ? run.fewShotK : run.mode === "zero-shot" ? 0 : "—";
