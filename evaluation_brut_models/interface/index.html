@@ -3,50 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Comparateur de runs · BRUT</title>
-    <link rel="stylesheet" href="styles.css?v=20260923-scaleway-runs" />
+    <title>Résultats d’évaluation · BRUT</title>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="page-shell">
       <header class="hero">
-        <div>
-          <p class="eyebrow">Évaluation Text-to-SQL</p>
-          <h1>Comparaison des runs</h1>
-          <p class="intro">Comparez la qualité SQL des modèles sur le même jeu de test.</p>
-        </div>
-        <div class="header-actions">
-          <label class="button button-primary" for="file-picker">Importer des JSON</label>
-          <input id="file-picker" type="file" accept="application/json,.json" multiple hidden />
-          <label class="button button-quiet" for="folder-picker">Importer un dossier</label>
-          <input id="folder-picker" type="file" webkitdirectory multiple hidden />
-          <button id="clear-button" class="button button-quiet" type="button">Effacer</button>
-        </div>
+        <p class="eyebrow">Évaluation Text-to-SQL</p>
+        <h1>Comparaison des modèles</h1>
+        <p class="intro">Résultats figés sur 2&nbsp;147 requêtes de test. Les meilleurs scores de chaque ligne sont en vert.</p>
       </header>
 
-      <section id="drop-zone" class="drop-zone" aria-label="Zone d'import de fichiers JSON">
-        <strong>Glissez ici les dossiers ou fichiers <code>generation_manifest.json</code> et <code>metrics.json</code></strong>
-        <span>Les données restent dans votre navigateur. Vous pouvez aussi sélectionner plusieurs fichiers.</span>
+      <section class="summary" aria-label="Résumé des résultats">
+        <div class="stat"><span>Runs comparés</span><strong>15</strong></div>
+        <div class="stat"><span>Meilleure execution accuracy hors Luna</span><strong>63,81&nbsp;%</strong></div>
+        <div class="stat"><span>Jeu de test</span><strong>2&nbsp;147 requêtes</strong></div>
       </section>
-
-      <section id="summary" class="summary" aria-live="polite"></section>
 
       <section class="table-card">
         <div class="table-heading">
-          <div>
-            <p class="eyebrow">Résultats</p>
-            <h2>Tableau comparatif</h2>
-          </div>
+          <div><p class="eyebrow">Résultats</p><h2>Tableau comparatif</h2></div>
+          <p class="table-note">Tri : modèle, puis configuration (zero-shot, few-shot 2, few-shot 4)</p>
         </div>
         <div class="table-scroll">
           <table class="evaluation-table">
-            <thead id="runs-head"></thead>
-            <tbody id="runs-body"></tbody>
+            <thead>
+              <tr>
+                <th scope="col">Métrique SQL</th>
+                <th scope="col" class="model-head model-tone-0">Qwen 0.8B<small>Zero-shot</small></th><th scope="col" class="model-head model-tone-1">Qwen 0.8B<small>Few-shot · 2</small></th><th scope="col" class="model-head model-tone-2">Qwen 0.8B<small>Few-shot · 4</small></th>
+                <th scope="col" class="model-head model-tone-0">Qwen 2B<small>Zero-shot</small></th><th scope="col" class="model-head model-tone-1">Qwen 2B<small>Few-shot · 2</small></th><th scope="col" class="model-head model-tone-2">Qwen 2B<small>Few-shot · 4</small></th>
+                <th scope="col" class="model-head model-tone-0">Qwen 4B<small>Zero-shot</small></th><th scope="col" class="model-head model-tone-1">Qwen 4B<small>Few-shot · 2</small></th><th scope="col" class="model-head model-tone-2">Qwen 4B<small>Few-shot · 4</small></th>
+                <th scope="col" class="model-head model-tone-0">Qwen 9B<small>Zero-shot</small></th><th scope="col" class="model-head model-tone-1">Qwen 9B<small>Few-shot · 2</small></th><th scope="col" class="model-head model-tone-2">Qwen 9B<small>Few-shot · 4</small></th>
+                <th scope="col" class="model-head model-tone-3 luna-zero">GPT-5.6 Luna<small>Zero-shot</small></th><th scope="col" class="model-head model-tone-3 luna-few">GPT-5.6 Luna<small>Few-shot · 2</small></th><th scope="col" class="model-head model-tone-3 luna-few">GPT-5.6 Luna<small>Few-shot · 4</small></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">Execution accuracy <button class="metric-help" type="button" aria-label="Explication de l'execution accuracy" data-tooltip="Part des requêtes dont le résultat SQLite est identique à celui du SQL de référence.">?</button><span>Résultat SQLite identique à la référence</span></th><td>11,78 %<small>253 / 2 147</small></td><td>7,27 %<small>156 / 2 147</small></td><td>8,29 %<small>178 / 2 147</small></td><td>29,48 %<small>633 / 2 147</small></td><td>26,36 %<small>566 / 2 147</small></td><td>25,24 %<small>542 / 2 147</small></td><td>54,26 %<small>1 165 / 2 147</small></td><td>54,08 %<small>1 161 / 2 147</small></td><td>57,76 %<small>1 240 / 2 147</small></td><td>63,06 %<small>1 354 / 2 147</small></td><td>63,81 %<small>1 370 / 2 147</small></td><td>63,11 %<small>1 355 / 2 147</small></td><td>67,77 %<small>1 455 / 2 147</small></td><td class="best">70,00 %<small>1 503 / 2 147</small></td><td>69,82 %<small>1 499 / 2 147</small></td></tr>
+              <tr><th scope="row">Exact match <button class="metric-help" type="button" aria-label="Explication de l'exact match" data-tooltip="Part des requêtes dont le SQL prédit correspond exactement au SQL de référence après normalisation.">?</button><span>SQL identique après normalisation</span></th><td>1,12 %<small>24 / 2 147</small></td><td>2,42 %<small>52 / 2 147</small></td><td>3,17 %<small>68 / 2 147</small></td><td>7,55 %<small>162 / 2 147</small></td><td>6,85 %<small>147 / 2 147</small></td><td>6,52 %<small>140 / 2 147</small></td><td>12,90 %<small>277 / 2 147</small></td><td>17,93 %<small>385 / 2 147</small></td><td>21,66 %<small>465 / 2 147</small></td><td>16,21 %<small>348 / 2 147</small></td><td>20,77 %<small>446 / 2 147</small></td><td>23,06 %<small>495 / 2 147</small></td><td>16,07 %<small>345 / 2 147</small></td><td class="best">25,52 %<small>548 / 2 147</small></td><td>27,01 %<small>580 / 2 147</small></td></tr>
+              <tr><th scope="row">SQL exécutable <button class="metric-help" type="button" aria-label="Explication du SQL exécutable" data-tooltip="Part des prédictions qui s’exécutent sans erreur dans SQLite, quel que soit leur résultat.">?</button><span>Exécution SQLite sans erreur</span></th><td>68,70 %<small>1 475 / 2 147</small></td><td>59,48 %<small>1 277 / 2 147</small></td><td>55,89 %<small>1 200 / 2 147</small></td><td>85,05 %<small>1 826 / 2 147</small></td><td>80,11 %<small>1 720 / 2 147</small></td><td>81,28 %<small>1 745 / 2 147</small></td><td>94,41 %<small>2 027 / 2 147</small></td><td>93,67 %<small>2 011 / 2 147</small></td><td>94,64 %<small>2 032 / 2 147</small></td><td>97,21 %<small>2 087 / 2 147</small></td><td>95,90 %<small>2 059 / 2 147</small></td><td>96,13 %<small>2 064 / 2 147</small></td><td>99,12 %<small>2 128 / 2 147</small></td><td class="best">99,16 %<small>2 129 / 2 147</small></td><td>99,21 %<small>2 130 / 2 147</small></td></tr>
+              <tr><th scope="row">SQL syntaxiquement valide <button class="metric-help" type="button" aria-label="Explication de la validité syntaxique" data-tooltip="Part des requêtes acceptées par le parseur SQLite ; une requête valide peut toutefois échouer à l’exécution.">?</button><span>Accepté par le parseur SQLite</span></th><td>95,53 %<small>2 051 / 2 147</small></td><td>96,23 %<small>2 066 / 2 147</small></td><td>94,97 %<small>2 039 / 2 147</small></td><td>97,72 %<small>2 098 / 2 147</small></td><td>97,95 %<small>2 103 / 2 147</small></td><td>98,04 %<small>2 105 / 2 147</small></td><td class="best">99,67 %<small>2 140 / 2 147</small></td><td>99,49 %<small>2 136 / 2 147</small></td><td class="best">99,67 %<small>2 140 / 2 147</small></td><td>99,49 %<small>2 136 / 2 147</small></td><td>99,35 %<small>2 133 / 2 147</small></td><td>99,39 %<small>2 134 / 2 147</small></td><td>99,21 %<small>2 130 / 2 147</small></td><td>99,30 %<small>2 132 / 2 147</small></td><td>99,30 %<small>2 132 / 2 147</small></td></tr>
+              <tr><th scope="row">Erreurs d’exécution <button class="metric-help" type="button" aria-label="Explication des erreurs d'exécution" data-tooltip="Nombre de prédictions que SQLite n’a pas pu exécuter, y compris les timeouts.">?</button></th><td>672</td><td>870</td><td>947</td><td>321</td><td>427</td><td>402</td><td>120</td><td>136</td><td>115</td><td>60</td><td>88</td><td>83</td><td>19</td><td class="best">18</td><td>17</td></tr>
+              <tr><th scope="row">SQL invalides <button class="metric-help" type="button" aria-label="Explication des SQL invalides" data-tooltip="Nombre de prédictions rejetées pour une erreur de syntaxe SQL.">?</button></th><td>96</td><td>81</td><td>108</td><td>49</td><td>44</td><td>42</td><td class="best">7</td><td>11</td><td class="best">7</td><td>11</td><td>14</td><td>13</td><td>17</td><td>15</td><td>15</td></tr>
+              <tr><th scope="row">Timeouts <button class="metric-help" type="button" aria-label="Explication des timeouts" data-tooltip="Nombre de requêtes interrompues après avoir dépassé la limite d’exécution de 5 secondes.">?</button></th><td>2</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td>1</td><td>1</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td>0</td></tr>
+              <tr><th scope="row">Prédictions vides <button class="metric-help" type="button" aria-label="Explication des prédictions vides" data-tooltip="Nombre de sorties sans requête SQL exploitable après nettoyage de la réponse du modèle.">?</button></th><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td class="best">0</td><td>0</td></tr>
+            </tbody>
           </table>
         </div>
-        <p id="empty-state" class="empty-state">Aucun run chargé. Déposez les deux fichiers JSON d’un run ci-dessus.</p>
       </section>
     </main>
-    <script src="runs-data.js?v=20260923-openai-runs"></script>
-    <script src="app.js?v=20260923-model-order"></script>
   </body>
 </html>
