@@ -46,9 +46,11 @@
 
   function render() {
     const runs = state.runs;
+    const models = [...new Set(runs.map(run => run.model))];
     head.innerHTML = `<tr><th>Métrique SQL</th>${runs.map(run => {
       const shots = Number.isFinite(run.fewShotK) ? run.fewShotK : run.mode === "zero-shot" ? 0 : "—";
-      return `<th class="model-head"><strong>${escapeHtml(run.model)}</strong><div class="run-meta"><span class="run-card"><small>Mode</small>${escapeHtml(run.mode)}</span><span class="run-card"><small>Shots</small>${shots}</span></div></th>`;
+      const tone = models.indexOf(run.model) % 4;
+      return `<th class="model-head model-tone-${tone}"><strong>${escapeHtml(run.model)}</strong><div class="run-meta"><span class="run-card"><small>Mode</small>${escapeHtml(run.mode)}</span><span class="run-card"><small>Shots</small>${shots}</span></div></th>`;
     }).join("")}</tr>`;
     body.innerHTML = metricRows.map(metric => {
       const values = runs.map(run => run[metric.key]).filter(Number.isFinite);
