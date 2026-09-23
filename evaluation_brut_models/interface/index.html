@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Comparateur de runs · BRUT</title>
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="styles.css?v=20260923-tooltips" />
   </head>
   <body>
     <main class="page-shell">
@@ -12,7 +12,7 @@
         <div>
           <p class="eyebrow">Évaluation Text-to-SQL</p>
           <h1>Comparaison des runs</h1>
-          <p class="intro">Chargez les artefacts de vos exécutions pour comparer précision, vitesse et ressources.</p>
+          <p class="intro">Comparez la qualité SQL des modèles sur le même jeu de test.</p>
         </div>
         <div class="header-actions">
           <label class="button button-primary" for="file-picker">Importer des JSON</label>
@@ -36,36 +36,17 @@
             <p class="eyebrow">Résultats</p>
             <h2>Tableau comparatif</h2>
           </div>
-          <label class="search-label">Filtrer <input id="search" type="search" placeholder="Modèle, mode, hôte…" /></label>
         </div>
         <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th data-sort="label">Run</th>
-                <th data-sort="model">Modèle</th>
-                <th data-sort="mode">Mode</th>
-                <th data-sort="groupedBatches">Batches<br />regroupés</th>
-                <th data-sort="paddingRate" class="metric">Padding</th>
-                <th data-sort="executionAccuracy" class="metric">Execution accuracy</th>
-                <th data-sort="exactMatch" class="metric">Exact match</th>
-                <th data-sort="syntaxValid" class="metric">SQL valide</th>
-                <th data-sort="generationEps" class="metric">Génération<br />(ex./s)</th>
-                <th data-sort="generationDuration" class="metric">Génération<br />(min)</th>
-                <th data-sort="evaluationDuration" class="metric">Évaluation<br />(s)</th>
-                <th data-sort="gpuPeak">VRAM pic<br />(MiB)</th>
-                <th data-sort="energy">Énergie<br />(Wh)</th>
-                <th data-sort="truncationRate" class="metric">Tronquées</th>
-              </tr>
-            </thead>
+          <table class="evaluation-table">
+            <thead id="runs-head"></thead>
             <tbody id="runs-body"></tbody>
           </table>
         </div>
         <p id="empty-state" class="empty-state">Aucun run chargé. Déposez les deux fichiers JSON d’un run ci-dessus.</p>
       </section>
     </main>
-    <template id="run-row-template"><tr></tr></template>
-    <script src="runs-data.js"></script>
-    <script src="app.js"></script>
+    <script src="runs-data.js?v=20260923-tooltips"></script>
+    <script src="app.js?v=20260923-tooltips"></script>
   </body>
 </html>

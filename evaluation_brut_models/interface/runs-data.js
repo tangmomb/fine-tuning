@@ -1,39 +1,11 @@
-/* Données statiques de la première version : aucun chargement réseau. */
+/* Résultats SQL statiques des runs Scaleway évalués localement le 23 septembre 2026. */
 window.initialRuns = [
-  {
-    label: "Baseline · batches non regroupés",
-    createdAt: "2026-09-22_21-12-57Z",
-    model: "Qwen3.5-0.8B",
-    mode: "zero-shot",
-    environment: "qwen-h100-finetuning",
-    groupedBatches: false,
-    paddingRate: 0.3924,
-    executionAccuracy: 0.11783884489986027,
-    exactMatch: 0.012109920819748486,
-    syntaxValid: 0.9590125756870052,
-    generationEps: 3.512,
-    generationDuration: 10.301833333333333,
-    evaluationDuration: 18.54,
-    gpuPeak: 16941.6,
-    energy: 49.495628,
-    truncationRate: 0.0796
-  },
-  {
-    label: "Baseline · batches regroupés par longueur",
-    createdAt: "2026-09-22_21-24-39Z",
-    model: "Qwen3.5-0.8B",
-    mode: "zero-shot",
-    environment: "qwen-h100-finetuning",
-    groupedBatches: true,
-    paddingRate: 0.0774,
-    executionAccuracy: 0.1159757801583605,
-    exactMatch: 0.011644154634373545,
-    syntaxValid: 0.959944108057755,
-    generationEps: 3.884,
-    generationDuration: 9.3675,
-    evaluationDuration: 12.91,
-    gpuPeak: 16286.98,
-    energy: 41.337276,
-    truncationRate: 0.0787
-  }
+  { model: "Qwen3.5-0.8B", mode: "zero-shot", examples: 2147, executionAccuracy: 0.11830461108523521, correctCount: 254, executionSuccess: 0.6818816953889147, successCount: 1464, exactMatch: 0.011178388448998603, exactCount: 24, syntaxValid: 0.96040987424313, validCount: 2062, invalidCount: 85, executionErrors: 683, timeouts: 2, emptyPredictions: 0 },
+  { model: "Qwen3.5-0.8B", mode: "few-shot", fewShotK: 2, examples: 2147, executionAccuracy: 0.07312529110386586, correctCount: 157, executionSuccess: 0.5947834187238007, successCount: 1277, exactMatch: 0.024685607824871916, exactCount: 53, syntaxValid: 0.9618071727992548, validCount: 2065, invalidCount: 82, executionErrors: 870, timeouts: 1, emptyPredictions: 0 },
+  { model: "Qwen3.5-2B", mode: "zero-shot", examples: 2147, executionAccuracy: 0.2952957615277131, correctCount: 634, executionSuccess: 0.8518863530507685, successCount: 1829, exactMatch: 0.07452258965999069, exactCount: 160, syntaxValid: 0.9799720540288775, validCount: 2104, invalidCount: 43, executionErrors: 318, timeouts: 0, emptyPredictions: 0 },
+  { model: "Qwen3.5-2B", mode: "few-shot", fewShotK: 2, examples: 2147, executionAccuracy: 0.26362366092221706, correctCount: 566, executionSuccess: 0.7987890079180252, successCount: 1715, exactMatch: 0.0703306939916162, exactCount: 151, syntaxValid: 0.9809035863996274, validCount: 2106, invalidCount: 41, executionErrors: 432, timeouts: 0, emptyPredictions: 0 },
+  { model: "Qwen3.5-4B", mode: "zero-shot", examples: 2147, executionAccuracy: 0.544480670703307, correctCount: 1169, executionSuccess: 0.9417792268281323, successCount: 2022, exactMatch: 0.12761993479273404, exactCount: 274, syntaxValid: 0.9972054028877504, validCount: 2141, invalidCount: 6, executionErrors: 125, timeouts: 0, emptyPredictions: 0 },
+  { model: "Qwen3.5-4B", mode: "few-shot", fewShotK: 2, examples: 2147, executionAccuracy: 0.5416860735910572, correctCount: 1163, executionSuccess: 0.9403819282720075, successCount: 2019, exactMatch: 0.17792268281322776, exactCount: 382, syntaxValid: 0.9953423381462506, validCount: 2137, invalidCount: 10, executionErrors: 128, timeouts: 0, emptyPredictions: 0 },
+  { model: "Qwen3.5-9B", mode: "zero-shot", examples: 2147, executionAccuracy: 0.631578947368421, correctCount: 1356, executionSuccess: 0.9715882626921285, successCount: 2086, exactMatch: 0.1630181648812296, exactCount: 350, syntaxValid: 0.9948765719608756, validCount: 2136, invalidCount: 11, executionErrors: 61, timeouts: 0, emptyPredictions: 0 },
+  { model: "Qwen3.5-9B", mode: "few-shot", fewShotK: 2, examples: 2147, executionAccuracy: 0.6385654401490451, correctCount: 1371, executionSuccess: 0.9566837447601304, successCount: 2054, exactMatch: 0.20773171867722404, exactCount: 446, syntaxValid: 0.9944108057755007, validCount: 2135, invalidCount: 12, executionErrors: 93, timeouts: 0, emptyPredictions: 0 }
 ];

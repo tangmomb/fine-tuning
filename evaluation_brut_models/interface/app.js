@@ -1,65 +1,69 @@
 (() => {
-  const state = { runs: [], sort: { key: "executionAccuracy", direction: "desc" }, query: "" };
+  const state = { runs: [] };
+  const head = document.querySelector("#runs-head");
   const body = document.querySelector("#runs-body");
   const empty = document.querySelector("#empty-state");
   const summary = document.querySelector("#summary");
-  const number = (value, digits = 2) => Number.isFinite(value) ? value.toLocaleString("fr-FR", { maximumFractionDigits: digits }) : "—";
+  const totalExamples = 2147;
   const percent = value => Number.isFinite(value) ? `${(value * 100).toLocaleString("fr-FR", { maximumFractionDigits: 2 })} %` : "—";
-  const valueAt = (object, path) => path.split(".").reduce((item, key) => item?.[key], object);
+  const count = value => Number.isFinite(value) ? value.toLocaleString("fr-FR") : "—";
 
   function makeRun(manifest, metrics, source = "") {
-    const gen = manifest?.generation || {};
     const evaluation = metrics?.evaluation || {};
     const accuracy = evaluation.accuracy || {};
     const modelPath = manifest?.model?.path || metrics?.source?.generation?.model_path || "Modèle inconnu";
     return {
       label: source || manifest?.artifact?.created_at_utc || metrics?.artifact?.created_at_utc || "Run importé",
-      createdAt: manifest?.artifact?.created_at_utc || metrics?.artifact?.created_at_utc,
       model: modelPath.split(/[\\/]/).filter(Boolean).pop(),
       mode: manifest?.configuration?.mode || metrics?.configuration?.mode || "—",
-      environment: manifest?.environment?.hostname || metrics?.environment?.hostname || "—",
-      groupedBatches: manifest?.configuration?.group_batches_by_length,
-      paddingRate: gen.tokens?.padding?.rate,
+      fewShotK: manifest?.configuration?.few_shot_k ?? metrics?.configuration?.few_shot_k,
+      examples: evaluation.examples,
       executionAccuracy: accuracy.execution?.rate,
+      correctCount: accuracy.execution?.correct_count,
+      executionSuccess: accuracy.execution?.success_rate,
+      successCount: accuracy.execution?.success_count,
       exactMatch: accuracy.exact_match?.rate,
+      exactCount: accuracy.exact_match?.count,
       syntaxValid: accuracy.syntax?.valid_rate,
-      generationEps: gen.throughput?.examples_per_second,
-      generationDuration: gen.duration_seconds ? gen.duration_seconds / 60 : undefined,
-      evaluationDuration: evaluation.duration_seconds,
-      gpuPeak: manifest?.gpu?.vram_mib?.peak,
-      energy: manifest?.gpu?.energy_wh?.total,
-      truncationRate: gen.reliability?.truncation_rate,
+      validCount: accuracy.syntax?.valid_count,
+      invalidCount: accuracy.syntax?.invalid_count,
+      executionErrors: evaluation.errors?.execution_error_count,
+      timeouts: evaluation.errors?.timeout_count,
+      emptyPredictions: evaluation.errors?.empty_prediction_count,
     };
   }
 
+  const metricRows = [
+    { label: "Execution accuracy", help: "Part des requêtes dont le résultat SQLite est identique à celui du SQL de référence.", value: run => percent(run.executionAccuracy), detail: run => `${count(run.correctCount)} / ${count(run.examples || totalExamples)}`, best: "max", key: "executionAccuracy" },
+    { label: "Exact match", help: "Part des requêtes dont le SQL prédit correspond exactement au SQL de référence après normalisation des espaces et de la casse.", value: run => percent(run.exactMatch), detail: run => `${count(run.exactCount)} / ${count(run.examples || totalExamples)}`, best: "max", key: "exactMatch" },
+    { label: "SQL exécutable", help: "Part des prédictions qui s’exécutent sans erreur dans SQLite, quel que soit leur résultat.", value: run => percent(run.executionSuccess), detail: run => `${count(run.successCount)} / ${count(run.examples || totalExamples)}`, best: "max", key: "executionSuccess" },
+    { label: "SQL syntaxiquement valide", help: "Part des requêtes acceptées par le parseur SQLite ; une requête peut être valide mais échouer à l’exécution si elle référence un élément inexistant.", value: run => percent(run.syntaxValid), detail: run => `${count(run.validCount)} / ${count(run.examples || totalExamples)}`, best: "max", key: "syntaxValid" },
+    { label: "Erreurs d’exécution", help: "Nombre de prédictions que SQLite n’a pas pu exécuter : erreurs de schéma, de type, de requête ou timeout inclus.", value: run => count(run.executionErrors), best: "min", key: "executionErrors" },
+    { label: "SQL invalides", help: "Nombre de prédictions rejetées pour une erreur de syntaxe SQL.", value: run => count(run.invalidCount), best: "min", key: "invalidCount" },
+    { label: "Timeouts", help: "Nombre de requêtes interrompues après avoir dépassé la limite d’exécution de 5 secondes.", value: run => count(run.timeouts), best: "min", key: "timeouts" },
+    { label: "Prédictions vides", help: "Nombre de sorties sans requête SQL exploitable après nettoyage de la réponse du modèle.", value: run => count(run.emptyPredictions), best: "min", key: "emptyPredictions" },
+  ];
+
   function render() {
-    const filtered = state.runs.filter(run => Object.values(run).join(" ").toLowerCase().includes(state.query));
-    const { key, direction } = state.sort;
-    filtered.sort((a, b) => {
-      const av = a[key], bv = b[key];
-      if (av == null) return 1; if (bv == null) return -1;
-      return (typeof av === "number" ? av - bv : String(av).localeCompare(String(bv))) * (direction === "asc" ? 1 : -1);
-    });
-    const bestAccuracy = Math.max(...filtered.map(run => run.executionAccuracy ?? -Infinity));
-    body.innerHTML = filtered.map(run => `<tr>
-      <td><span class="run-name">${escapeHtml(run.label)}</span><span class="subtext">${escapeHtml(run.createdAt || "date inconnue")}</span></td>
-      <td>${escapeHtml(run.model || "—")}</td><td>${escapeHtml(run.mode)}</td>
-      <td>${run.groupedBatches == null ? "<span class=\"na\">—</span>" : run.groupedBatches ? "Oui" : "Non"}</td>
-      <td class="metric">${percent(run.paddingRate)}</td>
-      <td class="metric ${run.executionAccuracy === bestAccuracy ? "best" : ""}">${percent(run.executionAccuracy)}</td>
-      <td class="metric">${percent(run.exactMatch)}</td><td class="metric">${percent(run.syntaxValid)}</td>
-      <td class="metric">${number(run.generationEps)}</td><td class="metric">${number(run.generationDuration)}</td>
-      <td class="metric">${number(run.evaluationDuration)}</td><td class="metric">${number(run.gpuPeak, 0)}</td>
-      <td class="metric">${number(run.energy)}</td><td class="metric">${percent(run.truncationRate)}</td>
-    </tr>`).join("");
-    empty.hidden = filtered.length > 0;
-    const accuracies = filtered.map(run => run.executionAccuracy).filter(Number.isFinite);
-    summary.innerHTML = filtered.length ? [
-      ["Runs chargés", filtered.length],
+    const runs = state.runs;
+    head.innerHTML = `<tr><th>Métrique SQL</th>${runs.map(run => {
+      const shots = Number.isFinite(run.fewShotK) ? run.fewShotK : run.mode === "zero-shot" ? 0 : "—";
+      return `<th class="model-head"><strong>${escapeHtml(run.model)}</strong><div class="run-meta"><span class="run-card"><small>Mode</small>${escapeHtml(run.mode)}</span><span class="run-card"><small>Shots</small>${shots}</span></div></th>`;
+    }).join("")}</tr>`;
+    body.innerHTML = metricRows.map(metric => {
+      const values = runs.map(run => run[metric.key]).filter(Number.isFinite);
+      const best = values.length ? (metric.best === "min" ? Math.min(...values) : Math.max(...values)) : undefined;
+      return `<tr><td><span class="metric-name">${metric.label}<button class="metric-help" type="button" aria-label="Explication : ${escapeHtml(metric.help)}" data-tooltip="${escapeHtml(metric.help)}">?</button></span></td>${runs.map(run => `<td class="${run[metric.key] === best ? "best" : ""}">${metric.value(run)}${metric.detail ? `<span class="cell-detail">${metric.detail(run)}</span>` : ""}</td>`).join("")}</tr>`;
+    }).join("");
+    empty.hidden = runs.length > 0;
+    const accuracies = runs.map(run => run.executionAccuracy).filter(Number.isFinite);
+    summary.innerHTML = runs.length ? [
+      ["Runs comparés", runs.length],
       ["Meilleure execution accuracy", accuracies.length ? percent(Math.max(...accuracies)) : "—"],
-      ["Modèles", new Set(filtered.map(run => run.model)).size]
+      ["Jeu de test", `${count(runs[0]?.examples || totalExamples)} requêtes`]
     ].map(([label, value]) => `<div class="stat"><span>${label}</span><strong>${value}</strong></div>`).join("") : "";
   }
+
   function escapeHtml(value) { const element = document.createElement("span"); element.textContent = value ?? "—"; return element.innerHTML; }
   function importFiles(files) {
     const pairs = new Map();
@@ -68,16 +72,13 @@
       const key = file.webkitRelativePath ? file.webkitRelativePath.replace(/[/\\][^/\\]+$/, "") : importId;
       const entry = pairs.get(key) || { label: key };
       const reader = new FileReader();
-      reader.onload = () => { try { entry[file.name === "metrics.json" ? "metrics" : "manifest"] = JSON.parse(reader.result); pairs.set(key, entry); refreshImports(pairs); } catch { alert(`JSON invalide : ${file.name}`); } };
+      reader.onload = () => { try { entry[file.name === "metrics.json" ? "metrics" : "manifest"] = JSON.parse(reader.result); pairs.set(key, entry); state.runs = [...pairs.values()].map(item => makeRun(item.manifest, item.metrics, item.label)); render(); } catch { alert(`JSON invalide : ${file.name}`); } };
       reader.readAsText(file);
     });
   }
-  function refreshImports(pairs) { state.runs = [...pairs.values()].filter(item => item.manifest || item.metrics).map(item => makeRun(item.manifest, item.metrics, item.label)); render(); }
   document.querySelector("#file-picker").addEventListener("change", event => importFiles(event.target.files));
   document.querySelector("#folder-picker").addEventListener("change", event => importFiles(event.target.files));
   document.querySelector("#clear-button").addEventListener("click", () => { state.runs = []; render(); });
-  document.querySelector("#search").addEventListener("input", event => { state.query = event.target.value.toLowerCase(); render(); });
-  document.querySelectorAll("th[data-sort]").forEach(header => header.addEventListener("click", () => { const key = header.dataset.sort; state.sort.direction = state.sort.key === key && state.sort.direction === "desc" ? "asc" : "desc"; state.sort.key = key; render(); }));
   const dropZone = document.querySelector("#drop-zone");
   ["dragenter", "dragover"].forEach(type => dropZone.addEventListener(type, event => { event.preventDefault(); dropZone.classList.add("is-over"); }));
   ["dragleave", "drop"].forEach(type => dropZone.addEventListener(type, event => { event.preventDefault(); dropZone.classList.remove("is-over"); }));

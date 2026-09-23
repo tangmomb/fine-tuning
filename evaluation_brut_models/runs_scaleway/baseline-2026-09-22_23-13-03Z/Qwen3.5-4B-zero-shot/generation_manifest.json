@@ -1,0 +1,100 @@
+{
+  "artifact": {
+    "type": "text_to_sql_predictions",
+    "created_at_utc": "2026-09-22_23-13-03Z",
+    "phase": "generate"
+  },
+  "model": {
+    "path": "/root/fine-tuning/models/Qwen3.5-4B",
+    "config_sha256": "ddc63e1c717afa86c865bb5e01313d89d72bb53b97ad4a8a03ba8510c0621670"
+  },
+  "configuration": {
+    "mode": "zero-shot",
+    "few_shot_k": 0,
+    "seed": 42,
+    "temperature": 0.0,
+    "max_new_tokens": 512,
+    "thinking_enabled": false,
+    "batch_size": 64,
+    "group_batches_by_length": true,
+    "save_prompts": true
+  },
+  "environment": {
+    "target": "auto",
+    "hostname": "qwen-h100-finetuning",
+    "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39"
+  },
+  "dataset": {
+    "inputs": "data/07_evaluation_dataset/03_production/test_inputs.jsonl",
+    "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
+    "examples": 2147
+  },
+  "generation": {
+    "duration_seconds": 218.23,
+    "throughput": {
+      "examples_per_second": 10.557,
+      "active_generation_output_tokens_per_second": 383.286,
+      "active_generation_total_tokens_per_second": 4885.518
+    },
+    "tokens": {
+      "input": {
+        "total": 915655,
+        "mean": 426.48,
+        "p95": 1211
+      },
+      "output": {
+        "total": 77952,
+        "mean": 36.31,
+        "p95": 75,
+        "max": 512
+      },
+      "padding": {
+        "tokens": 27693,
+        "rate": 0.0294
+      }
+    },
+    "latency_ms": {
+      "mean": 5896.38,
+      "p95": 25855.63
+    },
+    "reliability": {
+      "truncated_generation_count": 1,
+      "truncation_rate": 0.0005,
+      "failed_generations": 0,
+      "oom_count": 0
+    }
+  },
+  "gpu": {
+    "utilization_percent": {
+      "mean": 72.93,
+      "peak": 100.0
+    },
+    "energy_wh": {
+      "total": 14.802529,
+      "per_example": 0.006895
+    },
+    "vram_mib": {
+      "mean": 15697.9,
+      "peak": 24255.82
+    },
+    "vram_reserved_mib": {
+      "mean": 43893.76,
+      "peak": 79598.0
+    },
+    "device_vram_used_mib": {
+      "mean": 39828.95,
+      "peak": 80291.0,
+      "total": 81559.0
+    },
+    "compute_processes": {
+      "at_start": [],
+      "at_end": [
+        {
+          "pid": 17990,
+          "name": "/root/fine-tuning/.venv/bin/python",
+          "vram_mib": 31388.0
+        }
+      ]
+    }
+  }
+}
