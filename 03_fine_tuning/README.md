@@ -64,6 +64,11 @@ uniquement les poids LoRA et doivent être chargés avec le checkpoint de base
 Qwen correspondant ; ce ne sont pas des copies fusionnées de plusieurs dizaines
 de Go des modèles de base.
 
+Après avoir généré les métriques de validation des trois époques, le script les
+affiche dans le terminal. Il demande ensuite si le test final doit être lancé,
+et, en cas de réponse positive, quelle époque utiliser. Le test couvre les 2 147
+cas isolés et écrit `eval/test_metrics.json` et `eval/test_predictions.jsonl`.
+
 Pour éviter la question interactive (par exemple dans `tmux`), indiquez directement les modèles :
 
 ```bash

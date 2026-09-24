@@ -31,6 +31,9 @@ VALIDATION_TRANSLATIONS = ROOT / "01_data" / "04_merge_translations" / "03_produ
 VALIDATION_CHECKS = ROOT / "01_data" / "05_quality_control" / "03_production" / "01_deterministic_checks" / "dev_deterministic_checks.jsonl"
 VALIDATION_JUDGMENTS = ROOT / "01_data" / "05_quality_control" / "03_production" / "09_judgments" / "sol_judgments.jsonl"
 VALIDATION_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "database"
+TEST_INPUTS = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_inputs.jsonl"
+TEST_GOLD = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_gold.jsonl"
+TEST_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
 DEFAULT_MODELS = ("Qwen3.5-0.8B", "Qwen3.5-2B", "Qwen3.5-4B", "Qwen3.5-9B")
 
 
@@ -157,14 +160,15 @@ def validation_execution_rows(validation_rows: list[dict[str, Any]]) -> list[dic
     return rows
 
 
-def evaluate_validation_execution(model: Any, processor: Any, validation_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Génère et score le SQL sur le split validation sans jamais consulter le split test."""
+def evaluate_execution(
+    model: Any, processor: Any, records: list[dict[str, Any]], databases: Path
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Génère et score le SQL pour un split dont les SQL gold et bases sont disponibles."""
     assets_dir = str(ROOT / "02_evaluation_brut_models" / "assets")
     if assets_dir not in sys.path:
         sys.path.insert(0, assets_dir)
     evaluator = importlib.import_module("run_evaluation")
-    evaluator.DATABASES = VALIDATION_DATABASES
-    records = validation_execution_rows(validation_rows)
+    evaluator.DATABASES = databases
     device = next(model.parameters()).device
     processor.tokenizer.padding_side = "left"
     predictions: list[dict[str, Any]] = []
@@ -193,6 +197,53 @@ def evaluate_validation_execution(model: Any, processor: Any, validation_rows: l
             model.train()
     gold = [{key: row[key] for key in ("id", "db_id", "sql")} for row in records]
     return evaluator.score(predictions, gold)
+
+
+def evaluate_validation_execution(model: Any, processor: Any, validation_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Génère et score le SQL sur le split validation sans consulter le split test."""
+    return evaluate_execution(model, processor, validation_execution_rows(validation_rows), VALIDATION_DATABASES)
+
+
+def test_execution_rows() -> list[dict[str, Any]]:
+    """Associe les prompts test aux SQL gold et aux bases SQLite de test."""
+    inputs = read_jsonl(TEST_INPUTS)
+    gold = {row["id"]: row for row in read_jsonl(TEST_GOLD)}
+    if set(row["id"] for row in inputs) != set(gold):
+        raise ValueError("Les IDs de test_inputs et test_gold ne correspondent pas.")
+    return [
+        {"id": row["id"], "db_id": gold[row["id"]]["db_id"], "sql": gold[row["id"]]["sql"], "messages": row["messages"]}
+        for row in inputs
+    ]
+
+
+def evaluate_test_execution(model: Any, processor: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    return evaluate_execution(model, processor, test_execution_rows(), TEST_DATABASES)
+
+
+def choose_checkpoint_for_test(
+    validation_reports: list[dict[str, Any]], execution_reports: list[dict[str, Any]]
+) -> int | None:
+    """Affiche les métriques dev et demande quel adaptateur, s'il y en a un, tester."""
+    loss_by_epoch = {report["epoch"]: report["eval_loss"] for report in validation_reports}
+    execution_by_epoch = {report["epoch"]: report for report in execution_reports}
+    print("\nRésultats de validation par checkpoint :")
+    for epoch in sorted(loss_by_epoch):
+        execution = execution_by_epoch.get(epoch, {})
+        accuracy = execution.get("execution_accuracy")
+        accuracy_text = "indisponible" if accuracy is None else f"{accuracy * 100:.2f}%"
+        print(f"  epoch-{epoch} : eval_loss={loss_by_epoch[epoch]:.4f} | execution_accuracy={accuracy_text}")
+    choices = "/".join(str(epoch) for epoch in sorted(loss_by_epoch))
+    answer = input(f"\nTester un checkpoint sur les 2 147 exemples test ? [o/N] : ").strip().lower()
+    if answer not in {"o", "oui", "y", "yes"}:
+        return None
+    while True:
+        selected = input(f"Époque à tester [{choices}] : ").strip()
+        if selected.isdigit() and int(selected) in loss_by_epoch:
+            epoch = int(selected)
+            break
+        print(f"Choix invalide : indique une époque parmi {choices}.")
+    confirmation = input(f"Lancer le test final avec epoch-{epoch} ? [o/N] : ").strip().lower()
+    return epoch if confirmation in {"o", "oui", "y", "yes"} else None
 
 
 class RunArtifactCallback(TrainerCallback):
@@ -367,6 +418,7 @@ def train_model(
         model.set_adapter(adapter_name)
         predictions, execution_metrics = evaluate_validation_execution(model, processor, validation_rows)
         execution_report = {
+            "epoch": epoch,
             "checkpoint": f"checkpoints/epoch-{epoch}",
             "validation_examples": len(validation_rows),
             **execution_metrics,
@@ -375,6 +427,18 @@ def train_model(
         write_json(eval_dir / "val_metrics.json", execution_report)
         write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
         execution_reports.append(execution_report)
+    selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports) if reports else None
+    if selected_test_epoch is not None:
+        model.set_adapter(f"epoch-{selected_test_epoch}")
+        print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
+        test_predictions, test_metrics = evaluate_test_execution(model, processor)
+        write_json(run_dir / "eval" / "test_metrics.json", {
+            "checkpoint": f"checkpoints/epoch-{selected_test_epoch}",
+            "test_examples": len(test_predictions),
+            **test_metrics,
+        })
+        write_jsonl(run_dir / "eval" / "test_predictions.jsonl", test_predictions)
+        print("Évaluation test terminée : eval/test_metrics.json et eval/test_predictions.jsonl")
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
@@ -388,6 +452,7 @@ def train_model(
         "lowest_eval_loss_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
         "lowest_eval_loss": (best["eval_loss"] if best else None),
         "validation_execution_by_epoch": execution_reports,
+        "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
     })
     print(f"Run terminé : {run_dir}")
     if best:
