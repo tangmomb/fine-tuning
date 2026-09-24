@@ -11,6 +11,7 @@ import json
 import math
 import random
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +20,7 @@ from peft import LoraConfig, TaskType, get_peft_model
 from safetensors import safe_open
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
-from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainingArguments, set_seed
+from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
 
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
@@ -78,7 +79,9 @@ def parse_args() -> argparse.Namespace:
                         help="Modèle(s) à entraîner. Sans cette option, un choix interactif est proposé.")
     parser.add_argument("--dataset", type=Path, default=DATASET)
     parser.add_argument("--validation-dataset", type=Path, default=VALIDATION_DATASET)
-    parser.add_argument("--output-root", type=Path, default=ROOT / "03_fine_tuning" / "artifacts" / "adapters")
+    parser.add_argument("--output-root", type=Path, default=ROOT / "03_fine_tuning" / "artifacts")
+    parser.add_argument("--run-name", type=str,
+                        help="Nom du dossier de run. Par défaut : qwen3.5-<taille>-<date_heure_utc>.")
     parser.add_argument("--max-seq-length", type=int, default=4096)
     parser.add_argument("--per-device-batch-size", type=int, default=2)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=32,
@@ -90,6 +93,77 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume-from-checkpoint", type=str)
     return parser.parse_args()
+
+
+def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
+    """Crée un dossier de run autonome et horodaté, sans écraser un run existant."""
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    default_name = f"{model_name.lower()}-{timestamp}"
+    run_name = args.run_name or default_name
+    if len(args.models or ()) > 1 and args.run_name:
+        run_name = f"{args.run_name}-{model_name.lower()}"
+    run_dir = args.output_root / run_name
+    if run_dir.exists():
+        raise FileExistsError(f"Le dossier de run existe déjà : {run_dir}. Choisissez --run-name différent.")
+    for directory in ("checkpoints", "tokenizer", "training", "eval", "logs"):
+        (run_dir / directory).mkdir(parents=True, exist_ok=False)
+    return run_dir
+
+
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+class RunArtifactCallback(TrainerCallback):
+    """Archive l'adaptateur et les métriques à chaque validation d'époque."""
+
+    def __init__(self, run_dir: Path, validation_examples: int) -> None:
+        self.run_dir = run_dir
+        self.validation_examples = validation_examples
+
+    def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
+                    metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        model = kwargs["model"]
+        epoch = round(float(state.epoch or 0))
+        checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
+        model.save_pretrained(checkpoint_dir, safe_serialization=True)
+        report = {
+            "epoch": epoch,
+            "global_step": state.global_step,
+            "validation_examples": self.validation_examples,
+            "selection_metric": "eval_loss",
+            **(metrics or {}),
+        }
+        write_json(self.run_dir / "eval" / f"epoch-{epoch}-validation.json", report)
+        return control
+
+
+class JsonlLogCallback(TrainerCallback):
+    """Écrit les métriques brutes du Trainer au fil de l'eau, y compris en cas d'arrêt."""
+
+    def __init__(self, log_path: Path) -> None:
+        self.log_path = log_path
+
+    def on_log(self, args: TrainingArguments, state: Any, control: Any,
+               logs: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        record = {"step": state.global_step, "epoch": state.epoch, **(logs or {})}
+        with self.log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return control
+
+
+def write_run_readme(run_dir: Path, model_name: str) -> None:
+    (run_dir / "README.md").write_text(
+        f"# Fine-tuning LoRA — {model_name}\n\n"
+        "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
+        "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
+        "- `training/` : arguments et configuration reproductible du run.\n"
+        "- `eval/epoch-N-validation.json` : loss de validation servant à sélectionner l'époque.\n"
+        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : à produire uniquement après "
+        "sélection du checkpoint, via l'évaluation finale sur le split test.\n"
+        "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
+        encoding="utf-8",
+    )
 
 
 def choose_models() -> list[str]:
@@ -141,7 +215,8 @@ def train_model(
     model_path = ROOT / "models" / model_name
     if not model_path.is_dir():
         raise FileNotFoundError(f"Checkpoint absent : {model_path}")
-    output_dir = args.output_root / model_name
+    run_dir = make_run_directory(model_name, args)
+    write_run_readme(run_dir, model_name)
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
     tokenizer = processor.tokenizer
     if tokenizer.pad_token_id is None:
@@ -166,14 +241,16 @@ def train_model(
     )
     warmup_steps = math.ceil(args.warmup_ratio * updates_per_epoch * args.epochs)
     training_args = TrainingArguments(
-        output_dir=str(output_dir), num_train_epochs=args.epochs,
+        # Les artefacts utiles sont archivés par RunArtifactCallback. Le
+        # Trainer ne crée donc pas ses checkpoints internes redondants.
+        output_dir=str(run_dir / "training" / "trainer_state"), num_train_epochs=args.epochs,
         per_device_train_batch_size=args.per_device_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
         learning_rate=args.learning_rate, warmup_steps=warmup_steps,
         lr_scheduler_type=args.lr_scheduler, optim="adamw_torch_fused", max_grad_norm=1.0,
-        bf16=True, tf32=True, logging_steps=10, save_strategy="epoch", save_total_limit=2,
+        bf16=True, tf32=True, logging_steps=10, save_strategy="no",
         eval_strategy="epoch", per_device_eval_batch_size=args.per_device_batch_size,
-        load_best_model_at_end=True, metric_for_best_model="eval_loss", greater_is_better=False,
+        load_best_model_at_end=False,
         # Regroupe des séquences de longueurs proches : moins de padding et
         # des pics de VRAM plus prévisibles pour les schémas SQL les plus longs.
         train_sampling_strategy="group_by_length",
@@ -184,11 +261,18 @@ def train_model(
         train_dataset=SqlDataset(rows, processor, args.max_seq_length),
         eval_dataset=SqlDataset(validation_rows, processor, args.max_seq_length),
         data_collator=SqlCollator(tokenizer.pad_token_id),
+        callbacks=[
+            RunArtifactCallback(run_dir, len(validation_rows)),
+            JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
+        ],
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
-    trainer.save_model()
-    processor.save_pretrained(output_dir)
-    (output_dir / "run_config.json").write_text(json.dumps({
+    processor.save_pretrained(run_dir / "tokenizer")
+    torch.save(training_args, run_dir / "training" / "training_args.bin")
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*-validation.json"))
+    reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
+    best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
+    write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
         "bf16": True, "restored_fp32_base_parameters": fp32_parameters,
@@ -197,7 +281,13 @@ def train_model(
         "effective_batch_size": args.per_device_batch_size * args.gradient_accumulation_steps,
         "max_seq_length": args.max_seq_length, "optimizer": "AdamW", "lr_scheduler": args.lr_scheduler,
         "gradient_clipping": 1.0,
-    }, ensure_ascii=False, indent=2), encoding="utf-8")
+        "run_directory": str(run_dir),
+        "best_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
+        "best_eval_loss": (best["eval_loss"] if best else None),
+    })
+    print(f"Run terminé : {run_dir}")
+    if best:
+        print(f"Meilleur checkpoint : checkpoints/epoch-{best['epoch']} (eval_loss={best['eval_loss']:.4f})")
 
 
 def main() -> None:

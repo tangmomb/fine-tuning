@@ -11,7 +11,7 @@ Les chiffres de `02_evaluation_brut_models/interface/index.html` placent Qwen 9B
 | Précision | BF16 (TF32 activé pour les multiplications) ; les rares paramètres de stabilité publiés en FP32 des 0.8B/2B restent en FP32 |
 | LoRA | `r=16`, `alpha=32`, `dropout=0.05`, `target_modules=all-linear` |
 | Entraînement | 3 epochs, AdamW fused, LR `1e-4`, warmup `0.03`, cosine |
-| Validation | à la fin de chaque époque ; le checkpoint avec la plus faible `eval_loss` est conservé |
+| Validation | à la fin de chaque époque ; un adaptateur est archivé pour chaque époque et le plus faible `eval_loss` est indiqué comme meilleur checkpoint |
 | Stabilité | gradient clipping `1.0` |
 | Séquence | 4 096 tokens |
 | Batch effectif | 64 = micro-batch 2 × accumulation 32, mono-H100 |
@@ -32,7 +32,25 @@ Comme la H100 a déjà exécuté `02_evaluation_brut_models`, PyTorch CUDA, Tran
 python -m pip install -r 03_fine_tuning/requirements.txt
 ```
 
-Chaque adaptateur entraîné est écrit dans `03_fine_tuning/artifacts/adapters/<modèle>/`. Récupérez le ou les dossiers entiers : ils contiennent les poids LoRA (`adapter_model.safetensors`), leur configuration, le tokenizer et `run_config.json`. Ils doivent ensuite être chargés avec les checkpoints de base Qwen correspondants ; ce ne sont pas des copies fusionnées de plusieurs dizaines de Go des modèles de base.
+Chaque entraînement crée un dossier autonome horodaté, par exemple
+`03_fine_tuning/artifacts/qwen3.5-4b-20260924-211500Z/` :
+
+```text
+artifacts/qwen3.5-4b-<date_heure>/
+├── checkpoints/epoch-1/   # adapter_config.json + adapter_model.safetensors
+├── checkpoints/epoch-2/
+├── checkpoints/epoch-3/
+├── tokenizer/             # tokenizer et template de chat
+├── training/              # training_args.bin + run_config.json
+├── eval/                  # une métrique de validation par époque
+├── logs/training_log.jsonl
+└── README.md
+```
+
+Le chemin du meilleur adaptateur est écrit dans `training/run_config.json` sous
+`best_checkpoint`. Les artefacts contiennent uniquement les poids LoRA et doivent
+être chargés avec le checkpoint de base Qwen correspondant ; ce ne sont pas des
+copies fusionnées de plusieurs dizaines de Go des modèles de base.
 
 Pour éviter la question interactive (par exemple dans `tmux`), indiquez directement les modèles :
 
