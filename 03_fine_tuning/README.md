@@ -11,7 +11,7 @@ Les chiffres de `02_evaluation_brut_models/interface/index.html` placent Qwen 9B
 | Précision | BF16 (TF32 activé pour les multiplications) ; les rares paramètres de stabilité publiés en FP32 des 0.8B/2B restent en FP32 |
 | LoRA | `r=16`, `alpha=32`, `dropout=0.05`, `target_modules=all-linear` |
 | Entraînement | 3 epochs, AdamW fused, LR `1e-4`, warmup `0.03`, cosine |
-| Validation | à la fin de chaque époque : `eval_loss` et un adaptateur archivé ; après sélection, le meilleur adaptateur est inféré et scoré sur les 1 034 cas dev |
+| Validation | à la fin de chaque époque : `eval_loss`, adaptateur archivé, puis inférence/exécution SQL sur les 1 034 cas dev |
 | Stabilité | gradient clipping `1.0` |
 | Séquence | 4 096 tokens |
 | Batch effectif | 64 = micro-batch 2 × accumulation 32, mono-H100 |
@@ -43,20 +43,26 @@ artifacts/qwen3.5-4b-<date_heure>/
 ├── tokenizer/             # tokenizer et template de chat
 ├── training/              # training_args.bin + run_config.json
 ├── eval/epoch-1-validation.json
+├── eval/epoch-1-val_metrics.json
+├── eval/epoch-1-val_predictions.jsonl
 ├── eval/epoch-2-validation.json
+├── eval/epoch-2-val_metrics.json
+├── eval/epoch-2-val_predictions.jsonl
 ├── eval/epoch-3-validation.json
-├── eval/val_metrics.json  # inférence du meilleur checkpoint sur le split validation
-├── eval/val_predictions.jsonl
+├── eval/epoch-3-val_metrics.json
+├── eval/epoch-3-val_predictions.jsonl
 ├── eval/test_metrics.json # évaluation finale, après sélection du meilleur checkpoint
 ├── eval/test_predictions.jsonl
 ├── logs/training_log.jsonl
 └── README.md
 ```
 
-Le chemin du meilleur adaptateur est écrit dans `training/run_config.json` sous
-`best_checkpoint`. Les artefacts contiennent uniquement les poids LoRA et doivent
-être chargés avec le checkpoint de base Qwen correspondant ; ce ne sont pas des
-copies fusionnées de plusieurs dizaines de Go des modèles de base.
+`training/run_config.json` indique le checkpoint avec la plus faible `eval_loss`
+et les métriques d'exécution de validation de chaque époque. Le choix du
+checkpoint à tester doit comparer ces deux signaux. Les artefacts contiennent
+uniquement les poids LoRA et doivent être chargés avec le checkpoint de base
+Qwen correspondant ; ce ne sont pas des copies fusionnées de plusieurs dizaines
+de Go des modèles de base.
 
 Pour éviter la question interactive (par exemple dans `tmux`), indiquez directement les modèles :
 
