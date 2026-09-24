@@ -134,7 +134,9 @@ class RunArtifactCallback(TrainerCallback):
             "selection_metric": "eval_loss",
             **(metrics or {}),
         }
-        write_json(self.run_dir / "eval" / f"epoch-{epoch}-validation.json", report)
+        eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
+        eval_dir.mkdir(parents=True, exist_ok=True)
+        write_json(eval_dir / "validation.json", report)
         return control
 
 
@@ -158,9 +160,9 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
         "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
         "- `training/` : arguments et configuration reproductible du run.\n"
-        "- `eval/epoch-N-validation.json` : loss de validation servant à sélectionner l'époque.\n"
-        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : à produire uniquement après "
-        "sélection du checkpoint, via l'évaluation finale sur le split test.\n"
+        "- `eval/epoch-N/validation.json` : loss de validation servant à sélectionner l'époque.\n"
+        "- `eval/epoch-N/test_metrics.json` et `eval/epoch-N/test_predictions.jsonl` : à produire uniquement "
+        "pour le checkpoint sélectionné, via l'évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
         encoding="utf-8",
     )
@@ -269,7 +271,7 @@ def train_model(
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     processor.save_pretrained(run_dir / "tokenizer")
     torch.save(training_args, run_dir / "training" / "training_args.bin")
-    validation_reports = sorted((run_dir / "eval").glob("epoch-*-validation.json"))
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*/validation.json"))
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
     best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
     write_json(run_dir / "training" / "run_config.json", {

@@ -42,7 +42,7 @@ artifacts/qwen3.5-4b-<date_heure>/
 ├── checkpoints/epoch-3/
 ├── tokenizer/             # tokenizer et template de chat
 ├── training/              # training_args.bin + run_config.json
-├── eval/                  # une métrique de validation par époque
+├── eval/epoch-1/          # validation, puis test du checkpoint epoch-1 si sélectionné
 ├── logs/training_log.jsonl
 └── README.md
 ```
