@@ -198,10 +198,9 @@ def evaluate_validation_execution(model: Any, processor: Any, validation_rows: l
 class RunArtifactCallback(TrainerCallback):
     """Archive l'adaptateur et les métriques à chaque validation d'époque."""
 
-    def __init__(self, run_dir: Path, validation_rows: list[dict[str, Any]], processor: Any) -> None:
+    def __init__(self, run_dir: Path, validation_examples: int) -> None:
         self.run_dir = run_dir
-        self.validation_rows = validation_rows
-        self.processor = processor
+        self.validation_examples = validation_examples
 
     def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
                     metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
@@ -209,18 +208,14 @@ class RunArtifactCallback(TrainerCallback):
         epoch = round(float(state.epoch or 0))
         checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
         model.save_pretrained(checkpoint_dir, safe_serialization=True)
-        predictions, execution_metrics = evaluate_validation_execution(model, self.processor, self.validation_rows)
         report = {
             "epoch": epoch,
             "global_step": state.global_step,
-            "validation_examples": len(self.validation_rows),
-            "trainer": metrics or {},
-            "execution": execution_metrics,
+            "validation_examples": self.validation_examples,
+            "selection_metric": "eval_loss",
+            **(metrics or {}),
         }
-        eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
-        eval_dir.mkdir(parents=True, exist_ok=True)
-        write_json(eval_dir / "val_metrics.json", report)
-        write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
+        write_json(self.run_dir / "eval" / f"epoch-{epoch}-validation.json", report)
         return control
 
 
@@ -244,10 +239,10 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
         "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
         "- `training/` : arguments et configuration reproductible du run.\n"
-        "- `eval/epoch-N/val_metrics.json` et `val_predictions.jsonl` : génération et "
-        "exécution SQL sur la validation de l'époque N.\n"
-        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : à produire uniquement après "
-        "sélection du meilleur checkpoint, via l'évaluation finale sur le split test.\n"
+        "- `eval/epoch-N-validation.json` : loss de validation du Trainer pour l'époque N.\n"
+        "- `eval/val_metrics.json` et `eval/val_predictions.jsonl` : génération et exécution SQL du "
+        "meilleur checkpoint sur le split validation.\n"
+        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
         encoding="utf-8",
     )
@@ -349,16 +344,27 @@ def train_model(
         eval_dataset=SqlDataset(validation_rows, processor, args.max_seq_length),
         data_collator=SqlCollator(tokenizer.pad_token_id),
         callbacks=[
-            RunArtifactCallback(run_dir, validation_rows, processor),
+            RunArtifactCallback(run_dir, len(validation_rows)),
             JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
         ],
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     processor.save_pretrained(run_dir / "tokenizer")
     torch.save(training_args, run_dir / "training" / "training_args.bin")
-    validation_reports = sorted((run_dir / "eval").glob("epoch-*/val_metrics.json"))
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*-validation.json"))
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
-    best = min(reports, key=lambda report: report["trainer"]["eval_loss"]) if reports else None
+    best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
+    if best:
+        selected_checkpoint = run_dir / "checkpoints" / f"epoch-{best['epoch']}"
+        model.load_adapter(str(selected_checkpoint), adapter_name="selected")
+        model.set_adapter("selected")
+        predictions, validation_metrics = evaluate_validation_execution(model, processor, validation_rows)
+        write_json(run_dir / "eval" / "val_metrics.json", {
+            "checkpoint": f"checkpoints/epoch-{best['epoch']}",
+            "validation_examples": len(validation_rows),
+            **validation_metrics,
+        })
+        write_jsonl(run_dir / "eval" / "val_predictions.jsonl", predictions)
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
@@ -370,11 +376,11 @@ def train_model(
         "gradient_clipping": 1.0,
         "run_directory": str(run_dir),
         "best_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
-        "best_eval_loss": (best["trainer"]["eval_loss"] if best else None),
+        "best_eval_loss": (best["eval_loss"] if best else None),
     })
     print(f"Run terminé : {run_dir}")
     if best:
-        print(f"Meilleur checkpoint : checkpoints/epoch-{best['epoch']} (eval_loss={best['trainer']['eval_loss']:.4f})")
+        print(f"Meilleur checkpoint : checkpoints/epoch-{best['epoch']} (eval_loss={best['eval_loss']:.4f})")
 
 
 def main() -> None:
