@@ -174,6 +174,9 @@ def train_model(
         bf16=True, tf32=True, logging_steps=10, save_strategy="epoch", save_total_limit=2,
         eval_strategy="epoch", per_device_eval_batch_size=args.per_device_batch_size,
         load_best_model_at_end=True, metric_for_best_model="eval_loss", greater_is_better=False,
+        # Regroupe des séquences de longueurs proches : moins de padding et
+        # des pics de VRAM plus prévisibles pour les schémas SQL les plus longs.
+        train_sampling_strategy="group_by_length",
         report_to="none", remove_unused_columns=False, seed=args.seed,
     )
     trainer = Trainer(
