@@ -7,9 +7,11 @@ réservé à 02_evaluation_brut_models afin d'éviter toute fuite de données.
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import math
 import random
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -25,6 +27,10 @@ from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainerCa
 ROOT = Path(__file__).resolve().parents[1]
 DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
 VALIDATION_DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "validation.jsonl"
+VALIDATION_TRANSLATIONS = ROOT / "01_data" / "04_merge_translations" / "03_production" / "dev.jsonl"
+VALIDATION_CHECKS = ROOT / "01_data" / "05_quality_control" / "03_production" / "01_deterministic_checks" / "dev_deterministic_checks.jsonl"
+VALIDATION_JUDGMENTS = ROOT / "01_data" / "05_quality_control" / "03_production" / "09_judgments" / "sol_judgments.jsonl"
+VALIDATION_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "database"
 DEFAULT_MODELS = ("Qwen3.5-0.8B", "Qwen3.5-2B", "Qwen3.5-4B", "Qwen3.5-9B")
 
 
@@ -114,12 +120,88 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+
+
+def validation_execution_rows(validation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Retrouve les IDs, SQL gold et bases SQLite du split dev conservé pour le SFT."""
+    translations = read_jsonl(VALIDATION_TRANSLATIONS)
+    checks = {row["id"]: row for row in read_jsonl(VALIDATION_CHECKS)}
+    judgments = {row["id"]: row for row in read_jsonl(VALIDATION_JUDGMENTS)}
+    selected: list[tuple[str, dict[str, Any]]] = []
+    for index, translation in enumerate(translations):
+        identifier = f"dev:{index}"
+        judgment = judgments.get(identifier)
+        if judgment and judgment.get("verdict") != "pass":
+            continue
+        if not judgment and checks[identifier].get("status") != "pass":
+            continue
+        selected.append((identifier, translation))
+    if len(selected) != len(validation_rows):
+        raise ValueError(
+            f"Validation SFT ({len(validation_rows)}) et métadonnées exécutables ({len(selected)}) divergent."
+        )
+    rows = []
+    for sft_row, (identifier, translation) in zip(validation_rows, selected):
+        messages = sft_row["messages"]
+        prompt = json.loads(messages[1]["content"])
+        if prompt != {"question": translation["question"], "schema": translation["schema"]}:
+            raise ValueError(f"Validation SFT non alignée avec la traduction {identifier}.")
+        rows.append({
+            "id": identifier,
+            "db_id": translation["db_id"],
+            "sql": messages[2]["content"],
+            "messages": messages[:2],
+        })
+    return rows
+
+
+def evaluate_validation_execution(model: Any, processor: Any, validation_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Génère et score le SQL sur le split validation sans jamais consulter le split test."""
+    assets_dir = str(ROOT / "02_evaluation_brut_models" / "assets")
+    if assets_dir not in sys.path:
+        sys.path.insert(0, assets_dir)
+    evaluator = importlib.import_module("run_evaluation")
+    evaluator.DATABASES = VALIDATION_DATABASES
+    records = validation_execution_rows(validation_rows)
+    device = next(model.parameters()).device
+    processor.tokenizer.padding_side = "left"
+    predictions: list[dict[str, Any]] = []
+    was_training = model.training
+    use_cache = model.config.use_cache
+    model.eval()
+    model.config.use_cache = True
+    try:
+        for start in range(0, len(records), 8):
+            batch = records[start:start + 8]
+            message_batches = [row["messages"] for row in batch]
+            inputs = processor.apply_chat_template(
+                message_batches, add_generation_prompt=True, tokenize=True, return_dict=True,
+                return_tensors="pt", enable_thinking=False, processor_kwargs={"padding": True},
+            )
+            inputs.pop("mm_token_type_ids", None)
+            inputs = {key: value.to(device) for key, value in inputs.items()}
+            with torch.inference_mode():
+                output = model.generate(**inputs, max_new_tokens=256, do_sample=False)
+            generated = output[:, inputs["input_ids"].shape[1]:]
+            for row, text in zip(batch, processor.batch_decode(generated, skip_special_tokens=True)):
+                predictions.append({"id": row["id"], "raw_output": text})
+    finally:
+        model.config.use_cache = use_cache
+        if was_training:
+            model.train()
+    gold = [{key: row[key] for key in ("id", "db_id", "sql")} for row in records]
+    return evaluator.score(predictions, gold)
+
+
 class RunArtifactCallback(TrainerCallback):
     """Archive l'adaptateur et les métriques à chaque validation d'époque."""
 
-    def __init__(self, run_dir: Path, validation_examples: int) -> None:
+    def __init__(self, run_dir: Path, validation_rows: list[dict[str, Any]], processor: Any) -> None:
         self.run_dir = run_dir
-        self.validation_examples = validation_examples
+        self.validation_rows = validation_rows
+        self.processor = processor
 
     def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
                     metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
@@ -127,16 +209,18 @@ class RunArtifactCallback(TrainerCallback):
         epoch = round(float(state.epoch or 0))
         checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
         model.save_pretrained(checkpoint_dir, safe_serialization=True)
+        predictions, execution_metrics = evaluate_validation_execution(model, self.processor, self.validation_rows)
         report = {
             "epoch": epoch,
             "global_step": state.global_step,
-            "validation_examples": self.validation_examples,
-            "selection_metric": "eval_loss",
-            **(metrics or {}),
+            "validation_examples": len(self.validation_rows),
+            "trainer": metrics or {},
+            "execution": execution_metrics,
         }
         eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
         eval_dir.mkdir(parents=True, exist_ok=True)
-        write_json(eval_dir / "validation.json", report)
+        write_json(eval_dir / "validation_metrics.json", report)
+        write_jsonl(eval_dir / "validation_predictions.jsonl", predictions)
         return control
 
 
@@ -160,7 +244,8 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
         "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
         "- `training/` : arguments et configuration reproductible du run.\n"
-        "- `eval/epoch-N/validation.json` : loss de validation servant à sélectionner l'époque.\n"
+        "- `eval/epoch-N/validation_metrics.json` et `validation_predictions.jsonl` : génération et "
+        "exécution SQL sur la validation de l'époque N.\n"
         "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : à produire uniquement après "
         "sélection du meilleur checkpoint, via l'évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
@@ -264,16 +349,16 @@ def train_model(
         eval_dataset=SqlDataset(validation_rows, processor, args.max_seq_length),
         data_collator=SqlCollator(tokenizer.pad_token_id),
         callbacks=[
-            RunArtifactCallback(run_dir, len(validation_rows)),
+            RunArtifactCallback(run_dir, validation_rows, processor),
             JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
         ],
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     processor.save_pretrained(run_dir / "tokenizer")
     torch.save(training_args, run_dir / "training" / "training_args.bin")
-    validation_reports = sorted((run_dir / "eval").glob("epoch-*/validation.json"))
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*/validation_metrics.json"))
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
-    best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
+    best = min(reports, key=lambda report: report["trainer"]["eval_loss"]) if reports else None
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
@@ -285,11 +370,11 @@ def train_model(
         "gradient_clipping": 1.0,
         "run_directory": str(run_dir),
         "best_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
-        "best_eval_loss": (best["eval_loss"] if best else None),
+        "best_eval_loss": (best["trainer"]["eval_loss"] if best else None),
     })
     print(f"Run terminé : {run_dir}")
     if best:
-        print(f"Meilleur checkpoint : checkpoints/epoch-{best['epoch']} (eval_loss={best['eval_loss']:.4f})")
+        print(f"Meilleur checkpoint : checkpoints/epoch-{best['epoch']} (eval_loss={best['trainer']['eval_loss']:.4f})")
 
 
 def main() -> None:

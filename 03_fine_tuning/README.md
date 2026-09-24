@@ -11,7 +11,7 @@ Les chiffres de `02_evaluation_brut_models/interface/index.html` placent Qwen 9B
 | Précision | BF16 (TF32 activé pour les multiplications) ; les rares paramètres de stabilité publiés en FP32 des 0.8B/2B restent en FP32 |
 | LoRA | `r=16`, `alpha=32`, `dropout=0.05`, `target_modules=all-linear` |
 | Entraînement | 3 epochs, AdamW fused, LR `1e-4`, warmup `0.03`, cosine |
-| Validation | à la fin de chaque époque ; un adaptateur est archivé pour chaque époque et le plus faible `eval_loss` est indiqué comme meilleur checkpoint |
+| Validation | à la fin de chaque époque : `eval_loss`, génération SQL sur les 1 034 cas dev et execution accuracy ; un adaptateur est archivé par époque |
 | Stabilité | gradient clipping `1.0` |
 | Séquence | 4 096 tokens |
 | Batch effectif | 64 = micro-batch 2 × accumulation 32, mono-H100 |
@@ -42,7 +42,7 @@ artifacts/qwen3.5-4b-<date_heure>/
 ├── checkpoints/epoch-3/
 ├── tokenizer/             # tokenizer et template de chat
 ├── training/              # training_args.bin + run_config.json
-├── eval/epoch-1/          # métriques de validation de l'époque 1
+├── eval/epoch-1/          # validation_metrics.json + validation_predictions.jsonl
 ├── eval/epoch-2/
 ├── eval/epoch-3/
 ├── eval/test_metrics.json # évaluation finale, après sélection du meilleur checkpoint
