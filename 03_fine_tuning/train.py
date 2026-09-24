@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
@@ -157,11 +158,18 @@ def train_model(
         target_modules="all-linear", bias="none",
     ))
     model.print_trainable_parameters()
+    # Transformers 5 utilise warmup_steps (warmup_ratio a été retiré).
+    # Le lanceur vise une H100 mono-GPU ; le batch effectif détermine donc le
+    # nombre de mises à jour par époque.
+    updates_per_epoch = math.ceil(
+        len(rows) / (args.per_device_batch_size * args.gradient_accumulation_steps)
+    )
+    warmup_steps = math.ceil(args.warmup_ratio * updates_per_epoch * args.epochs)
     training_args = TrainingArguments(
         output_dir=str(output_dir), num_train_epochs=args.epochs,
         per_device_train_batch_size=args.per_device_batch_size,
         gradient_accumulation_steps=args.gradient_accumulation_steps,
-        learning_rate=args.learning_rate, warmup_ratio=args.warmup_ratio,
+        learning_rate=args.learning_rate, warmup_steps=warmup_steps,
         lr_scheduler_type=args.lr_scheduler, optim="adamw_torch_fused", max_grad_norm=1.0,
         bf16=True, tf32=True, logging_steps=10, save_strategy="epoch", save_total_limit=2,
         eval_strategy="epoch", per_device_eval_batch_size=args.per_device_batch_size,
