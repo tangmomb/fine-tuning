@@ -11,7 +11,7 @@ Les chiffres de `02_evaluation_brut_models/interface/index.html` placent Qwen 9B
 | Précision | BF16 (TF32 activé pour les multiplications) ; les rares paramètres de stabilité publiés en FP32 des 0.8B/2B restent en FP32 |
 | LoRA | `r=16`, `alpha=32`, `dropout=0.05`, `target_modules=all-linear` |
 | Entraînement | 3 epochs, AdamW fused, LR `1e-4`, warmup `0.03`, cosine |
-| Validation | à la fin de chaque époque : `eval_loss`, adaptateur archivé, puis inférence/exécution SQL sur les 1 034 cas dev |
+| Validation | à la fin de chaque époque : `eval_loss` et adaptateur archivé ; après toutes les époques, chaque adaptateur est inféré/exécuté sur les 1 034 cas dev |
 | Stabilité | gradient clipping `1.0` |
 | Séquence | 4 096 tokens |
 | Batch effectif | 64 = micro-batch 2 × accumulation 32, mono-H100 |

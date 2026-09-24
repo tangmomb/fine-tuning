@@ -198,10 +198,9 @@ def evaluate_validation_execution(model: Any, processor: Any, validation_rows: l
 class RunArtifactCallback(TrainerCallback):
     """Archive l'adaptateur et les métriques à chaque validation d'époque."""
 
-    def __init__(self, run_dir: Path, validation_rows: list[dict[str, Any]], processor: Any) -> None:
+    def __init__(self, run_dir: Path, validation_examples: int) -> None:
         self.run_dir = run_dir
-        self.validation_rows = validation_rows
-        self.processor = processor
+        self.validation_examples = validation_examples
 
     def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
                     metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
@@ -212,18 +211,11 @@ class RunArtifactCallback(TrainerCallback):
         report = {
             "epoch": epoch,
             "global_step": state.global_step,
-            "validation_examples": len(self.validation_rows),
+            "validation_examples": self.validation_examples,
             "selection_metric": "eval_loss",
             **(metrics or {}),
         }
         write_json(self.run_dir / "eval" / f"epoch-{epoch}-validation.json", report)
-        predictions, execution_metrics = evaluate_validation_execution(model, self.processor, self.validation_rows)
-        write_json(self.run_dir / "eval" / f"epoch-{epoch}-val_metrics.json", {
-            "checkpoint": f"checkpoints/epoch-{epoch}",
-            "validation_examples": len(self.validation_rows),
-            **execution_metrics,
-        })
-        write_jsonl(self.run_dir / "eval" / f"epoch-{epoch}-val_predictions.jsonl", predictions)
         return control
 
 
@@ -352,7 +344,7 @@ def train_model(
         eval_dataset=SqlDataset(validation_rows, processor, args.max_seq_length),
         data_collator=SqlCollator(tokenizer.pad_token_id),
         callbacks=[
-            RunArtifactCallback(run_dir, validation_rows, processor),
+            RunArtifactCallback(run_dir, len(validation_rows)),
             JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
         ],
     )
@@ -362,10 +354,24 @@ def train_model(
     validation_reports = sorted((run_dir / "eval").glob("epoch-*-validation.json"))
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
     best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
-    execution_reports = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in sorted((run_dir / "eval").glob("epoch-*-val_metrics.json"))
-    ]
+    execution_reports = []
+    # Après la fin des époques, recharger chaque adaptateur gelé et l'évaluer
+    # séparément : l'inférence ne perturbe jamais l'entraînement ni son état.
+    for report in reports:
+        epoch = report["epoch"]
+        checkpoint = run_dir / "checkpoints" / f"epoch-{epoch}"
+        adapter_name = f"epoch-{epoch}"
+        model.load_adapter(str(checkpoint), adapter_name=adapter_name)
+        model.set_adapter(adapter_name)
+        predictions, execution_metrics = evaluate_validation_execution(model, processor, validation_rows)
+        execution_report = {
+            "checkpoint": f"checkpoints/epoch-{epoch}",
+            "validation_examples": len(validation_rows),
+            **execution_metrics,
+        }
+        write_json(run_dir / "eval" / f"epoch-{epoch}-val_metrics.json", execution_report)
+        write_jsonl(run_dir / "eval" / f"epoch-{epoch}-val_predictions.jsonl", predictions)
+        execution_reports.append(execution_report)
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
