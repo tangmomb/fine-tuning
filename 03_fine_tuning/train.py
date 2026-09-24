@@ -96,13 +96,29 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--per-device-batch-size", type=int, default=2)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=32,
                         help="2 x 32 = batch effectif 64 sur une H100 mono-GPU.")
-    parser.add_argument("--epochs", type=float, default=3)
+    parser.add_argument("--epochs", type=float,
+                        help="Nombre d'époques. Sans cette option, une valeur est demandée au terminal.")
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--warmup-ratio", type=float, default=0.03)
     parser.add_argument("--lr-scheduler", choices=("cosine", "linear"), default="cosine")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume-from-checkpoint", type=str)
     return parser.parse_args()
+
+
+def choose_epochs() -> float:
+    """Demande un nombre d'époques positif, avec 3 comme valeur recommandée."""
+    while True:
+        value = input("Nombre d'époques [3] : ").strip() or "3"
+        try:
+            epochs = float(value)
+        except ValueError:
+            print("Entrez un nombre positif, par exemple 1 ou 3.")
+            continue
+        if epochs <= 0:
+            print("Le nombre d'époques doit être strictement positif.")
+            continue
+        return epochs
 
 
 def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
@@ -462,6 +478,10 @@ def train_model(
 
 def main() -> None:
     args = parse_args()
+    if args.epochs is None:
+        args.epochs = choose_epochs()
+    elif args.epochs <= 0:
+        raise ValueError("--epochs doit être strictement positif.")
     if not torch.cuda.is_available():
         raise RuntimeError("GPU CUDA requise : ce lanceur est prévu pour la H100.")
     if not torch.cuda.is_bf16_supported():
