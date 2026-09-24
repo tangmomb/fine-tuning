@@ -295,7 +295,7 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `eval/epoch-N/epoch-N-validation.json` : loss de validation du Trainer pour l'époque N.\n"
         "- `eval/epoch-N/val_metrics.json` et `val_predictions.jsonl` : génération et exécution SQL "
         "du checkpoint N sur le split validation.\n"
-        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : évaluation finale sur le split test.\n"
+        "- `eval/final_test/test_metrics.json` et `test_predictions.jsonl` : évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
         encoding="utf-8",
     )
@@ -432,13 +432,15 @@ def train_model(
         model.set_adapter(f"epoch-{selected_test_epoch}")
         print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
         test_predictions, test_metrics = evaluate_test_execution(model, processor)
-        write_json(run_dir / "eval" / "test_metrics.json", {
+        final_test_dir = run_dir / "eval" / "final_test"
+        final_test_dir.mkdir(parents=True, exist_ok=True)
+        write_json(final_test_dir / "test_metrics.json", {
             "checkpoint": f"checkpoints/epoch-{selected_test_epoch}",
             "test_examples": len(test_predictions),
             **test_metrics,
         })
-        write_jsonl(run_dir / "eval" / "test_predictions.jsonl", test_predictions)
-        print("Évaluation test terminée : eval/test_metrics.json et eval/test_predictions.jsonl")
+        write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
+        print("Évaluation test terminée : eval/final_test/test_metrics.json et test_predictions.jsonl")
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
