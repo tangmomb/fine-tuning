@@ -120,9 +120,15 @@ def restore_fp32_checkpoint_parameters(model: Any, model_path: Path) -> int:
             for name in archive.keys():
                 if archive.get_slice(name).get_dtype() != "F32":
                     continue
-                if name not in parameters:
+                # Les checkpoints Qwen multimodaux préfixent les poids texte
+                # par ``model.language_model``. AutoModelForCausalLM charge
+                # toutefois le sous-modèle texte directement sous ``model``.
+                # Traduire ce préfixe permet de restaurer les rares poids de
+                # stabilité FP32 après le chargement BF16.
+                parameter_name = name.replace("model.language_model.", "model.", 1)
+                if parameter_name not in parameters:
                     raise KeyError(f"Paramètre FP32 introuvable dans le modèle : {name}")
-                parameter = parameters[name]
+                parameter = parameters[parameter_name]
                 parameter.data = archive.get_tensor(name).to(dtype=torch.float32)
                 restored += 1
     return restored
