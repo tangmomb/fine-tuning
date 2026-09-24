@@ -215,7 +215,9 @@ class RunArtifactCallback(TrainerCallback):
             "selection_metric": "eval_loss",
             **(metrics or {}),
         }
-        write_json(self.run_dir / "eval" / f"epoch-{epoch}-validation.json", report)
+        eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
+        eval_dir.mkdir(parents=True, exist_ok=True)
+        write_json(eval_dir / f"epoch-{epoch}-validation.json", report)
         return control
 
 
@@ -239,9 +241,9 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
         "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
         "- `training/` : arguments et configuration reproductible du run.\n"
-        "- `eval/epoch-N-validation.json` : loss de validation du Trainer pour l'époque N.\n"
-        "- `eval/epoch-N-val_metrics.json` et `eval/epoch-N-val_predictions.jsonl` : génération et "
-        "exécution SQL du checkpoint N sur le split validation.\n"
+        "- `eval/epoch-N/epoch-N-validation.json` : loss de validation du Trainer pour l'époque N.\n"
+        "- `eval/epoch-N/val_metrics.json` et `val_predictions.jsonl` : génération et exécution SQL "
+        "du checkpoint N sur le split validation.\n"
         "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
         encoding="utf-8",
@@ -351,7 +353,7 @@ def train_model(
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
     processor.save_pretrained(run_dir / "tokenizer")
     torch.save(training_args, run_dir / "training" / "training_args.bin")
-    validation_reports = sorted((run_dir / "eval").glob("epoch-*-validation.json"))
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*/epoch-*-validation.json"))
     reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
     best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
     execution_reports = []
@@ -369,8 +371,9 @@ def train_model(
             "validation_examples": len(validation_rows),
             **execution_metrics,
         }
-        write_json(run_dir / "eval" / f"epoch-{epoch}-val_metrics.json", execution_report)
-        write_jsonl(run_dir / "eval" / f"epoch-{epoch}-val_predictions.jsonl", predictions)
+        eval_dir = run_dir / "eval" / f"epoch-{epoch}"
+        write_json(eval_dir / "val_metrics.json", execution_report)
+        write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
         execution_reports.append(execution_report)
     write_json(run_dir / "training" / "run_config.json", {
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
