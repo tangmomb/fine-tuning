@@ -91,7 +91,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output-root", type=Path, default=ROOT / "03_fine_tuning" / "artifacts")
     parser.add_argument("--run-name", type=str,
                         help="Nom du dossier de run. Par défaut : qwen3.5-<taille>-<date_heure_utc>.")
-    parser.add_argument("--max-seq-length", type=int, default=4096)
+    parser.add_argument("--max-seq-length", type=int, default=3072,
+                        help="3 072 couvre le maximum observé (2 769 tokens) sans troncature.")
     parser.add_argument("--per-device-batch-size", type=int, default=2)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=32,
                         help="2 x 32 = batch effectif 64 sur une H100 mono-GPU.")
