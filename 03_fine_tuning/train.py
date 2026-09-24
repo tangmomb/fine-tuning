@@ -34,6 +34,7 @@ VALIDATION_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / 
 TEST_INPUTS = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_inputs.jsonl"
 TEST_GOLD = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_gold.jsonl"
 TEST_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
+EVALUATION_BATCH_SIZE = 8
 DEFAULT_MODELS = ("Qwen3.5-0.8B", "Qwen3.5-2B", "Qwen3.5-4B", "Qwen3.5-9B")
 
 
@@ -190,14 +191,25 @@ def evaluate_execution(
     evaluator.DATABASES = databases
     device = next(model.parameters()).device
     processor.tokenizer.padding_side = "left"
+    # L'ordre n'a pas d'incidence sur le score (les IDs sont conservés), mais
+    # regrouper les prompts de taille proche évite le padding inutile.
+    indexed_records = list(enumerate(records))
+    def prompt_length(item: tuple[int, dict[str, Any]]) -> int:
+        encoded = processor.apply_chat_template(
+            item[1]["messages"], add_generation_prompt=True, tokenize=True,
+            return_dict=True, return_tensors="pt", enable_thinking=False,
+        )
+        return int(encoded["attention_mask"].sum().item())
+    ordered_records = [record for _, record in sorted(indexed_records, key=prompt_length)]
+    original_positions = {record["id"]: index for index, record in indexed_records}
     predictions: list[dict[str, Any]] = []
     was_training = model.training
     use_cache = model.config.use_cache
     model.eval()
     model.config.use_cache = True
     try:
-        for start in range(0, len(records), 8):
-            batch = records[start:start + 8]
+        for start in range(0, len(ordered_records), EVALUATION_BATCH_SIZE):
+            batch = ordered_records[start:start + EVALUATION_BATCH_SIZE]
             message_batches = [row["messages"] for row in batch]
             inputs = processor.apply_chat_template(
                 message_batches, add_generation_prompt=True, tokenize=True, return_dict=True,
@@ -215,7 +227,9 @@ def evaluate_execution(
         if was_training:
             model.train()
     gold = [{key: row[key] for key in ("id", "db_id", "sql")} for row in records]
-    return evaluator.score(predictions, gold)
+    results, metrics = evaluator.score(predictions, gold)
+    results.sort(key=lambda row: original_positions[row["id"]])
+    return results, metrics
 
 
 def evaluate_validation_execution(model: Any, processor: Any, validation_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
