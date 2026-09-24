@@ -2,7 +2,7 @@
 
 Le script demande l'adresse IP publique de la VM à chaque exécution. Les fichiers
 distants dont le chemin existe déjà localement sont remplacés ; les autres sont
-ajoutés au dossier ``evaluation_brut_models/runs_scaleway``.
+ajoutés au dossier ``02_evaluation_brut_models/runs_scaleway``.
 """
 
 from __future__ import annotations
@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DESTINATION = PROJECT_ROOT / "evaluation_brut_models" / "runs_scaleway"
+DESTINATION = PROJECT_ROOT / "02_evaluation_brut_models" / "runs_scaleway"
 REMOTE_RUNS = "/root/fine-tuning/evaluation_brut_models/runs/."
 SSH_KEY = Path.home() / ".ssh" / "id_ed25519"
 

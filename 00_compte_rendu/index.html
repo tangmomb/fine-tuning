@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Suivi du projet · Text-to-SQL français</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="overrides.css" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Suivi du projet · Text-to-SQL français</p>
+        <h1>Du jeu de données<br />au modèle entraîné.</h1>
+        <p class="intro">Le point d’avancement unique du projet : données finales, comportement des modèles bruts, puis résultats des entraînements LoRA.</p>
+        <nav aria-label="Navigation du suivi"><a href="#donnees">1 · Données</a><a href="#evaluation">2 · Modèles bruts</a><a href="#entrainements">3 · Entraînements</a></nav>
+      </header>
+
+      <section id="donnees" class="section">
+        <div class="section-heading"><p class="eyebrow">01 · Données</p><h2>Jeux finaux et séparation</h2><p class="header-note">206 bases distinctes au total — 146 en train, 20 en validation et 40 en test, sans aucun recouvrement entre les splits.</p><p>Les longueurs et volumes des fichiers finaux sont détaillés ci-dessous.</p></div>
+        <div id="dataset-summary" class="dataset-summary"></div>
+        <div class="table-card"><div class="table-scroll"><table class="dataset-table"><thead><tr><th>Fichier</th><th>Cas</th><th>Prompt moyen</th><th>Prompt max.</th><th>Question moy.</th><th>Schéma moy.</th><th>SQL moy.</th><th>SQL max.</th><th>Taille</th></tr></thead><tbody id="dataset-rows"></tbody></table></div></div>
+        <p class="caption">Longueurs en tokens Qwen 3.5. Les prompts de <code>test_inputs</code> ne contiennent pas le SQL de référence ; celui-ci est conservé séparément dans <code>test_gold</code>.</p>
+      </section>
+
+      <section id="evaluation" class="section">
+        <div class="section-heading"><p class="eyebrow">02 · Point de départ</p><h2>Tests des modèles bruts</h2><p>Résultats figés sur les 2&nbsp;147 requêtes du jeu de test, avant fine-tuning. Les meilleurs résultats Qwen sont indiqués en vert ; GPT-5.6 Luna est présenté comme repère externe.</p></div>
+        <div id="evaluation-highlights" class="highlights"></div>
+        <div class="table-card"><div class="table-scroll"><table class="evaluation-table"><thead id="evaluation-head"></thead><tbody id="evaluation-rows"></tbody></table></div></div>
+        <p class="caption">Execution accuracy : résultat SQLite identique à la référence. Exact match : SQL identique après normalisation. SQL exécutable : requête exécutée sans erreur.</p>
+      </section>
+
+      <section id="entrainements" class="section training-section">
+        <div class="section-heading"><p class="eyebrow">03 · Prochaine étape</p><h2>Entraînements LoRA H100</h2><p>Cette partie accueillera les résultats des adaptateurs entraînés sur les 8&nbsp;651 exemples de train, avec sélection du checkpoint par loss sur les 1&nbsp;034 exemples de validation.</p></div>
+        <div class="training-grid">
+          <article><span>Configuration</span><strong>Qwen 0.8B · 2B · 4B · 9B</strong><small>LoRA r=16 · BF16 · 3 époques · batch effectif 64</small></article>
+          <article><span>À renseigner après les runs</span><strong>Validation et test</strong><small>Comparer chaque adaptateur à son modèle brut, puis au meilleur Qwen de référence.</small></article>
+        </div>
+      </section>
+
+      <section id="methodologie" class="methodology">
+        <p class="eyebrow">03 · Méthodologie</p>
+        <h2>Un protocole sans fuite de test</h2>
+        <div><p>Le fine-tuning H100 apprend exclusivement sur <code>train.jsonl</code> et calcule la loss de validation sur <code>validation.jsonl</code> à chaque époque. Le meilleur checkpoint est choisi par <code>eval_loss</code>.</p><p>Le test est préparé séparément et reste réservé à l’évaluation finale par exécution SQLite. Il n’est ni chargé ni consulté pendant l’entraînement.</p></div>
+      </section>
+    </main>
+    <script src="app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,40 @@
+#dataset-summary { grid-template-columns: repeat(3, 1fr); }
+
+@media (max-width: 760px) {
+  #dataset-summary { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 430px) {
+  #dataset-summary { grid-template-columns: 1fr; }
+}
+
+.dataset-example { position: relative; display: inline-block; margin: 4px 0 13px; }
+.card-metrics { display: grid; gap: 1px; margin: 5px 0 4px; }
+.card-metrics .metric-line { align-items: baseline; display: flex; gap: 7px; }
+.card-metrics strong { font-size: 1.55rem; letter-spacing: -.04em; }
+.metric-examples { color: #8dc8ff; }
+.metric-databases { color: #8ce0cf; }
+.metric-line small { color: inherit; font-size: .83rem; }
+.file-path { display: block; margin-top: 6px; color: #71879c; font-size: .68rem; overflow-wrap: anywhere; }
+.header-note { margin: -9px 0 20px; color: #8ce0cf; font-size: .84rem; white-space: nowrap; }
+
+@media (max-width: 760px) {
+  .header-note { white-space: normal; }
+}
+.dataset-example button { border: 1px solid #3c6e7f; border-radius: 999px; background: #142938; color: #b6e0f4; cursor: pointer; font: inherit; font-size: .8rem; padding: 6px 11px; }
+.example-tooltip { position: absolute; z-index: 5; bottom: calc(100% + 8px); left: 0; width: min(430px, calc(100vw - 48px)); padding: 13px 15px; border: 1px solid #49687a; border-radius: 10px; background: #0d1620; box-shadow: 0 12px 32px #0009; color: #dce7f2; font-size: .82rem; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s, transform .15s; }
+.example-tooltip p { margin: 0 0 7px; }.example-tooltip p:last-child { margin-bottom: 0; }
+.dataset-example.is-open .example-tooltip { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.json-code { max-height: 390px; margin: 0; overflow: auto; color: #dce7f2; font: .71rem/1.42 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre; }
+.json-key { color: #6cbcff !important; font-weight: 700; }.json-string { color: #9ce2bb; }.json-value { color: #efca84; }
+
+.dataset-example.is-open::before { content: ""; position: fixed; z-index: 20; inset: 0; background: rgb(3 8 13 / 72%); }
+.dataset-example.is-open .example-tooltip { position: fixed; z-index: 21; top: 50%; bottom: auto; left: 50%; width: min(1200px, calc(100vw - 48px)); max-height: 82vh; padding: 22px; border-color: #5d849b; overflow: hidden; transform: translate(-50%, -50%); }
+.dataset-example.is-open .json-code { max-height: min(70vh, 680px); font-size: .8rem; }
+.example-tooltip .close-example { float: right; border: 0; background: transparent; color: #b6e0f4; font-size: 1.5rem; line-height: 1; padding: 0 0 8px 12px; }
+.popup-grid { display: grid; grid-template-columns: 1fr; gap: 14px; clear: both; }
+.popup-grid section { min-width: 0; padding: 14px; border: 1px solid #30485b; border-radius: 9px; background: #101c28; }
+.popup-grid section:nth-child(2) { border-color: #4a3b66; background: #191529; }
+.popup-grid h3 { margin: 0 0 8px; color: #aebed1; font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+.chat-code { color: #d9d3ff; }.chat-token { color: #e4a8ff; font-weight: 700; }.chat-role { color: #8dc8ff; font-weight: 700; }
+.popup-grid .json-code { max-height: 27vh; }

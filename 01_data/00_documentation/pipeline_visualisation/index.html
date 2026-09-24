@@ -1,0 +1,671 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pipeline de données · Text-to-SQL</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#step-01">Aller aux étapes</a>
+    <main id="top">
+      <header>
+        <p class="eyebrow">SPIDER → TEXT-TO-SQL FRANÇAIS</p>
+        <h1>Du dataset brut<br />aux données prêtes à l’emploi.</h1>
+        <p class="intro">
+          Un parcours commun pour préparer, traduire et contrôler les
+          questions.<br />Puis deux destinations distinctes : l’apprentissage et
+          l’évaluation.
+        </p>
+        <div class="meta">
+          <span>7 étapes</span><span>4 splits</span
+          ><span>Fichiers &amp; contrats JSON</span>
+        </div>
+      </header>
+      <nav class="overview" aria-label="Accès aux étapes">
+        <a href="#step-00">Source</a><span aria-hidden="true">→</span
+        ><a href="#step-01">01 Préparer</a><span aria-hidden="true">→</span
+        ><a href="#step-02">02 Demander</a><span aria-hidden="true">→</span
+        ><a href="#step-03">03 Récupérer</a><span aria-hidden="true">→</span
+        ><a href="#step-04">04 Fusionner</a><span aria-hidden="true">→</span
+        ><a href="#step-05">05 Contrôler</a>
+        <div class="destinations">
+          <a href="#step-06">06 Fine-tuning <small>train + dev</small></a
+          ><a href="#step-07">07 Évaluation <small>test</small></a>
+        </div>
+      </nav>
+      <div class="reading-guide">
+        <p>
+          <b>Lire les fichiers</b> Les noms sont relatifs au dossier indiqué en
+          tête de carte. <code>{split}</code> = train_spider, train_others, dev
+          ou test.
+        </p>
+        <p>
+          <b>Lire les clés</b> Un point indique un objet imbriqué ;
+          <code>[]</code> indique une liste. Un fichier JSONL contient un objet
+          JSON par ligne. Les contrats décrivent les scripts actuels.
+        </p>
+      </div>
+      <section class="pipeline" aria-label="Détail du pipeline">
+        <article id="step-00" class="step source">
+          <div class="step-heading">
+            <span class="number">00</span>
+            <div>
+              <p class="folder">BRUT_spider-original/data/spider_data/</p>
+              <h2>Partir de Spider en anglais</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Les questions anglaises et leurs requêtes SQL de référence
+                constituent le point de départ. Les bases SQLite fournissent la
+                structure des tables.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>Dataset Spider original.</p>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers sources</span> · aucun
+                fichier créé
+              </h3>
+              <div class="artifact">
+                <code class="filename"
+                  >train_spider.json · train_others.json · dev.json ·
+                  test.json</code
+                >
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>db_id</code><code>question</code><code>query</code>
+                </div>
+                <p>
+                  Clés utilisées par le pipeline ; les autres champs du dataset
+                  brut ne sont pas conservés.
+                </p>
+              </div>
+              <div class="artifact">
+                <code class="filename">database/ · test_database/</code>
+                <p>
+                  Bases sqlite. Le test utilise test_database/. Le dossier
+                  test_database contient les memes bases que database + les 40
+                  bases de test.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article id="step-01" class="step">
+          <div class="step-heading">
+            <span class="number">01</span>
+            <div>
+              <p class="folder">01_data/01_prepare/02_output/</p>
+              <h2>Préparer les exemples</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Vérifie la présence des bases (est-ce que chaque base de chaque
+                requête existe), retire les doublons exacts (si même base, même
+                requête, même SQL) au sein de chaque split et extrait les
+                instructions CREATE TABLE (des dossiers des bases directement).
+                La question anglaise, le db_id et la requête SQL viennent du
+                dataset brut.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>Les 4 fichiers JSON Spider + les bases SQLite.</p>
+              </div>
+              <div class="note">
+                Le script de vérification affiche son résultat dans le terminal
+                ; il ne crée pas de fichier.
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_check_original_dataset.py</code
+                ><code>02_prepare_english_dataset.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename"
+                  >train_spider.jsonl · train_others.jsonl · dev.jsonl ·
+                  test.jsonl</code
+                >
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>db_id</code><code>question_original_en</code
+                  ><code>schema</code><code>sql</code>
+                </div>
+                <p>
+                  <code>question</code> devient
+                  <code>question_original_en</code> ; <code>query</code> devient
+                  <code>sql</code>. Le schéma est ajouté dans
+                  <code>schema</code>.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article id="step-02" class="step">
+          <div class="step-heading">
+            <span class="number">02</span>
+            <div>
+              <p class="folder">01_data/02_translation_batches/03_production/</p>
+              <h2>Demander les traductions</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Prépare et soumet les lots à Mistral avec le modèle zai-glm-5-3.
+                Le prompt contient la question anglaise, le SQL attendu et le
+                schéma pour guider la traduction.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>Les fichiers <code>01_prepare/02_output/{split}.jsonl</code>.</p>
+              </div>
+              <div class="note">
+                <code>custom_id = split:index</code> relie chaque requête à son
+                exemple source. La réponse demandée est une simple phrase
+                française.
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_create_and_send_batches.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename">{split}_requests.jsonl</code>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>custom_id</code><code>body.max_tokens</code
+                  ><code>body.temperature</code><code>body.messages[].role</code
+                  ><code>body.messages[].content</code>
+                </div>
+                <p>
+                  Le contenu du message user est une chaîne JSON avec
+                  <code>question_original_en</code>, <code>sql</code> et
+                  <code>schema</code>.
+                </p>
+              </div>
+              <details>
+                <summary>État des lots</summary>
+                <div class="artifact">
+                  <code class="filename">batch_state.json</code>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>environment</code><code>model</code
+                    ><code>submitted_at</code><code>batches[].split</code
+                    ><code>batches[].request_file</code
+                    ><code>batches[].batch_id</code
+                    ><code>batches[].input_file_id</code>
+                  </div>
+                  <p>Écrit après la soumission des lots.</p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+        <article id="step-03" class="step">
+          <div class="step-heading">
+            <span class="number">03</span>
+            <div>
+              <p class="folder">01_data/03_batch_responses/03_production/</p>
+              <h2>Récupérer les réponses</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Vérifie le statut des lots et télécharge les réponses brutes une
+                fois le traitement terminé.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>
+                  Les identifiants de lots dans
+                  <code>02_translation_batches/03_production/02_batch_state/batch_state.json</code>.
+                </p>
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_download_batch_responses.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename">output_{NN}.jsonl</code>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>id</code><code>custom_id</code><code>response</code
+                  ><code>error</code>
+                </div>
+                <p>
+                  Un fichier par lot, numéroté à partir de 01. L’enveloppe
+                  fournisseur est conservée sans transformation.
+                </p>
+              </div>
+              <details>
+                <summary>Où se trouve la traduction ?</summary>
+                <div class="artifact">
+                  <code class="filename">Champs imbriqués utiles</code>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>response.status_code</code
+                    ><code>response.body.choices[].message.content</code
+                    ><code>response.body.choices[].finish_reason</code
+                    ><code>response.body.usage</code>
+                  </div>
+                  <p>
+                    Le texte se trouve dans message.content (texte ou blocs de
+                    contenu). D’autres métadonnées fournisseur peuvent être
+                    présentes.
+                  </p>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+        <article id="step-04" class="step">
+          <div class="step-heading">
+            <span class="number">04</span>
+            <div>
+              <p class="folder">01_data/04_merge_translations/03_production/</p>
+              <h2>Rattacher le français à la source</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Extrait la traduction et la rattache à l’exemple anglais grâce à
+                son identifiant. Le SQL et le schéma source sont conservés.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>Les données de 01, les réponses de 03.</p>
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_merge_translations.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename"
+                  >train_spider.jsonl · train_others.jsonl · dev.jsonl ·
+                  test.jsonl</code
+                >
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>db_id</code><code>question_original_en</code
+                  ><code>schema</code><code>sql</code><code>question</code>
+                </div>
+                <p>
+                  <code>question_original_en</code> reste la source anglaise ;
+                  <code>question</code> contient la traduction française.
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article id="step-05" class="step">
+          <div class="step-heading">
+            <span class="number">05</span>
+            <div>
+              <p class="folder">01_data/05_quality_control/03_production/</p>
+              <h2>Vérifier la fidélité</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                2 juges distincts : <br />
+                Un script qui vérifie quelques erreurs potentielles, <br />par
+                exemple :
+                <small
+                  ><i>
+                    La source contient <code>56</code>, mais la traduction
+                    contient <code>65</code> ;<br />
+                    La source contient <code>20 %</code>, mais la traduction
+                    omet le pourcentage ;<br />
+                    La traduction contient une requête SQL, telle que
+                    <code>SELECT ... FROM ...</code>.
+                  </i></small
+                ><br />
+                Un modèle plus puissant qui juge une seconde fois les cas
+                détectés par le premier, si il y a, et prend aussi 200 exemples
+                au hasard parmi les réussites pour vérifier que le modèle de
+                traduction a bien traduit. Il ne corrige pas, il valide ou non.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>
+                  Les erreurs notifiées par le premier juge et les traductions
+                  de l'étape 04.
+                </p>
+              </div>
+              <div class="note">
+                2 étapes distinctes, 1 par script. Le second juge est appelé en
+                batch.
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_check_translations.py</code
+                ><code>02_judge_translations.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename">{split}_deterministic_checks.jsonl</code>
+                <p>
+                  Enregistre le résultat des contrôles automatiques appliqués à
+                  chaque traduction. Résultat du juge 1.
+                </p>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>id</code><code>db_id</code
+                  ><code>question_original_en</code><code>question</code
+                  ><code>status</code><code>issues[]</code>
+                </div>
+                <p>
+                  <code>status</code> vaut pass ou fail. Pour une ligne source
+                  qui n’est pas un objet, seuls id, status et issues sont
+                  écrits.
+                </p>
+              </div>
+              <div class="artifact">
+                <code class="filename"
+                  >sol_judgments.jsonl · sol_judgments_test.jsonl</code
+                >
+                <p>
+                  Regroupe les verdicts du second juge pour les traductions
+                  sélectionnées. Résulat du juge 2.
+                </p>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>id</code><code>selection_reason</code><code>db_id</code
+                  ><code>question_original_en</code><code>schema</code
+                  ><code>sql</code><code>question</code><code>verdict</code
+                  ><code>issues[]</code>
+                </div>
+                <p>
+                  <code>verdict</code> vaut pass, fail ou uncertain. Le fichier
+                  suffixé _test correspond au lancement séparé avec --splits
+                  test.
+                </p>
+              </div>
+              <details>
+                <summary>Fichiers intermédiaires du second juge</summary>
+                <div class="artifact">
+                  <code class="filename">judge_selection{suffix}.jsonl</code>
+                  <p>
+                    Réunit les traductions à faire examiner : tous les échecs
+                    locaux et un échantillon des réussites.
+                  </p>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>id</code><code>selection_reason</code
+                    ><code>db_id</code><code>question_original_en</code
+                    ><code>schema</code><code>sql</code><code>question</code>
+                  </div>
+                </div>
+                <div class="artifact">
+                  <code class="filename"
+                    >judge_requests{suffix}/requests_{NN}.jsonl</code
+                  >
+                  <p>
+                    Découpe cette sélection en requêtes prêtes à envoyer en
+                    batch au second juge.
+                  </p>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>custom_id</code><code>method</code><code>url</code
+                    ><code>body.model</code><code>body.reasoning.effort</code
+                    ><code>body.instructions</code><code>body.input</code
+                    ><code>body.max_output_tokens</code>
+                  </div>
+                  <p>
+                    body.input est une chaîne JSON : id, question_original_en,
+                    question, sql, schema.
+                  </p>
+                </div>
+                <div class="artifact">
+                  <code class="filename">judge_batch_state{suffix}.json</code>
+                  <p>
+                    Mémorise les identifiants et l’état des lots envoyés afin de
+                    pouvoir les suivre puis récupérer les résultats.
+                  </p>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>environment</code><code>model</code
+                    ><code>selection</code><code>submitted_at</code
+                    ><code>batches[].batch_id</code
+                    ><code>batches[].input_file_id</code>
+                  </div>
+                </div>
+                <div class="artifact">
+                  <code class="filename"
+                    >judge_raw_response{suffix}/output_{NN}.jsonl</code
+                  >
+                  <p>
+                    Conserve les réponses brutes reçues du Batch avant
+                    l’extraction des verdicts.
+                  </p>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>id</code><code>custom_id</code><code>response</code
+                    ><code>error</code>
+                  </div>
+                  <p>
+                    Le JSON du verdict (id, verdict, issues) est extrait de
+                    <code>response.body.output[].content[].text</code>. Les
+                    autres métadonnées API sont conservées.
+                  </p>
+                </div>
+                <p class="detail-note">
+                  {suffix} est vide par défaut, ou _test avec --splits test ;
+                  les autres sélections utilisent les noms des splits joints par
+                  des underscores.
+                </p>
+              </details>
+            </div>
+          </div>
+        </article>
+        <div class="branch">
+          <span>DEUX DESTINATIONS</span>
+          <p>
+            <b>Apprentissage :</b> train et dev, filtrés après contrôle.<br /><b
+              >Évaluation :</b
+            >
+            test, filtré après contrôle puis préparé pour l’évaluation.
+          </p>
+        </div>
+        <article id="step-06" class="step training">
+          <div class="step-heading">
+            <span class="number">06</span>
+            <div>
+              <p class="folder">01_data/06_training_dataset/03_production/</p>
+              <h2>Construire les conversations</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>
+                Sélectionne les exemples pour l’apprentissage à partir des
+                contrôles et des verdicts, puis normalise leur SQL.
+              </p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>
+                  Reprend train_spider, train_others et dev de l'étape 04 en
+                  supprimant les exemples non-validés en étape 05.
+                </p>
+              </div>
+              <div class="note">
+                <b>train_spider + train_others → train.jsonl</b><br />dev →
+                validation.jsonl<br />Le split test est exclu.<br /><br />
+                <b>Normalisation SQL :</b> compacte les espaces, tabulations et
+                retours à la ligne en un seul espace, retire l’espace avant une
+                virgule et préserve exactement le contenu entre guillemets,
+                doubles guillemets ou accents graves.
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_build_dataset.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename">train.jsonl · validation.jsonl</code>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>messages[].role</code><code>messages[].content</code>
+                </div>
+                <p>
+                  3 messages : <b>system</b> (consigne), <b>user</b> (chaîne
+                  JSON avec question et schema), <b>assistant</b> (SQL
+                  normalisé).
+                </p>
+              </div>
+              <details>
+                <summary>Manifeste de construction</summary>
+                <div class="artifact">
+                  <code class="filename">manifest.json</code>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>source_translations</code><code>source_judgments</code
+                    ><code>total_candidates</code><code>train_examples</code
+                    ><code>validation_examples</code><code>rejected[].id</code
+                    ><code>rejected[].reason</code
+                    ><code>manual_corrections[]</code><code>format</code>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+        <article id="step-07" class="step evaluation">
+          <div class="step-heading">
+            <span class="number">07</span>
+            <div>
+              <p class="folder">01_data/07_evaluation_dataset/03_production/</p>
+              <h2>Préparer l’évaluation indépendante</h2>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="explanation">
+              <p>Prépare les données pour l’évaluation indépendante finale.</p>
+              <div class="input">
+                <h3>Entrées</h3>
+                <p>
+                  Reprend <code>04_merge_translations/03_production/test.jsonl</code> et
+                  supprime les lignes non validées de
+                  <code>05_quality_control/03_production/</code>.
+                </p>
+              </div>
+              <div class="note">
+                Comme l’étape 06, source de l'étape 04 moins les exemples
+                non-validés en étape 05.<br /><br />
+                <b>Normalisation SQL :</b> compacte les espaces, tabulations et
+                retours à la ligne en un seul espace, retire l’espace avant une
+                virgule et préserve exactement le contenu entre guillemets,
+                doubles guillemets ou accents graves.
+              </div>
+              <div class="scripts">
+                <h3>Scripts</h3>
+                <code>01_prepare_test.py</code>
+              </div>
+            </div>
+            <div class="outputs">
+              <h3>
+                <span class="files-label">Fichiers créés</span
+                ><span class="heading-separator" aria-hidden="true"> / </span
+                ><span class="keys-label">Clés JSON</span>
+              </h3>
+              <div class="artifact">
+                <code class="filename">test_inputs.jsonl</code>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>id</code><code>db_id</code><code>messages[].role</code
+                  ><code>messages[].content</code>
+                </div>
+                <p>
+                  2 messages : <b>system</b> et <b>user</b>. Le contenu user est
+                  une chaîne JSON avec question et schema. Aucun SQL gold dans
+                  le prompt.
+                </p>
+              </div>
+              <div class="artifact">
+                <code class="filename">test_gold.jsonl</code>
+                <span class="keys-caption">Clés JSON</span>
+                <div class="keys">
+                  <code>id</code><code>db_id</code><code>sql</code>
+                </div>
+                <p>SQL de référence normalisé, relié à l’entrée par id.</p>
+              </div>
+              <details>
+                <summary>Manifeste d’évaluation</summary>
+                <div class="artifact">
+                  <code class="filename">manifest.json</code>
+                  <span class="keys-caption">Clés JSON</span>
+                  <div class="keys">
+                    <code>source</code><code>source_checks</code
+                    ><code>source_judgments</code><code>inputs</code
+                    ><code>gold</code><code>total_candidates</code
+                    ><code>examples</code><code>rejected[].id</code
+                    ><code>rejected[].reason</code
+                    ><code>manual_corrections[]</code
+                    ><code>prompt_contains_gold_sql</code
+                    ><code>gold_sql_normalized</code>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </div>
+        </article>
+      </section>
+      <footer>
+        <span>Question française + schéma → SQL SQLite</span
+        ><a href="../dataset_statistics/index.html">Statistiques des datasets</a
+        ><a href="#top">Retour en haut ↑</a>
+      </footer>
+    </main>
+  </body>
+</html>

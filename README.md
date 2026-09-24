@@ -1,8 +1,8 @@
 # Fine-tuning text-to-SQL
 
-Le dossier `data/` est réservé à la préparation et aux jeux de données. Les
+Le dossier `01_data/` est réservé à la préparation et aux jeux de données. Les
 scripts, sorties et synthèses de benchmark des modèles bruts se trouvent dans
-`evaluation_brut_models/`.
+`02_evaluation_brut_models/`.
 
 ## Contenu brut de Spider original
 

@@ -1,7 +1,7 @@
 """Mesure le gaspillage de padding des batches réels du benchmark text-to-SQL.
 
 Le script reprend le même ordre d'exemples et le même chat template que
-``evaluation_brut_models/assets/run_evaluation.py``. Il ne charge pas le modèle
+``02_evaluation_brut_models/assets/run_evaluation.py``. Il ne charge pas le modèle
 en VRAM : seul le processor/tokenizer est nécessaire.
 """
 
@@ -16,9 +16,9 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_MODEL = ROOT / "models" / "Qwen3.5-0.8B"
-sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "02_evaluation_brut_models" / "assets"))
 
-from evaluation_brut_models.assets.run_evaluation import (  # noqa: E402
+from run_evaluation import (  # noqa: E402
     FEW_SHOT_SOURCE,
     INPUTS,
     load_jsonl,
