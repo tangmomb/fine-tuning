@@ -1,0 +1,4 @@
+# Les dépendances d'inférence (PyTorch CUDA, transformers, accelerate et
+# safetensors) sont déjà présentes sur la H100 puisqu'elle exécute les baselines.
+# Ce projet utilise torch.utils.data, pas la bibliothèque Hugging Face datasets.
+peft>=0.17.0
