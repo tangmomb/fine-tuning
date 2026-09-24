@@ -22,6 +22,7 @@ from peft import LoraConfig, PeftModel, TaskType, get_peft_model
 from safetensors import safe_open
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
+from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -181,7 +182,7 @@ def validation_execution_rows(validation_rows: list[dict[str, Any]]) -> list[dic
 
 
 def evaluate_execution(
-    model: Any, processor: Any, records: list[dict[str, Any]], databases: Path
+    model: Any, processor: Any, records: list[dict[str, Any]], databases: Path, progress_label: str
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Génère et score le SQL pour un split dont les SQL gold et bases sont disponibles."""
     assets_dir = str(ROOT / "02_evaluation_brut_models" / "assets")
@@ -200,7 +201,11 @@ def evaluate_execution(
             return_dict=True, return_tensors="pt", enable_thinking=False,
         )
         return int(encoded["attention_mask"].sum().item())
-    ordered_records = [record for _, record in sorted(indexed_records, key=prompt_length)]
+    lengths = [
+        (prompt_length(item), item)
+        for item in tqdm(indexed_records, desc=f"{progress_label} · préparation", unit="prompt")
+    ]
+    ordered_records = [record for _, (_, record) in sorted(lengths, key=lambda item: item[0])]
     original_positions = {record["id"]: index for index, record in indexed_records}
     predictions: list[dict[str, Any]] = []
     was_training = model.training
@@ -208,7 +213,8 @@ def evaluate_execution(
     model.eval()
     model.config.use_cache = True
     try:
-        for start in range(0, len(ordered_records), EVALUATION_BATCH_SIZE):
+        starts = range(0, len(ordered_records), EVALUATION_BATCH_SIZE)
+        for start in tqdm(starts, desc=f"{progress_label} · inférence", unit="batch"):
             batch = ordered_records[start:start + EVALUATION_BATCH_SIZE]
             message_batches = [row["messages"] for row in batch]
             inputs = processor.apply_chat_template(
@@ -232,9 +238,13 @@ def evaluate_execution(
     return results, metrics
 
 
-def evaluate_validation_execution(model: Any, processor: Any, validation_rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def evaluate_validation_execution(
+    model: Any, processor: Any, validation_rows: list[dict[str, Any]], progress_label: str
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Génère et score le SQL sur le split validation sans consulter le split test."""
-    return evaluate_execution(model, processor, validation_execution_rows(validation_rows), VALIDATION_DATABASES)
+    return evaluate_execution(
+        model, processor, validation_execution_rows(validation_rows), VALIDATION_DATABASES, progress_label
+    )
 
 
 def test_execution_rows() -> list[dict[str, Any]]:
@@ -250,7 +260,7 @@ def test_execution_rows() -> list[dict[str, Any]]:
 
 
 def evaluate_test_execution(model: Any, processor: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    return evaluate_execution(model, processor, test_execution_rows(), TEST_DATABASES)
+    return evaluate_execution(model, processor, test_execution_rows(), TEST_DATABASES, "Test final")
 
 
 def choose_checkpoint_for_test(
@@ -448,7 +458,9 @@ def train_model(
         adapter_name = f"epoch-{epoch}"
         model.load_adapter(str(checkpoint), adapter_name=adapter_name)
         model.set_adapter(adapter_name)
-        predictions, execution_metrics = evaluate_validation_execution(model, processor, validation_rows)
+        predictions, execution_metrics = evaluate_validation_execution(
+            model, processor, validation_rows, f"Validation epoch-{epoch}"
+        )
         execution_report = {
             "epoch": epoch,
             "checkpoint": f"checkpoints/epoch-{epoch}",
@@ -534,7 +546,9 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
             model.load_adapter(str(run_dir / "checkpoints" / adapter_name), adapter_name=adapter_name)
         model.set_adapter(adapter_name)
         print(f"Évaluation validation de {adapter_name}…")
-        predictions, execution_metrics = evaluate_validation_execution(model, processor, validation_rows)
+        predictions, execution_metrics = evaluate_validation_execution(
+            model, processor, validation_rows, f"Validation epoch-{epoch}"
+        )
         execution_report = {"epoch": epoch, "checkpoint": f"checkpoints/epoch-{epoch}",
                             "validation_examples": len(validation_rows), **execution_metrics}
         eval_dir = run_dir / "eval" / f"epoch-{epoch}"
