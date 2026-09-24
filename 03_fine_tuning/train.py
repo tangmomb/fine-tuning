@@ -286,21 +286,6 @@ class JsonlLogCallback(TrainerCallback):
         return control
 
 
-def write_run_readme(run_dir: Path, model_name: str) -> None:
-    (run_dir / "README.md").write_text(
-        f"# Fine-tuning LoRA — {model_name}\n\n"
-        "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
-        "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
-        "- `training/` : arguments et configuration reproductible du run.\n"
-        "- `eval/epoch-N/epoch-N-validation.json` : loss de validation du Trainer pour l'époque N.\n"
-        "- `eval/epoch-N/val_metrics.json` et `val_predictions.jsonl` : génération et exécution SQL "
-        "du checkpoint N sur le split validation.\n"
-        "- `eval/final_test/test_metrics.json` et `test_predictions.jsonl` : évaluation finale sur le split test.\n"
-        "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
-        encoding="utf-8",
-    )
-
-
 def choose_models() -> list[str]:
     print("Choisissez le(s) modèle(s) à entraîner :")
     for index, model_name in enumerate(DEFAULT_MODELS, start=1):
@@ -351,7 +336,6 @@ def train_model(
     if not model_path.is_dir():
         raise FileNotFoundError(f"Checkpoint absent : {model_path}")
     run_dir = make_run_directory(model_name, args)
-    write_run_readme(run_dir, model_name)
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
     tokenizer = processor.tokenizer
     if tokenizer.pad_token_id is None:
