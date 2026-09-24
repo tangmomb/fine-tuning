@@ -161,8 +161,8 @@ def write_run_readme(run_dir: Path, model_name: str) -> None:
         "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
         "- `training/` : arguments et configuration reproductible du run.\n"
         "- `eval/epoch-N/validation.json` : loss de validation servant à sélectionner l'époque.\n"
-        "- `eval/epoch-N/test_metrics.json` et `eval/epoch-N/test_predictions.jsonl` : à produire uniquement "
-        "pour le checkpoint sélectionné, via l'évaluation finale sur le split test.\n"
+        "- `eval/test_metrics.json` et `eval/test_predictions.jsonl` : à produire uniquement après "
+        "sélection du meilleur checkpoint, via l'évaluation finale sur le split test.\n"
         "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
         encoding="utf-8",
     )
