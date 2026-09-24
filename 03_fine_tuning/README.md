@@ -51,8 +51,8 @@ artifacts/qwen3.5-4b-<date_heure>/
 ├── eval/epoch-3/epoch-3-validation.json
 ├── eval/epoch-3/val_metrics.json
 ├── eval/epoch-3/val_predictions.jsonl
-├── eval/test_metrics.json # évaluation finale, après sélection du meilleur checkpoint
-├── eval/test_predictions.jsonl
+├── eval/final_test/test_metrics.json # évaluation finale, après sélection du checkpoint
+├── eval/final_test/test_predictions.jsonl
 ├── logs/training_log.jsonl
 └── README.md
 ```
