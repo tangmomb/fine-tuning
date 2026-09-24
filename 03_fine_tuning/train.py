@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from peft import LoraConfig, TaskType, get_peft_model
+from peft import LoraConfig, PeftModel, TaskType, get_peft_model
 from safetensors import safe_open
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
@@ -103,6 +103,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lr-scheduler", choices=("cosine", "linear"), default="cosine")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume-from-checkpoint", type=str)
+    parser.add_argument("--evaluate-run", type=Path,
+                        help="Évalue les checkpoints déjà présents dans un dossier de run, sans réentraîner.")
     return parser.parse_args()
 
 
@@ -273,15 +275,15 @@ class RunArtifactCallback(TrainerCallback):
     def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
                     metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
         model = kwargs["model"]
-        epoch = round(float(state.epoch or 0))
+        epoch = int(round(float(state.epoch or 0)))
         checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
         model.save_pretrained(checkpoint_dir, safe_serialization=True)
         report = {
+            **(metrics or {}),
             "epoch": epoch,
             "global_step": state.global_step,
             "validation_examples": self.validation_examples,
             "selection_metric": "eval_loss",
-            **(metrics or {}),
         }
         eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
         eval_dir.mkdir(parents=True, exist_ok=True)
@@ -426,7 +428,8 @@ def train_model(
     # Après la fin des époques, recharger chaque adaptateur gelé et l'évaluer
     # séparément : l'inférence ne perturbe jamais l'entraînement ni son état.
     for report in reports:
-        epoch = report["epoch"]
+        epoch = int(round(float(report["epoch"])))
+        report["epoch"] = epoch
         checkpoint = run_dir / "checkpoints" / f"epoch-{epoch}"
         adapter_name = f"epoch-{epoch}"
         model.load_adapter(str(checkpoint), adapter_name=adapter_name)
@@ -476,20 +479,88 @@ def train_model(
         print(f"Meilleure eval_loss : checkpoints/epoch-{best['epoch']} ({best['eval_loss']:.4f})")
 
 
+def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_rows: list[dict[str, Any]]) -> None:
+    """Reprend uniquement les évaluations d'un run déjà entraîné et checkpointé."""
+    if not run_dir.is_dir():
+        raise FileNotFoundError(f"Dossier de run introuvable : {run_dir}")
+    reports = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted((run_dir / "eval").glob("epoch-*/epoch-*-validation.json"))
+    ]
+    if not reports:
+        raise FileNotFoundError(f"Rapports epoch-N-validation.json introuvables dans : {run_dir / 'eval'}")
+    for report in reports:
+        report["epoch"] = int(round(float(report["epoch"])))
+    if args.models:
+        if len(args.models) != 1:
+            raise ValueError("--evaluate-run accepte exactement un modèle avec --models.")
+        model_name = args.models[0]
+    else:
+        matches = [name for name in DEFAULT_MODELS if run_dir.name.lower().startswith(name.lower())]
+        if len(matches) != 1:
+            raise ValueError("Impossible d'identifier le modèle du run. Ajoutez --models Qwen3.5-4B.")
+        model_name = matches[0]
+    model_path = ROOT / "models" / model_name
+    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+    first_epoch = reports[0]["epoch"]
+    base_model = AutoModelForCausalLM.from_pretrained(
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True, attn_implementation="sdpa"
+    )
+    restore_fp32_checkpoint_parameters(base_model, model_path)
+    model = PeftModel.from_pretrained(
+        base_model, str(run_dir / "checkpoints" / f"epoch-{first_epoch}"),
+        adapter_name=f"epoch-{first_epoch}",
+    )
+    execution_reports = []
+    for index, report in enumerate(reports):
+        epoch = report["epoch"]
+        adapter_name = f"epoch-{epoch}"
+        if index:
+            model.load_adapter(str(run_dir / "checkpoints" / adapter_name), adapter_name=adapter_name)
+        model.set_adapter(adapter_name)
+        print(f"Évaluation validation de {adapter_name}…")
+        predictions, execution_metrics = evaluate_validation_execution(model, processor, validation_rows)
+        execution_report = {"epoch": epoch, "checkpoint": f"checkpoints/epoch-{epoch}",
+                            "validation_examples": len(validation_rows), **execution_metrics}
+        eval_dir = run_dir / "eval" / f"epoch-{epoch}"
+        write_json(eval_dir / "val_metrics.json", execution_report)
+        write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
+        execution_reports.append(execution_report)
+    selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports)
+    if selected_test_epoch is not None:
+        model.set_adapter(f"epoch-{selected_test_epoch}")
+        print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
+        test_predictions, test_metrics = evaluate_test_execution(model, processor)
+        final_test_dir = run_dir / "eval" / "final_test"
+        final_test_dir.mkdir(parents=True, exist_ok=True)
+        write_json(final_test_dir / "test_metrics.json", {
+            "checkpoint": f"checkpoints/epoch-{selected_test_epoch}",
+            "test_examples": len(test_predictions), **test_metrics,
+        })
+        write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
+    write_json(run_dir / "training" / "recovery_evaluation.json", {
+        "validation_execution_by_epoch": execution_reports,
+        "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
+    })
+
+
 def main() -> None:
     args = parse_args()
-    if args.epochs is None:
-        args.epochs = choose_epochs()
-    elif args.epochs <= 0:
-        raise ValueError("--epochs doit être strictement positif.")
     if not torch.cuda.is_available():
         raise RuntimeError("GPU CUDA requise : ce lanceur est prévu pour la H100.")
     if not torch.cuda.is_bf16_supported():
         raise RuntimeError("BF16 non pris en charge par cette GPU.")
-    rows = read_jsonl(args.dataset)
     validation_rows = read_jsonl(args.validation_dataset)
     if not validation_rows:
         raise ValueError("Le dataset de validation est vide.")
+    if args.evaluate_run:
+        evaluate_existing_run(args.evaluate_run, args, validation_rows)
+        return
+    if args.epochs is None:
+        args.epochs = choose_epochs()
+    elif args.epochs <= 0:
+        raise ValueError("--epochs doit être strictement positif.")
+    rows = read_jsonl(args.dataset)
     random.Random(args.seed).shuffle(rows)
     set_seed(args.seed)
     for model_name in args.models or choose_models():
