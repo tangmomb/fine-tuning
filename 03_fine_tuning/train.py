@@ -511,6 +511,7 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
         base_model, str(run_dir / "checkpoints" / f"epoch-{first_epoch}"),
         adapter_name=f"epoch-{first_epoch}",
     )
+    model.to(torch.device("cuda"))
     execution_reports = []
     for index, report in enumerate(reports):
         epoch = report["epoch"]
