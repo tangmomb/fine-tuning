@@ -18,17 +18,31 @@
       </header>
 
       <section id="donnees" class="section">
-        <div class="section-heading"><p class="eyebrow">01 · Données</p><h2>Jeux finaux et séparation</h2><p class="header-note">206 bases distinctes au total — 146 en train, 20 en validation et 40 en test, sans aucun recouvrement entre les splits.</p><p>Les longueurs et volumes des fichiers finaux sont détaillés ci-dessous.</p></div>
+        <div class="section-heading"><p class="eyebrow">01 · Données</p><h2>Jeux finaux et séparation</h2><p class="header-note">206 bases distinctes au total — 146 en train, 20 en validation et 40 en test, sans aucun recouvrement entre les splits.</p><p>Les longueurs et volumes des fichiers finaux sont détaillés ci-dessous.</p><p>Pour découvrir en détail la préparation des données et le pipeline associé, <a href="../01_data/00_documentation/pipeline_visualisation/">cliquez ici</a>.</p></div>
         <div id="dataset-summary" class="dataset-summary"></div>
-        <div class="table-card"><div class="table-scroll"><table class="dataset-table"><thead><tr><th>Fichier</th><th>Cas</th><th>Prompt moyen</th><th>Prompt max.</th><th>Question moy.</th><th>Schéma moy.</th><th>SQL moy.</th><th>SQL max.</th><th>Taille</th></tr></thead><tbody id="dataset-rows"></tbody></table></div></div>
-        <p class="caption">Longueurs en tokens Qwen 3.5. Les prompts de <code>test_inputs</code> ne contiennent pas le SQL de référence ; celui-ci est conservé séparément dans <code>test_gold</code>.</p>
+        <div class="table-card"><div class="table-scroll"><table class="dataset-table"><thead><tr><th>Fichier</th><th>Cas</th><th>Moyenne<br />(tokens)</th><th>P95<br />(tokens)</th><th>P99<br />(tokens)</th><th>Max.<br />(tokens)</th><th>&gt; 1 024<br />(%)</th><th>&gt; 1 536<br />(%)</th><th>&gt; 2 048<br />(%)</th><th>Taille</th></tr></thead><tbody id="dataset-rows"></tbody></table></div></div>
+        <div class="sequence-examples">
+          <div class="sequence-anatomy" aria-label="Séquence complète de l’exemple tokenisé"><p><b>Séquence complète</b><span>Même exemple train · 176 tokens · <em class="prediction-legend">à prédire</em></span></p><pre id="complete-sequence" class="complete-sequence"></pre></div>
+          <div class="sequence-token-map" aria-label="Exemple complet tokenisé d’une séquence complète"><p><b>Exemple complet tokenisé</b><span>Tokenizer officiel Qwen · ␠ espace · ↵ retour ligne</span></p><pre id="tokenized-example" class="tokenized-example"></pre></div>
+        </div>
+        <p class="caption">Longueurs en tokens Qwen 3.5 de la séquence complète : system + user + préambule assistant + SQL cible + <code>&lt;|im_end|&gt;</code>. P95 et P99 utilisent le rang le plus proche.</p>
       </section>
 
       <section id="evaluation" class="section">
         <div class="section-heading"><p class="eyebrow">02 · Point de départ</p><h2>Tests des modèles bruts</h2><p>Résultats figés sur les 2&nbsp;147 requêtes du jeu de test, avant fine-tuning. Les meilleurs résultats Qwen sont indiqués en vert ; GPT-5.6 Luna est présenté comme repère externe.</p></div>
-        <div id="evaluation-highlights" class="highlights"></div>
+        <div class="metric-note" aria-label="Explication des métriques d’évaluation">
+          <ul>
+            <li><b>Execution accuracy</b> : part des requêtes dont le résultat renvoyé par SQLite est exactement le même que celui de la requête de référence. C’est la mesure principale de la justesse fonctionnelle.</li>
+            <li><b>Exact match</b> : part des requêtes dont le texte SQL, après normalisation, est identique à la référence. Une requête différente mais équivalente peut donc réussir l’exécution sans compter ici.</li>
+            <li><b>SQL exécutable</b> : part des requêtes que SQLite peut lancer sur la base concernée sans produire d’erreur. Cela vérifie notamment que les tables, colonnes et types employés sont cohérents avec le schéma.</li>
+            <li><b>SQL valide</b> : part des sorties dont la syntaxe peut être analysée comme du SQL. Cette métrique ne garantit ni que les noms du schéma existent, ni que la réponse à la question est correcte.</li>
+            <li><b>Erreurs d’exécution</b> : requêtes syntaxiquement valides, mais rejetées au moment de l’exécution — par exemple à cause d’une table ou d’une colonne inexistante.</li>
+            <li><b>SQL invalides</b> : sorties qui ne peuvent pas être analysées comme une requête SQL, souvent en raison d’une syntaxe incomplète, d’un format parasite ou d’une réponse en langage naturel.</li>
+            <li><b>Timeouts</b> : exécutions interrompues parce qu’elles dépassent la durée autorisée, généralement à cause d’une requête trop coûteuse.</li>
+          </ul>
+        </div>
         <div class="table-card"><div class="table-scroll"><table class="evaluation-table"><thead id="evaluation-head"></thead><tbody id="evaluation-rows"></tbody></table></div></div>
-        <p class="caption">Execution accuracy : résultat SQLite identique à la référence. Exact match : SQL identique après normalisation. SQL exécutable : requête exécutée sans erreur.</p>
+        <p class="caption score-legend"><span class="best">Vert</span> : meilleure valeur Qwen de la colonne. <span class="worst">Rouge</span> : moins bonne valeur Qwen. GPT‑5.6 Luna est exclu de ces repères.</p>
       </section>
 
       <section id="entrainements" class="section training-section">
