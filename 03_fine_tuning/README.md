@@ -42,7 +42,7 @@ artifacts/qwen3.5-4b-<date_heure>/
 ├── checkpoints/epoch-3/
 ├── tokenizer/             # tokenizer et template de chat
 ├── training/              # training_args.bin + run_config.json
-├── eval/epoch-1/          # validation_metrics.json + validation_predictions.jsonl
+├── eval/epoch-1/          # val_metrics.json + val_predictions.jsonl
 ├── eval/epoch-2/
 ├── eval/epoch-3/
 ├── eval/test_metrics.json # évaluation finale, après sélection du meilleur checkpoint
