@@ -45,18 +45,22 @@
         <p class="caption score-legend"><span class="best">Vert</span> : meilleure valeur Qwen de la colonne. <span class="worst">Rouge</span> : moins bonne valeur Qwen. GPT‑5.6 Luna est exclu de ces repères.</p>
       </section>
 
-      <section id="entrainements" class="section training-section">
-        <div class="section-heading"><p class="eyebrow">03 · Prochaine étape</p><h2>Entraînements LoRA H100</h2><p>Cette partie accueillera les résultats des adaptateurs entraînés sur les 8&nbsp;651 exemples de train, avec sélection du checkpoint par loss sur les 1&nbsp;034 exemples de validation.</p></div>
+      <section id="entrainements" class="section">
+        <div class="section-heading"><p class="eyebrow">03 · Fine-tuning réalisé</p><h2>Qwen 3.5 4B adapté par LoRA</h2><p>Un adaptateur LoRA a été entraîné sur les 8&nbsp;651 exemples de train, puis chaque checkpoint a été évalué fonctionnellement sur les 1&nbsp;034 exemples de validation. L’epoch 2 a été retenue avant le test final, car elle maximise l’execution accuracy de validation.</p></div>
         <div class="training-grid">
-          <article><span>Configuration</span><strong>Qwen 0.8B · 2B · 4B · 9B</strong><small>LoRA r=16 · BF16 · 3 époques · batch effectif 64</small></article>
-          <article><span>À renseigner après les runs</span><strong>Validation et test</strong><small>Comparer chaque adaptateur à son modèle brut, puis au meilleur Qwen de référence.</small></article>
+          <article><span>Modèle et adaptation</span><strong>Qwen 3.5 4B · LoRA</strong><small>r=16 · alpha=32 · dropout 0,05 · toutes les couches linéaires</small></article>
+          <article><span>Entraînement H100</span><strong>3 époques · BF16</strong><small>Batch effectif 64 · LR 1e-4 · scheduler cosinus · warmup 3 % · séquence max. 3&nbsp;072 tokens</small></article>
+          <article><span>Checkpoint retenu</span><strong>Epoch 2 · 74,66 %</strong><small>772 / 1&nbsp;034 réponses correctes par exécution sur validation ; sélection faite sans consulter le test.</small></article>
+          <article><span>Test final</span><strong>73,17 % · 1&nbsp;571 / 2&nbsp;147</strong><small>+15,41 points face au meilleur Qwen 3.5 4B brut ; 46,11 % d’exact match.</small></article>
         </div>
+        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Checkpoint</th><th>Loss validation</th><th>Execution accuracy</th><th>Exact match</th><th>SQL exécutable</th><th>Choix</th></tr></thead><tbody><tr><td>Epoch 1</td><td>0,2573</td><td>73,02 % <small>755 / 1&nbsp;034</small></td><td>43,04 %</td><td>95,16 %</td><td>—</td></tr><tr><td>Epoch 2</td><td>0,2742</td><td class="best">74,66 % <small>772 / 1&nbsp;034</small></td><td class="best">45,65 %</td><td class="best">96,03 %</td><td class="best">Test final</td></tr><tr><td>Epoch 3</td><td>0,2846</td><td>73,69 % <small>762 / 1&nbsp;034</small></td><td>44,00 %</td><td class="best">96,03 %</td><td>—</td></tr></tbody></table></div></div>
+        <p class="caption">Run <code>qwen3.5-4b-20260924-223636Z</code> · métrique de sélection : execution accuracy sur validation. Les artefacts du test sont rattachés à <a href="../03_fine_tuning/artifacts/qwen3.5-4b-20260924-223636Z/eval/epoch-2/final_test/"><code>eval/epoch-2/final_test/</code></a>.</p>
       </section>
 
       <section id="methodologie" class="methodology">
         <p class="eyebrow">03 · Méthodologie</p>
         <h2>Un protocole sans fuite de test</h2>
-        <div><p>Le fine-tuning H100 apprend exclusivement sur <code>train.jsonl</code> et calcule la loss de validation sur <code>validation.jsonl</code> à chaque époque. Le meilleur checkpoint est choisi par <code>eval_loss</code>.</p><p>Le test est préparé séparément et reste réservé à l’évaluation finale par exécution SQLite. Il n’est ni chargé ni consulté pendant l’entraînement.</p></div>
+        <div><p>Le fine-tuning H100 apprend exclusivement sur <code>train.jsonl</code> et calcule la loss de validation sur <code>validation.jsonl</code> à chaque époque. Pour ce run, chaque checkpoint a aussi été évalué par exécution SQLite sur validation ; l’epoch 2 a été retenue pour son execution accuracy maximale, avant de lancer le test.</p><p>Le test est préparé séparément et reste réservé à l’évaluation finale par exécution SQLite. Il n’est ni chargé ni consulté pendant l’entraînement ni pendant la sélection du checkpoint.</p></div>
       </section>
     </main>
     <script src="app.js"></script>
