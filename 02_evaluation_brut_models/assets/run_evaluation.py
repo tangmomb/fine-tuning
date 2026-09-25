@@ -82,6 +82,10 @@ def execute_sql(database: Path, sql: str) -> tuple[bool, list[list[Any]] | None,
         return False, None, "requête non lecture seule", round((time.perf_counter() - started) * 1000, 2)
     connection = sqlite3.connect(f"file:{database.as_posix()}?mode=ro", uri=True)
     try:
+        # Quelques bases Spider historiques contiennent du texte encodé avec
+        # des octets invalides en UTF-8. Le remplacement permet d'exécuter et
+        # comparer de façon déterministe le SQL prédit et le SQL gold.
+        connection.text_factory = lambda value: value.decode("utf-8", errors="replace")
         connection.execute("PRAGMA query_only = ON")
         deadline = time.perf_counter() + SQL_EXECUTION_TIMEOUT_SECONDS
         connection.set_progress_handler(lambda: int(time.perf_counter() >= deadline), 1_000)
