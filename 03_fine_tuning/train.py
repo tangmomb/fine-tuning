@@ -151,6 +151,23 @@ def choose_lora_preset() -> str:
         print("Choix invalide : entrez A, B ou classique.")
 
 
+def choose_learning_rates() -> tuple[float, ...]:
+    """Demande un LR unique ou le balayage des trois valeurs prévues."""
+    print("Choisissez le learning rate :")
+    labels = ("5e-5", "1e-4", "2e-4")
+    for index, (learning_rate, label) in enumerate(zip(LEARNING_RATE_PRESETS, labels), start=1):
+        suffix = " — classique" if learning_rate == 1e-4 else ""
+        print(f"  {index}) {label}{suffix}")
+    print("  4) Les trois learning rates")
+    while True:
+        choice = input("Choix [4] : ").strip() or "4"
+        if choice.isdigit() and 1 <= int(choice) <= len(LEARNING_RATE_PRESETS):
+            return (LEARNING_RATE_PRESETS[int(choice) - 1],)
+        if choice == "4":
+            return LEARNING_RATE_PRESETS
+        print("Choix invalide : entrez 1, 2, 3 ou 4.")
+
+
 def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
     """Crée un dossier de run autonome et horodaté, sans écraser un run existant."""
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
@@ -628,7 +645,7 @@ def main() -> None:
         raise ValueError("--epochs doit être strictement positif.")
     if args.lora_preset is None:
         args.lora_preset = choose_lora_preset()
-    args.learning_rates = (args.learning_rate,) if args.learning_rate is not None else LEARNING_RATE_PRESETS
+    args.learning_rates = (args.learning_rate,) if args.learning_rate is not None else choose_learning_rates()
     if len(args.learning_rates) > 1:
         values = ", ".join(f"{learning_rate:g}" for learning_rate in args.learning_rates)
         print(f"Le preset LoRA {args.lora_preset} sera entraîné successivement avec les learning rates : {values}.")
