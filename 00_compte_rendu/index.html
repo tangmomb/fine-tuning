@@ -14,7 +14,7 @@
         <p class="eyebrow">Suivi du projet · Text-to-SQL français</p>
         <h1>Du jeu de données<br />au modèle entraîné.</h1>
         <p class="intro">Le point d’avancement unique du projet : données finales, comportement des modèles bruts, puis résultats des entraînements LoRA.</p>
-        <nav aria-label="Navigation du suivi"><a href="#donnees">1 · Données</a><a href="#evaluation">2 · Modèles bruts</a><a href="#entrainements">3 · Entraînements</a></nav>
+        <nav aria-label="Navigation du suivi"><a href="#donnees">1 · Données</a><a href="#evaluation">2 · Modèles bruts</a><a href="#entrainements">3 · Entraînements</a><a href="#optimisation-lora">4 · Optimisation LoRA</a></nav>
       </header>
 
       <section id="donnees" class="section">
@@ -43,24 +43,28 @@
         </div>
         <div class="table-card"><div class="table-scroll"><table class="evaluation-table"><thead id="evaluation-head"></thead><tbody id="evaluation-rows"></tbody></table></div></div>
         <p class="caption score-legend"><span class="best">Vert</span> : meilleure valeur Qwen de la colonne. <span class="worst">Rouge</span> : moins bonne valeur Qwen. GPT‑5.6 Luna est exclu de ces repères.</p>
+        <aside class="conclusion-box" aria-labelledby="conclusion-few-shot">
+          <h3 id="conclusion-few-shot">Que peut-on conclure&nbsp;?</h3>
+          <ul>
+            <li>Sans surprise, <strong>la qualité des réponses progresse avec le nombre de paramètres</strong>.</li>
+            <li>Le <strong>few-shot n’apporte pas de gain robuste</strong> sur les modèles Qwen : les améliorations restent marginales sur les plus grands modèles, tandis que les modèles 0,8B et 2B <strong>régressent nettement</strong>. Il peut donc déstabiliser certains modèles plutôt que d’améliorer fiablement leurs réponses.</li>
+          </ul>
+        </aside>
       </section>
 
       <section id="entrainements" class="section">
-        <div class="section-heading"><p class="eyebrow">03 · Fine-tuning réalisé</p><h2>Qwen 3.5 4B adapté par LoRA</h2><p>Un adaptateur LoRA a été entraîné sur les 8&nbsp;651 exemples de train, puis chaque checkpoint a été évalué fonctionnellement sur les 1&nbsp;034 exemples de validation. L’epoch 2 a été retenue avant le test final, car elle maximise l’execution accuracy de validation.</p></div>
-        <div class="training-grid">
-          <article><span>Modèle et adaptation</span><strong>Qwen 3.5 4B · LoRA</strong><small>r=16 · alpha=32 · dropout 0,05 · toutes les couches linéaires</small></article>
-          <article><span>Entraînement H100</span><strong>3 époques · BF16</strong><small>Batch effectif 64 · LR 1e-4 · scheduler cosinus · warmup 3 % · séquence max. 3&nbsp;072 tokens</small></article>
-          <article><span>Checkpoint retenu</span><strong>Epoch 2 · 74,66 %</strong><small>772 / 1&nbsp;034 réponses correctes par exécution sur validation ; sélection faite sans consulter le test.</small></article>
-          <article><span>Test final</span><strong>73,17 % · 1&nbsp;571 / 2&nbsp;147</strong><small>+15,41 points face au meilleur Qwen 3.5 4B brut ; 46,11 % d’exact match.</small></article>
-        </div>
-        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Checkpoint</th><th>Loss validation</th><th>Execution accuracy</th><th>Exact match</th><th>SQL exécutable</th><th>Choix</th></tr></thead><tbody><tr><td>Epoch 1</td><td>0,2573</td><td>73,02 % <small>755 / 1&nbsp;034</small></td><td>43,04 %</td><td>95,16 %</td><td>—</td></tr><tr><td>Epoch 2</td><td>0,2742</td><td class="best">74,66 % <small>772 / 1&nbsp;034</small></td><td class="best">45,65 %</td><td class="best">96,03 %</td><td class="best">Test final</td></tr><tr><td>Epoch 3</td><td>0,2846</td><td>73,69 % <small>762 / 1&nbsp;034</small></td><td>44,00 %</td><td class="best">96,03 %</td><td>—</td></tr></tbody></table></div></div>
-        <p class="caption">Run <code>qwen3.5-4b-20260924-223636Z</code> · métrique de sélection : execution accuracy sur validation. Les artefacts du test sont rattachés à <a href="../03_fine_tuning/artifacts/qwen3.5-4b-20260924-223636Z/eval/epoch-2/final_test/"><code>eval/epoch-2/final_test/</code></a>.</p>
+        <div class="section-heading"><p class="eyebrow">03 · Expériences de fine-tuning</p><h2>Adaptations LoRA comparées</h2><p>Chaque expérience entraîne un adaptateur LoRA sur les 8&nbsp;651 exemples de train, puis évalue tous ses checkpoints par exécution SQLite sur les 1&nbsp;034 exemples de validation. Le checkpoint retenu est choisi exclusivement sur cette validation, avant toute évaluation finale sur test.</p></div>
+        <div class="training-parameters"><strong>Paramètres du fine-tuning :</strong> LoRA (r=16, α=32, dropout 0,05) · 3 époques · learning rate 1e-4 · batch par GPU 2, accumulation de gradients 32, batch effectif 64 · séquences de 3&nbsp;072 tokens maximum · AdamW avec scheduler cosinus · bfloat16, avec des paramètres de base restaurés en FP32 (36 pour le 2B, 48 pour le 4B)</div>
+        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Modèle · checkpoint</th><th>Loss validation</th><th>Execution accuracy · validation</th><th>Execution accuracy · test</th></tr></thead><tbody><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 1</td><td>0,2813</td><td>65,09 %</td><td>—</td></tr><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 2</td><td>0,3013</td><td>63,93 %</td><td>—</td></tr><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 3</td><td>0,3046</td><td class="best">66,25 %</td><td class="best">67,44 %</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 1</td><td>0,2573</td><td>73,02 %</td><td>—</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 2</td><td>0,2742</td><td class="best">74,66 %</td><td class="best">73,17 %</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 3</td><td>0,2846</td><td>73,69 %</td><td>—</td></tr></tbody></table></div></div>
+        <p class="training-reminder">Pour rappel, nous avions sur les modèles de base :</p>
+        <div class="base-bubbles"><article>Qwen 3.5 2B : <strong>29,48 %</strong> d’execution accuracy, et maintenant sa version fine-tunée :<br><strong>67,44 %</strong>, soit un gain de <strong>+37,96 points</strong>.</article><article>Qwen 3.5 4B : <strong>54,26 %</strong> d’execution accuracy, et maintenant sa version fine-tunée :<br><strong>73,17 %</strong>, soit un gain de <strong>+18,91 points</strong>.</article><article class="base-best">Meilleur score des modèles de base zero-shot : Qwen 3.5 9B avec <strong>63,06 %</strong> d’execution accuracy.</article></div>
+        <aside class="conclusion-box" aria-labelledby="conclusion-fine-tuning"><h3 id="conclusion-fine-tuning">Que peut-on conclure&nbsp;?</h3><ul><li>Les gains sont <strong>très importants</strong> : <strong>+37,96 points</strong> pour le 2B et <strong>+18,91 points</strong> pour le 4B d’execution accuracy par rapport à leur version zero-shot.</li><li>Les <strong>deux modèles fine-tunés dépassent le meilleur score zero-shot</strong>, celui du Qwen 3.5 9B (63,06 %) : <strong>67,44 %</strong> pour le 2B et <strong>73,17 %</strong> pour le 4B.</li></ul></aside>
       </section>
 
-      <section id="methodologie" class="methodology">
-        <p class="eyebrow">03 · Méthodologie</p>
-        <h2>Un protocole sans fuite de test</h2>
-        <div><p>Le fine-tuning H100 apprend exclusivement sur <code>train.jsonl</code> et calcule la loss de validation sur <code>validation.jsonl</code> à chaque époque. Pour ce run, chaque checkpoint a aussi été évalué par exécution SQLite sur validation ; l’epoch 2 a été retenue pour son execution accuracy maximale, avant de lancer le test.</p><p>Le test est préparé séparément et reste réservé à l’évaluation finale par exécution SQLite. Il n’est ni chargé ni consulté pendant l’entraînement ni pendant la sélection du checkpoint.</p></div>
+      <section id="optimisation-lora" class="section">
+        <div class="section-heading"><p class="eyebrow">04 · Optimisation LoRA</p><h2>Explorer les paramètres du Qwen 3.5 2B</h2><p>La prochaine étape compare différentes configurations LoRA sur le Qwen 3.5 2B. Pour isoler l’effet des hyperparamètres, les mêmes données et le même protocole d’évaluation sont conservés : seule la configuration LoRA varie.</p></div>
+        <div class="training-parameters"><strong>Protocole constant :</strong> 8&nbsp;651 exemples train · 1&nbsp;034 exemples validation · 2&nbsp;147 exemples test · mêmes bases SQLite, tokenizer, prompts, nombre d’époques, learning rate, batch et procédure de sélection sur validation</div>
+        <div class="training-parameters"><strong>Paramètres LoRA à explorer :</strong> rang (r), facteur d’échelle (α) et dropout.</div>
       </section>
     </main>
     <script src="app.js"></script>

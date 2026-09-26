@@ -29,7 +29,15 @@
 .metric-note ul { margin: 0; padding-left: 1.25rem; }
 .metric-note li + li { margin-top: 4px; }
 .metric-note b { color: #b9d8ef; }
+.conclusion-box { margin-top: 16px; padding: 16px 18px; border: 1px solid #7a5a35; border-left: 3px solid #e8a85d; border-radius: 10px; background: linear-gradient(110deg, #302317, #1c1a1a); }
+.conclusion-box h3 { margin: 0 0 6px; color: #f1bd78; font-size: .9rem; letter-spacing: .02em; }
+.conclusion-box p { margin: 0; color: #f5f5f5; font-size: .88rem; }
+.conclusion-box ul { margin: 0; padding-left: 1.2rem; color: #f5f5f5; font-size: .88rem; }
+.conclusion-box li + li { margin-top: 5px; }
 
+#entrainements .section-heading,#optimisation-lora .section-heading { max-width: none; }
+.training-parameters { margin: -10px 0 16px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; }
+.training-parameters strong { color: var(--text); white-space: nowrap; }
 .evaluation-table .model-qwen-0-8b td { background: #172938; }.evaluation-table .model-qwen-0-8b:hover td { background: #213b50; }
 .evaluation-table .model-qwen-2b td { background: #182f36; }.evaluation-table .model-qwen-2b:hover td { background: #22434c; }
 .evaluation-table .model-qwen-4b td { background: #252b40; }.evaluation-table .model-qwen-4b:hover td { background: #353f5c; }
@@ -39,6 +47,15 @@
 .evaluation-table th:nth-child(3),.evaluation-table td:nth-child(3) { border-right: 1px solid rgb(255 255 255 / 90%); border-left: 1px solid rgb(255 255 255 / 90%); }
 .evaluation-table th:nth-child(3) { border-top: 1px solid rgb(255 255 255 / 90%); color: rgb(255 255 255 / 90%); }
 .evaluation-table tbody tr:last-child td:nth-child(3) { border-bottom: 1px solid rgb(255 255 255 / 90%); }
+.training-results .evaluation-table th:nth-child(3),.training-results .evaluation-table td:nth-child(3) { border-right: 0; border-left: 0; }
+.training-results .evaluation-table th:nth-child(3) { border-top: 0; color: #b5c4d7; }
+.training-results .evaluation-table tbody tr:last-child td:nth-child(3) { border-bottom: 0; }
+.training-reminder { margin: 23px 0 10px; color: var(--muted); font-size: 1.05rem; }
+.base-bubbles { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 14px; }
+.base-bubbles article { padding: 17px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; }
+.base-bubbles strong { color: var(--text); font-weight: 750; }
+.base-bubbles .base-best { padding: 10px 14px; font-size: .74rem; }
+@media (max-width: 720px) { .base-bubbles { grid-template-columns: 1fr; } }
 .example-tooltip { position: absolute; z-index: 5; bottom: calc(100% + 8px); left: 0; width: min(430px, calc(100vw - 48px)); padding: 13px 15px; border: 1px solid #49687a; border-radius: 10px; background: #0d1620; box-shadow: 0 12px 32px #0009; color: #dce7f2; font-size: .82rem; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s, transform .15s; }
 .example-tooltip p { margin: 0 0 7px; }.example-tooltip p:last-child { margin-bottom: 0; }
 .dataset-example.is-open .example-tooltip { opacity: 1; pointer-events: auto; transform: translateY(0); }

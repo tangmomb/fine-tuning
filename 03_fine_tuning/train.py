@@ -37,6 +37,11 @@ TEST_GOLD = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test
 TEST_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
 EVALUATION_BATCH_SIZE = 8
 DEFAULT_MODELS = ("Qwen3.5-0.8B", "Qwen3.5-2B", "Qwen3.5-4B", "Qwen3.5-9B")
+LORA_PRESETS = {
+    "A": {"r": 8, "alpha": 16},
+    "classique": {"r": 16, "alpha": 32},
+    "B": {"r": 32, "alpha": 64},
+}
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -103,6 +108,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--learning-rate", type=float, default=1e-4)
     parser.add_argument("--warmup-ratio", type=float, default=0.03)
     parser.add_argument("--lr-scheduler", choices=("cosine", "linear"), default="cosine")
+    parser.add_argument("--lora-preset", choices=LORA_PRESETS,
+                        help="Preset LoRA : A (r=8, alpha=16), classique (r=16, alpha=32) ou B (r=32, alpha=64). "
+                             "Sans cette option, un choix interactif est proposé.")
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume-from-checkpoint", type=str)
     parser.add_argument("--evaluate-run", type=Path,
@@ -123,6 +131,22 @@ def choose_epochs() -> float:
             print("Le nombre d'époques doit être strictement positif.")
             continue
         return epochs
+
+
+def choose_lora_preset() -> str:
+    """Demande le preset LoRA, en conservant la configuration historique par défaut."""
+    print("Choisissez le preset LoRA :")
+    for name, config in LORA_PRESETS.items():
+        print(f"  {name}) r={config['r']}, alpha={config['alpha']} (alpha/r={config['alpha'] / config['r']:.0f})")
+    while True:
+        choice = input("Choix [classique] : ").strip() or "classique"
+        if choice.lower() in {"a", "b"}:
+            choice = choice.upper()
+        elif choice.lower() in {"actuel", "classique"}:
+            choice = "classique"
+        if choice in LORA_PRESETS:
+            return choice
+        print("Choix invalide : entrez A, B ou classique.")
 
 
 def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
@@ -404,8 +428,9 @@ def train_model(
     if fp32_parameters:
         print(f"{model_name} : {fp32_parameters} paramètres de stabilité conservés en FP32.")
     model.config.use_cache = False
+    lora = LORA_PRESETS[args.lora_preset]
     model = get_peft_model(model, LoraConfig(
-        task_type=TaskType.CAUSAL_LM, r=16, lora_alpha=32, lora_dropout=0.05,
+        task_type=TaskType.CAUSAL_LM, r=lora["r"], lora_alpha=lora["alpha"], lora_dropout=0.05,
         target_modules="all-linear", bias="none",
     ))
     model.print_trainable_parameters()
@@ -492,7 +517,8 @@ def train_model(
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
         "bf16": True, "restored_fp32_base_parameters": fp32_parameters,
-        "lora": {"r": 16, "alpha": 32, "dropout": 0.05, "target_modules": "all-linear"},
+        "lora_preset": args.lora_preset,
+        "lora": {"r": lora["r"], "alpha": lora["alpha"], "dropout": 0.05, "target_modules": "all-linear"},
         "epochs": args.epochs, "learning_rate": args.learning_rate, "warmup_ratio": args.warmup_ratio,
         "effective_batch_size": args.per_device_batch_size * args.gradient_accumulation_steps,
         "max_seq_length": args.max_seq_length, "optimizer": "AdamW", "lr_scheduler": args.lr_scheduler,
@@ -592,6 +618,8 @@ def main() -> None:
         args.epochs = choose_epochs()
     elif args.epochs <= 0:
         raise ValueError("--epochs doit être strictement positif.")
+    if args.lora_preset is None:
+        args.lora_preset = choose_lora_preset()
     rows = read_jsonl(args.dataset)
     random.Random(args.seed).shuffle(rows)
     set_seed(args.seed)
