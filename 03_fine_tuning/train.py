@@ -42,6 +42,7 @@ LORA_PRESETS = {
     "classique": {"r": 16, "alpha": 32},
     "B": {"r": 32, "alpha": 64},
 }
+LEARNING_RATE_PRESETS = (5e-5, 1e-4, 2e-4)
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -105,7 +106,8 @@ def parse_args() -> argparse.Namespace:
                         help="2 x 32 = batch effectif 64 sur une H100 mono-GPU.")
     parser.add_argument("--epochs", type=float,
                         help="Nombre d'époques. Sans cette option, une valeur est demandée au terminal.")
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--learning-rate", type=float,
+                        help="Limite le lancement à un seul learning rate. Sans cette option, les trois valeurs sont testées.")
     parser.add_argument("--warmup-ratio", type=float, default=0.03)
     parser.add_argument("--lr-scheduler", choices=("cosine", "linear"), default="cosine")
     parser.add_argument("--lora-preset", choices=LORA_PRESETS,
@@ -152,10 +154,16 @@ def choose_lora_preset() -> str:
 def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
     """Crée un dossier de run autonome et horodaté, sans écraser un run existant."""
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
-    default_name = f"{model_name.lower()}-{timestamp}"
+    default_name = f"{model_name.lower()}-{args.lora_preset.lower()}-lr-{args.learning_rate:g}-{timestamp}"
     run_name = args.run_name or default_name
-    if len(args.models or ()) > 1 and args.run_name:
-        run_name = f"{args.run_name}-{model_name.lower()}"
+    if args.run_name:
+        suffixes = []
+        if len(args.models or ()) > 1:
+            suffixes.append(model_name.lower())
+        if len(args.learning_rates) > 1:
+            suffixes.append(f"lr-{args.learning_rate:g}")
+        if suffixes:
+            run_name = f"{args.run_name}-{'-'.join(suffixes)}"
     run_dir = args.output_root / run_name
     if run_dir.exists():
         raise FileExistsError(f"Le dossier de run existe déjà : {run_dir}. Choisissez --run-name différent.")
@@ -620,11 +628,19 @@ def main() -> None:
         raise ValueError("--epochs doit être strictement positif.")
     if args.lora_preset is None:
         args.lora_preset = choose_lora_preset()
+    args.learning_rates = (args.learning_rate,) if args.learning_rate is not None else LEARNING_RATE_PRESETS
+    if len(args.learning_rates) > 1:
+        values = ", ".join(f"{learning_rate:g}" for learning_rate in args.learning_rates)
+        print(f"Le preset LoRA {args.lora_preset} sera entraîné successivement avec les learning rates : {values}.")
     rows = read_jsonl(args.dataset)
     random.Random(args.seed).shuffle(rows)
     set_seed(args.seed)
     for model_name in args.models or choose_models():
-        train_model(model_name, args, rows, validation_rows)
+        for args.learning_rate in args.learning_rates:
+            # Chaque LR repart de la même initialisation LoRA et de la même
+            # séquence aléatoire : seul le learning rate varie dans ce sweep.
+            set_seed(args.seed)
+            train_model(model_name, args, rows, validation_rows)
 
 
 if __name__ == "__main__":
