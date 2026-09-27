@@ -29,6 +29,8 @@ JUDGMENTS = ROOT / "01_data" / "05_quality_control" / "03_production" / "09_judg
 CORRECTIONS = ROOT / "01_data" / "05_quality_control" / "03_production" / "02_manual_corrections" / "manual_corrections.jsonl"
 TRAIN_SCRIPT = Path(__file__).with_name("train.py")
 PERCENTAGES = (25, 50, 75, 100)
+TRAINING_PERCENTAGES = (25, 50, 75)
+EXISTING_FULL_RUN = ROOT / "03_fine_tuning" / "artifacts" / "qwen3.5-2b-20260926-125948Z_r8_alpha16_lr1e-4"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -175,6 +177,7 @@ def main() -> None:
         "validation_dataset": str(VALIDATION_DATASET),
         "validation_examples": len(validation_rows),
         "test_dataset_used": False,
+        "existing_full_run": str(EXISTING_FULL_RUN),
         "subsets": [],
     }
     subsets: list[tuple[int, Path]] = []
@@ -183,6 +186,9 @@ def main() -> None:
         path = subsets_dir / f"train_{percentage:03d}pct.jsonl"
         write_jsonl(path, [item["row"] for item in subset])
         entry = {**subset_manifest(subset, len(train_rows), percentage), "dataset": str(path)}
+        if percentage == 100:
+            entry["run"] = str(EXISTING_FULL_RUN)
+            entry["run_reused"] = True
         manifest["subsets"].append(entry)
         subsets.append((percentage, path))
     # Contrat central de l'expérience : chaque subset est inclus dans le suivant.
@@ -196,6 +202,8 @@ def main() -> None:
     if args.prepare_only:
         return
     for percentage, dataset in subsets:
+        if percentage not in TRAINING_PERCENTAGES:
+            continue
         run_name = f"{args.model.lower()}-data-scaling-{percentage:03d}pct"
         command = [
             sys.executable, str(TRAIN_SCRIPT), "--models", args.model,
