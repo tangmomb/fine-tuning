@@ -169,8 +169,8 @@ def main() -> None:
         "lora": {"r": 8, "alpha": 16, "dropout": 0.05},
         "learning_rate": 1e-4,
         "epochs": args.epochs,
-        "per_device_batch_size": 4,
-        "gradient_accumulation_steps": 16,
+        "per_device_batch_size": 2,
+        "gradient_accumulation_steps": 32,
         "effective_batch_size": 64,
         "validation_dataset": str(VALIDATION_DATASET),
         "validation_examples": len(validation_rows),
@@ -202,7 +202,7 @@ def main() -> None:
             "--dataset", str(dataset), "--validation-dataset", str(VALIDATION_DATASET),
             "--output-root", str(output_root / "runs"), "--run-name", run_name,
             "--epochs", str(args.epochs), "--lora-preset", "A", "--learning-rate", "1e-4",
-            "--per-device-batch-size", "4", "--gradient-accumulation-steps", "16",
+            "--per-device-batch-size", "2", "--gradient-accumulation-steps", "32",
             "--seed", str(args.seed),
         ]
         print(f"\n=== Data scaling {percentage} % ===")
