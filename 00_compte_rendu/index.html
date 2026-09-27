@@ -13,71 +13,486 @@
       <header class="hero">
         <p class="eyebrow">Suivi du projet · Text-to-SQL français</p>
         <h1>Du jeu de données<br />au modèle entraîné.</h1>
-        <p class="intro">Le point d’avancement unique du projet : données finales, comportement des modèles bruts, puis résultats des entraînements LoRA.</p>
-        <nav aria-label="Navigation du suivi"><a href="#donnees">1 · Données</a><a href="#evaluation">2 · Modèles bruts</a><a href="#entrainements">3 · Entraînements</a><a href="#optimisation-lora">4 · Optimisation LoRA</a><a href="#data-scaling">5 · Data scaling</a></nav>
+        <p class="intro">
+          Le point d’avancement unique du projet : données finales, comportement
+          des modèles bruts, puis résultats des entraînements LoRA.
+        </p>
+        <nav aria-label="Navigation du suivi">
+          <a href="#donnees">1 · Données</a
+          ><a href="#evaluation">2 · Modèles bruts</a
+          ><a href="#entrainements">3 · Entraînements</a
+          ><a href="#optimisation-lora">4 · Optimisation LoRA</a
+          ><a href="#data-scaling">5 · Data scaling</a>
+        </nav>
       </header>
 
       <section id="donnees" class="section">
-        <div class="section-heading"><p class="eyebrow">01 · Données</p><h2>Jeux finaux et séparation</h2><p class="header-note">206 bases distinctes au total — 146 en train, 20 en validation et 40 en test, sans aucun recouvrement entre les splits.</p><p>Les longueurs et volumes des fichiers finaux sont détaillés ci-dessous.</p><p>Pour découvrir en détail la préparation des données et le pipeline associé, <a href="../01_data/00_documentation/pipeline_visualisation/">cliquez ici</a>.</p></div>
-        <div id="dataset-summary" class="dataset-summary"></div>
-        <div class="table-card"><div class="table-scroll"><table class="dataset-table"><thead><tr><th>Fichier</th><th>Cas</th><th>Moyenne<br />(tokens)</th><th>P95<br />(tokens)</th><th>P99<br />(tokens)</th><th>Max.<br />(tokens)</th><th>&gt; 1 024<br />(%)</th><th>&gt; 1 536<br />(%)</th><th>&gt; 2 048<br />(%)</th><th>Taille</th></tr></thead><tbody id="dataset-rows"></tbody></table></div></div>
-        <div class="sequence-examples">
-          <div class="sequence-anatomy" aria-label="Séquence complète de l’exemple tokenisé"><p><b>Séquence complète</b><span>Même exemple train · 176 tokens · <em class="prediction-legend">à prédire</em></span></p><pre id="complete-sequence" class="complete-sequence"></pre></div>
-          <div class="sequence-token-map" aria-label="Exemple complet tokenisé d’une séquence complète"><p><b>Exemple complet tokenisé</b><span>Tokenizer officiel Qwen · ␠ espace · ↵ retour ligne</span></p><pre id="tokenized-example" class="tokenized-example"></pre></div>
+        <div class="section-heading">
+          <p class="eyebrow">01 · Données</p>
+          <h2>Jeux finaux et séparation</h2>
+          <p class="header-note">
+            206 bases distinctes au total — 146 en train, 20 en validation et 40
+            en test, sans aucun recouvrement entre les splits.
+          </p>
+          <p>
+            Les longueurs et volumes des fichiers finaux sont détaillés
+            ci-dessous.
+          </p>
+          <p>
+            Pour découvrir en détail la préparation des données et le pipeline
+            associé,
+            <a href="../01_data/00_documentation/pipeline_visualisation/"
+              >cliquez ici</a
+            >.
+          </p>
         </div>
-        <p class="caption">Longueurs en tokens Qwen 3.5 de la séquence complète : system + user + préambule assistant + SQL cible + <code>&lt;|im_end|&gt;</code>. P95 et P99 utilisent le rang le plus proche.</p>
+        <div id="dataset-summary" class="dataset-summary"></div>
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="dataset-table">
+              <thead>
+                <tr>
+                  <th>Fichier</th>
+                  <th>Cas</th>
+                  <th>Moyenne<br />(tokens)</th>
+                  <th>P95<br />(tokens)</th>
+                  <th>P99<br />(tokens)</th>
+                  <th>Max.<br />(tokens)</th>
+                  <th>&gt; 1 024<br />(%)</th>
+                  <th>&gt; 1 536<br />(%)</th>
+                  <th>&gt; 2 048<br />(%)</th>
+                  <th>Taille</th>
+                </tr>
+              </thead>
+              <tbody id="dataset-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="sequence-examples">
+          <div
+            class="sequence-anatomy"
+            aria-label="Séquence complète de l’exemple tokenisé"
+          >
+            <p>
+              <b>Séquence complète</b
+              ><span
+                >Même exemple train · 176 tokens ·
+                <em class="prediction-legend">à prédire</em></span
+              >
+            </p>
+            <pre id="complete-sequence" class="complete-sequence"></pre>
+          </div>
+          <div
+            class="sequence-token-map"
+            aria-label="Exemple complet tokenisé d’une séquence complète"
+          >
+            <p>
+              <b>Exemple complet tokenisé</b
+              ><span>Tokenizer officiel Qwen · ␠ espace · ↵ retour ligne</span>
+            </p>
+            <pre id="tokenized-example" class="tokenized-example"></pre>
+          </div>
+        </div>
+        <p class="caption">
+          Longueurs en tokens Qwen 3.5 de la séquence complète : system + user +
+          préambule assistant + SQL cible + <code>&lt;|im_end|&gt;</code>. P95
+          et P99 utilisent le rang le plus proche.
+        </p>
       </section>
 
       <section id="evaluation" class="section">
-        <div class="section-heading"><p class="eyebrow">02 · Point de départ</p><h2>Tests des modèles bruts</h2><p>Résultats figés sur les 2&nbsp;147 requêtes du jeu de test, avant fine-tuning. Les meilleurs résultats Qwen sont indiqués en vert ; GPT-5.6 Luna est présenté comme repère externe.</p></div>
-        <div class="metric-note" aria-label="Explication des métriques d’évaluation">
+        <div class="section-heading">
+          <p class="eyebrow">02 · Point de départ</p>
+          <h2>Tests des modèles bruts</h2>
+          <p>
+            Résultats figés sur les 2&nbsp;147 requêtes du jeu de test, avant
+            fine-tuning. Les meilleurs résultats Qwen sont indiqués en vert ;
+            GPT-5.6 Luna est présenté comme repère externe.
+          </p>
+        </div>
+        <div
+          class="metric-note"
+          aria-label="Explication des métriques d’évaluation"
+        >
           <ul>
-            <li><b>Execution accuracy</b> : part des requêtes dont le résultat renvoyé par SQLite est exactement le même que celui de la requête de référence. C’est la mesure principale de la justesse fonctionnelle.</li>
-            <li><b>Exact match</b> : part des requêtes dont le texte SQL, après normalisation, est identique à la référence. Une requête différente mais équivalente peut donc réussir l’exécution sans compter ici.</li>
-            <li><b>SQL exécutable</b> : part des requêtes que SQLite peut lancer sur la base concernée sans produire d’erreur. Cela vérifie notamment que les tables, colonnes et types employés sont cohérents avec le schéma.</li>
-            <li><b>SQL valide</b> : part des sorties dont la syntaxe peut être analysée comme du SQL. Cette métrique ne garantit ni que les noms du schéma existent, ni que la réponse à la question est correcte.</li>
-            <li><b>Erreurs d’exécution</b> : requêtes syntaxiquement valides, mais rejetées au moment de l’exécution — par exemple à cause d’une table ou d’une colonne inexistante.</li>
-            <li><b>SQL invalides</b> : sorties qui ne peuvent pas être analysées comme une requête SQL, souvent en raison d’une syntaxe incomplète, d’un format parasite ou d’une réponse en langage naturel.</li>
-            <li><b>Timeouts</b> : exécutions interrompues parce qu’elles dépassent la durée autorisée, généralement à cause d’une requête trop coûteuse.</li>
+            <li>
+              <b>Execution accuracy</b> : part des requêtes dont le résultat
+              renvoyé par SQLite est exactement le même que celui de la requête
+              de référence. C’est la mesure principale de la justesse
+              fonctionnelle.
+            </li>
+            <li>
+              <b>Exact match</b> : part des requêtes dont le texte SQL, après
+              normalisation, est identique à la référence. Une requête
+              différente mais équivalente peut donc réussir l’exécution sans
+              compter ici.
+            </li>
+            <li>
+              <b>SQL exécutable</b> : part des requêtes que SQLite peut lancer
+              sur la base concernée sans produire d’erreur. Cela vérifie
+              notamment que les tables, colonnes et types employés sont
+              cohérents avec le schéma.
+            </li>
+            <li>
+              <b>SQL valide</b> : part des sorties dont la syntaxe peut être
+              analysée comme du SQL. Cette métrique ne garantit ni que les noms
+              du schéma existent, ni que la réponse à la question est correcte.
+            </li>
+            <li>
+              <b>Erreurs d’exécution</b> : requêtes syntaxiquement valides, mais
+              rejetées au moment de l’exécution — par exemple à cause d’une
+              table ou d’une colonne inexistante.
+            </li>
+            <li>
+              <b>SQL invalides</b> : sorties qui ne peuvent pas être analysées
+              comme une requête SQL, souvent en raison d’une syntaxe incomplète,
+              d’un format parasite ou d’une réponse en langage naturel.
+            </li>
+            <li>
+              <b>Timeouts</b> : exécutions interrompues parce qu’elles dépassent
+              la durée autorisée, généralement à cause d’une requête trop
+              coûteuse.
+            </li>
           </ul>
         </div>
-        <div class="table-card"><div class="table-scroll"><table class="evaluation-table"><thead id="evaluation-head"></thead><tbody id="evaluation-rows"></tbody></table></div></div>
-        <p class="caption score-legend"><span class="best">Vert</span> : meilleure valeur Qwen de la colonne. <span class="worst">Rouge</span> : moins bonne valeur Qwen. GPT‑5.6 Luna est exclu de ces repères.</p>
+        <div class="table-card">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead id="evaluation-head"></thead>
+              <tbody id="evaluation-rows"></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption score-legend">
+          <span class="best">Vert</span> : meilleure valeur Qwen de la colonne.
+          <span class="worst">Rouge</span> : moins bonne valeur Qwen. GPT‑5.6
+          Luna est exclu de ces repères.
+        </p>
         <aside class="conclusion-box" aria-labelledby="conclusion-few-shot">
           <h3 id="conclusion-few-shot">Que peut-on conclure&nbsp;?</h3>
           <ul>
-            <li>Sans surprise, <strong>la qualité des réponses progresse avec le nombre de paramètres</strong>.</li>
-            <li>Le <strong>few-shot n’apporte pas de gain robuste</strong> sur les modèles Qwen : les améliorations restent marginales sur les plus grands modèles, tandis que les modèles 0,8B et 2B <strong>régressent nettement</strong>. Il peut donc déstabiliser certains modèles plutôt que d’améliorer fiablement leurs réponses.</li>
+            <li>
+              Sans surprise,
+              <strong
+                >la qualité des réponses progresse avec le nombre de
+                paramètres</strong
+              >.
+            </li>
+            <li>
+              Le <strong>few-shot n’apporte pas de gain robuste</strong> sur les
+              modèles Qwen : les améliorations restent marginales sur les plus
+              grands modèles, tandis que les modèles 0,8B et 2B
+              <strong>régressent nettement</strong>. Il peut donc déstabiliser
+              certains modèles plutôt que d’améliorer fiablement leurs réponses.
+            </li>
           </ul>
         </aside>
       </section>
 
       <section id="entrainements" class="section">
-        <div class="section-heading"><p class="eyebrow">03 · Expériences de fine-tuning</p><h2>Adaptations LoRA comparées</h2><p>Chaque expérience entraîne un adaptateur LoRA sur les 8&nbsp;651 exemples de train, puis évalue tous ses checkpoints par exécution SQLite sur les 1&nbsp;034 exemples de validation. Le checkpoint retenu est choisi exclusivement sur cette validation, avant toute évaluation finale sur test.</p></div>
-        <div class="training-parameters"><strong>Paramètres du fine-tuning :</strong> LoRA (r=16, α=32, dropout 0,05) · 3 époques · learning rate 1e-4 · batch par GPU 2, accumulation de gradients 32, batch effectif 64 · séquences de 3&nbsp;072 tokens maximum · AdamW avec scheduler cosinus · bfloat16, avec des paramètres de base restaurés en FP32 (36 pour le 2B, 48 pour le 4B)</div>
-        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Modèle · checkpoint</th><th>Loss validation</th><th>Execution accuracy · validation</th><th>Execution accuracy · test</th></tr></thead><tbody><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 1</td><td>0,2813</td><td>65,09 %</td><td>—</td></tr><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 2</td><td>0,3013</td><td>63,93 %</td><td>—</td></tr><tr class="model-qwen-2b"><td>Qwen 3.5 2B · Fine-tuned · Epoch 3</td><td>0,3046</td><td class="best">66,25 %</td><td class="best">67,44 %</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 1</td><td>0,2573</td><td>73,02 %</td><td>—</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 2</td><td>0,2742</td><td class="best">74,66 %</td><td class="best">73,17 %</td></tr><tr class="model-qwen-4b"><td>Qwen 3.5 4B · Fine-tuned · Epoch 3</td><td>0,2846</td><td>73,69 %</td><td>—</td></tr></tbody></table></div></div>
-        <p class="training-reminder">Pour rappel, nous avions sur les modèles de base :</p>
-        <div class="base-bubbles"><article>Qwen 3.5 2B : <strong>29,48 %</strong> d’execution accuracy, et maintenant sa version fine-tunée :<br><strong>67,44 %</strong>, soit un gain de <strong>+37,96 points</strong>.</article><article>Qwen 3.5 4B : <strong>54,26 %</strong> d’execution accuracy, et maintenant sa version fine-tunée :<br><strong>73,17 %</strong>, soit un gain de <strong>+18,91 points</strong>.</article><article class="base-best">Meilleur score des modèles de base zero-shot : Qwen 3.5 9B avec <strong>63,06 %</strong> d’execution accuracy.</article></div>
-        <aside class="conclusion-box" aria-labelledby="conclusion-fine-tuning"><h3 id="conclusion-fine-tuning">Que peut-on conclure&nbsp;?</h3><ul><li>Les gains sont <strong>très importants</strong> : <strong>+37,96 points</strong> pour le 2B et <strong>+18,91 points</strong> pour le 4B d’execution accuracy par rapport à leur version zero-shot.</li><li>Les <strong>deux modèles fine-tunés dépassent le meilleur score zero-shot</strong>, celui du Qwen 3.5 9B (63,06 %) : <strong>67,44 %</strong> pour le 2B et <strong>73,17 %</strong> pour le 4B.</li></ul></aside>
+        <div class="section-heading">
+          <p class="eyebrow">03 · Expériences de fine-tuning</p>
+          <h2>Adaptations LoRA comparées</h2>
+          <p>
+            Chaque expérience entraîne un adaptateur LoRA sur les 8&nbsp;651
+            exemples de train, puis évalue tous ses checkpoints par exécution
+            SQLite sur les 1&nbsp;034 exemples de validation. Le checkpoint
+            retenu est choisi exclusivement sur cette validation, avant toute
+            évaluation finale sur test.
+          </p>
+        </div>
+        <div class="training-parameters">
+          <strong>Paramètres du fine-tuning :</strong> LoRA (r=16, α=32, dropout
+          0,05) · 3 époques · learning rate 1e-4 · batch par GPU 2, accumulation
+          de gradients 32, batch effectif 64 · séquences de 3&nbsp;072 tokens
+          maximum · AdamW avec scheduler cosinus · bfloat16, avec des paramètres
+          de base restaurés en FP32 (36 pour le 2B, 48 pour le 4B)
+        </div>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Modèle · checkpoint</th>
+                  <th>Loss validation</th>
+                  <th>Execution accuracy · validation</th>
+                  <th>Execution accuracy · test</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="model-qwen-2b">
+                  <td>Qwen 3.5 2B · Fine-tuned · Epoch 1</td>
+                  <td>0,2813</td>
+                  <td>65,09 %</td>
+                  <td>—</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Qwen 3.5 2B · Fine-tuned · Epoch 2</td>
+                  <td>0,3013</td>
+                  <td>63,93 %</td>
+                  <td>—</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Qwen 3.5 2B · Fine-tuned · Epoch 3</td>
+                  <td>0,3046</td>
+                  <td class="best">66,25 %</td>
+                  <td class="best">67,44 %</td>
+                </tr>
+                <tr class="model-qwen-4b">
+                  <td>Qwen 3.5 4B · Fine-tuned · Epoch 1</td>
+                  <td>0,2573</td>
+                  <td>73,02 %</td>
+                  <td>—</td>
+                </tr>
+                <tr class="model-qwen-4b">
+                  <td>Qwen 3.5 4B · Fine-tuned · Epoch 2</td>
+                  <td>0,2742</td>
+                  <td class="best">74,66 %</td>
+                  <td class="best">73,17 %</td>
+                </tr>
+                <tr class="model-qwen-4b">
+                  <td>Qwen 3.5 4B · Fine-tuned · Epoch 3</td>
+                  <td>0,2846</td>
+                  <td>73,69 %</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="training-reminder">
+          Pour rappel, nous avions sur les modèles de base :
+        </p>
+        <div class="base-bubbles">
+          <article>
+            Qwen 3.5 2B : <strong>29,48 %</strong> d’execution accuracy, et
+            maintenant sa version fine-tunée :<br /><strong>67,44 %</strong>,
+            soit un gain de <strong>+37,96 points</strong>.
+          </article>
+          <article>
+            Qwen 3.5 4B : <strong>54,26 %</strong> d’execution accuracy, et
+            maintenant sa version fine-tunée :<br /><strong>73,17 %</strong>,
+            soit un gain de <strong>+18,91 points</strong>.
+          </article>
+          <article class="base-best">
+            Meilleur score des modèles de base zero-shot : Qwen 3.5 9B avec
+            <strong>63,06 %</strong> d’execution accuracy.
+          </article>
+        </div>
+        <aside class="conclusion-box" aria-labelledby="conclusion-fine-tuning">
+          <h3 id="conclusion-fine-tuning">Que peut-on conclure&nbsp;?</h3>
+          <ul>
+            <li>
+              Les gains sont <strong>très importants</strong> :
+              <strong>+37,96 points</strong> pour le 2B et
+              <strong>+18,91 points</strong> pour le 4B d’execution accuracy par
+              rapport à leur version zero-shot.
+            </li>
+            <li>
+              Les
+              <strong
+                >deux modèles fine-tunés dépassent le meilleur score
+                zero-shot</strong
+              >, celui du Qwen 3.5 9B (63,06 %) : <strong>67,44 %</strong> pour
+              le 2B et <strong>73,17 %</strong> pour le 4B.
+            </li>
+          </ul>
+        </aside>
       </section>
 
       <section id="optimisation-lora" class="section">
-        <div class="section-heading"><p class="eyebrow">04 · Optimisation LoRA</p><h2>Explorer les paramètres du Qwen 3.5 2B</h2><p>Le Qwen 3.5 2B réagit particulièrement bien au fine-tuning : son execution accuracy test passe de 29,48 % à 67,44 % (+37,96 points). Nous allons donc tester différentes configurations LoRA sur ce modèle. Pour isoler l’effet des hyperparamètres, les mêmes données et le même protocole d’évaluation sont conservés : seule la configuration LoRA varie.</p></div>
-        <div class="lora-subsection"><p class="eyebrow">04.1 · Capacité des adaptateurs</p><h3>Faire varier r et α à ratio constant</h3><p>Nous faisons varier le rang <code>r</code> et le facteur d’échelle <code>α</code>, tout en conservant <code>α / r = 2</code>. Le dropout et tous les autres paramètres d’entraînement restent inchangés.</p></div>
-        <p>Les pourcentages correspondent à l’execution accuracy sur les 1&nbsp;034 exemples de validation :</p>
-        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Epoch</th><th>r=8 · α=16</th><th>r=16 · α=32</th><th>r=32 · α=64</th></tr></thead><tbody><tr class="model-qwen-2b"><td>Epoch 1</td><td>63,44 %</td><td>65,09 %</td><td class="best">66,83 %</td></tr><tr class="model-qwen-2b"><td>Epoch 2</td><td>63,54 %</td><td>63,93 %</td><td>66,25 %</td></tr><tr class="model-qwen-2b"><td>Epoch 3</td><td>66,44 %</td><td>66,25 %</td><td>65,18 %</td></tr></tbody></table></div></div>
-        <p>Bien que le meilleur score de validation soit obtenu avec <code>r=32</code> et <code>α=64</code>, son avantage reste limité. Il ne justifie pas nécessairement un adaptateur plus grand, donc davantage de paramètres LoRA à entraîner, lorsque les configurations plus légères produisent des résultats très proches. Nous retenons donc le plus petit couple, <code>r=8</code> et <code>α=16</code>, pour la suite des essais.</p>
-        <div class="lora-subsection"><p class="eyebrow">04.2 · Taux d’apprentissage</p><h3>Tester différents learning rates</h3><p>Nous conservons le plus petit couple, <code>r=8</code> et <code>α=16</code>, puis comparons plusieurs learning rates. Les données, les autres hyperparamètres et le protocole de sélection restent identiques.</p></div>
-        <div class="table-card training-results"><div class="table-scroll"><table class="evaluation-table"><thead><tr><th>Epoch</th><th>Learning rate 5e-5</th><th>Learning rate 1e-4</th><th>Learning rate 2e-4</th></tr></thead><tbody><tr class="model-qwen-2b"><td>Epoch 1</td><td>60,35 %</td><td>63,44 %</td><td>64,41 %</td></tr><tr class="model-qwen-2b"><td>Epoch 2</td><td>62,77 %</td><td>63,54 %</td><td class="best">66,63 %</td></tr><tr class="model-qwen-2b"><td>Epoch 3</td><td>64,41 %</td><td>66,44 %</td><td>65,96 %</td></tr></tbody></table></div></div>
-        <aside class="conclusion-box" aria-labelledby="conclusion-optimisation-lora"><h3 id="conclusion-optimisation-lora">Que peut-on conclure&nbsp;?</h3><ul><li>Les variations de <code>r</code>, <code>α</code> et du learning rate ont un <strong>impact limité</strong> sur l’Execution Accuracy de validation dans la plage testée.</li><li>Le rang <code>r=8</code> offre des performances comparables aux rangs supérieurs tout en réduisant le nombre de paramètres LoRA entraînables.</li><li>Nous retenons donc <code>r=8</code>, <code>α=16</code> et un learning rate de <strong>1e-4</strong> : il converge bien en 3 epochs et est plus conservateur que <code>2e-4</code>, sans perte significative de performance.</li></ul></aside>
+        <div class="section-heading">
+          <p class="eyebrow">04 · Optimisation LoRA</p>
+          <h2>Explorer les paramètres du Qwen 3.5 2B</h2>
+          <p>
+            Le Qwen 3.5 2B réagit particulièrement bien au fine-tuning : son
+            execution accuracy test passe de 29,48 % à 67,44 % (+37,96 points).
+            Nous allons donc tester différentes configurations LoRA sur ce
+            modèle. Pour isoler l’effet des hyperparamètres, les mêmes données
+            et le même protocole d’évaluation sont conservés : seule la
+            configuration LoRA varie.
+          </p>
+        </div>
+        <div class="lora-subsection">
+          <p class="eyebrow">04.1 · Capacité des adaptateurs</p>
+          <h3>Faire varier r et α à ratio constant</h3>
+          <p>
+            Nous faisons varier le rang <code>r</code> et le facteur d’échelle
+            <code>α</code>, tout en conservant <code>α / r = 2</code>. Le
+            dropout et tous les autres paramètres d’entraînement restent
+            inchangés.
+          </p>
+        </div>
+        <p>
+          Les pourcentages correspondent à l’execution accuracy sur les
+          1&nbsp;034 exemples de validation :
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Epoch</th>
+                  <th>r=8 · α=16</th>
+                  <th>r=16 · α=32</th>
+                  <th>r=32 · α=64</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 1</td>
+                  <td>63,44 %</td>
+                  <td>65,09 %</td>
+                  <td class="best">66,83 %</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 2</td>
+                  <td>63,54 %</td>
+                  <td>63,93 %</td>
+                  <td>66,25 %</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 3</td>
+                  <td>66,44 %</td>
+                  <td>66,25 %</td>
+                  <td>65,18 %</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          Bien que le meilleur score de validation soit obtenu avec
+          <code>r=32</code> et <code>α=64</code>, son avantage reste limité. Il
+          ne justifie pas nécessairement un adaptateur plus grand, donc
+          davantage de paramètres LoRA à entraîner, lorsque les configurations
+          plus légères produisent des résultats très proches. Nous retenons donc
+          le plus petit couple, <code>r=8</code> et <code>α=16</code>, pour la
+          suite des essais.
+        </p>
+        <div class="lora-subsection">
+          <p class="eyebrow">04.2 · Taux d’apprentissage</p>
+          <h3>Tester différents learning rates</h3>
+          <p>
+            Nous conservons le plus petit couple, <code>r=8</code> et
+            <code>α=16</code>, puis comparons plusieurs learning rates. Les
+            données, les autres hyperparamètres et le protocole de sélection
+            restent identiques.
+          </p>
+        </div>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Epoch</th>
+                  <th>Learning rate 5e-5</th>
+                  <th>Learning rate 1e-4</th>
+                  <th>Learning rate 2e-4</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 1</td>
+                  <td>60,35 %</td>
+                  <td>63,44 %</td>
+                  <td>64,41 %</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 2</td>
+                  <td>62,77 %</td>
+                  <td>63,54 %</td>
+                  <td class="best">66,63 %</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>Epoch 3</td>
+                  <td>64,41 %</td>
+                  <td>66,44 %</td>
+                  <td>65,96 %</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside
+          class="conclusion-box"
+          aria-labelledby="conclusion-optimisation-lora"
+        >
+          <h3 id="conclusion-optimisation-lora">Que peut-on conclure&nbsp;?</h3>
+          <ul>
+            <li>
+              Les variations de <code>r</code>, <code>α</code> et du learning
+              rate ont un <strong>impact limité</strong> sur l’Execution
+              Accuracy de validation dans la plage testée.
+            </li>
+            <li>
+              Le rang <code>r=8</code> offre des performances comparables aux
+              rangs supérieurs tout en réduisant le nombre de paramètres LoRA
+              entraînables.
+            </li>
+            <li>
+              Nous retenons donc <code>r=8</code>, <code>α=16</code> et un
+              learning rate de <strong>1e-4</strong> : il converge bien en 3
+              epochs et est plus conservateur que <code>2e-4</code>, sans perte
+              significative de performance.
+            </li>
+          </ul>
+        </aside>
       </section>
 
       <section id="data-scaling" class="section">
-        <div class="section-heading"><p class="eyebrow">05 · Data scaling</p><h2>Mesurer l’effet du volume de données</h2><p>Après avoir fixé une configuration LoRA compacte, nous allons maintenant mesurer l’apport de données d’entraînement supplémentaires. L’objectif est d’identifier comment l’Execution Accuracy évolue lorsque la taille du jeu de train augmente. Chaque version sera évaluée sur le <strong>même jeu de validation</strong>, avec le même protocole d’évaluation.</p></div>
-        <div class="training-parameters"><strong>Configuration conservée :</strong> Qwen 3.5 2B · LoRA (<code>r=8</code>, <code>α=16</code>) · learning rate <code>1e-4</code> · 3 époques.</div>
-        <p>Le jeu d’entraînement sera découpé en quatre volumes : <strong>25 %</strong>, <strong>50 %</strong>, <strong>75 %</strong> et <strong>100 %</strong>. Les sous-ensembles seront imbriqués (<code>25% ⊂ 50% ⊂ 75% ⊂ 100%</code>) et construits par échantillonnage contrôlé selon les <code>db_id</code> : chaque base y contribuera proportionnellement à son nombre d’exemples. Cela permet de conserver une diversité raisonnablement représentative des bases et schémas à chaque niveau.</p>
-        <div class="scaling-bubbles" aria-label="Volumes des jeux d’entraînement testés"><article>Train · 25 % · <strong>2&nbsp;163 exemples</strong></article><article>Train · 50 % · <strong>4&nbsp;326 exemples</strong></article><article>Train · 75 % · <strong>6&nbsp;488 exemples</strong></article><article>Train · 100 % · <strong>8&nbsp;651 exemples</strong></article></div>
-        <p>Les résultats permettront de mesurer l’importance du nombre d’exemples d’entraînement sur les performances du modèle.</p>
+        <div class="section-heading">
+          <p class="eyebrow">05 · Data scaling</p>
+          <h2>Mesurer l’effet du volume de données</h2>
+          <p>
+            Après avoir fixé une configuration LoRA compacte, nous allons
+            maintenant mesurer l’apport de données d’entraînement
+            supplémentaires. L’objectif est d’identifier comment l’Execution
+            Accuracy évolue lorsque la taille du jeu de train augmente. Chaque
+            version sera évaluée sur le <strong>même jeu de validation</strong>,
+            avec le même protocole d’évaluation.
+          </p>
+        </div>
+        <div class="training-parameters">
+          <strong>Configuration conservée :</strong> Qwen 3.5 2B · LoRA
+          (<code>r=8</code>, <code>α=16</code>) · learning rate
+          <code>1e-4</code> · 3 époques.
+        </div>
+        <p>
+          Le jeu d’entraînement sera découpé en quatre volumes :
+          <strong>25 %</strong>, <strong>50 %</strong>, <strong>75 %</strong> et
+          <strong>100 %</strong>. Les sous-ensembles seront imbriqués (<code
+            >25% ⊂ 50% ⊂ 75% ⊂ 100%</code
+          >) et construits par échantillonnage contrôlé selon les
+          <code>db_id</code> et la difficulté Spider (<code>easy</code>,
+          <code>medium</code>, <code>hard</code>, <code>extra</code>) : chaque
+          base et chaque niveau de difficulté y contribueront proportionnellement
+          à leur nombre d’exemples. Cela permet de conserver une diversité
+          raisonnablement représentative des bases, schémas et requêtes à chaque
+          niveau.
+        </p>
+        <p>
+          Spider ne fournit pas directement ces niveaux de difficulté dans ses
+          fichiers train. Ils sont recalculés à partir de l’AST SQL gold avec les
+          règles de son évaluateur officiel, qui classe chaque requête en
+          <code>easy</code>, <code>medium</code>, <code>hard</code> ou
+          <code>extra</code>.
+        </p>
+        <div
+          class="scaling-bubbles"
+          aria-label="Volumes des jeux d’entraînement testés"
+        >
+          <article>Train · 25 % · <strong>2&nbsp;163 exemples</strong></article>
+          <article>Train · 50 % · <strong>4&nbsp;326 exemples</strong></article>
+          <article>Train · 75 % · <strong>6&nbsp;488 exemples</strong></article>
+          <article>
+            Train · 100 % · <strong>8&nbsp;651 exemples</strong>
+          </article>
+        </div>
+        <p>
+          Les résultats permettront de mesurer l’importance du nombre d’exemples
+          d’entraînement sur les performances du modèle.
+        </p>
       </section>
     </main>
     <script src="app.js"></script>
