@@ -35,7 +35,13 @@
 .conclusion-box ul { margin: 0; padding-left: 1.2rem; color: #f5f5f5; font-size: .88rem; }
 .conclusion-box li + li { margin-top: 5px; }
 
-#entrainements .section-heading,#optimisation-lora .section-heading { max-width: none; }
+#entrainements .section-heading,#optimisation-lora .section-heading,#data-scaling .section-heading { max-width: none; }
+.lora-subsection { margin: 30px 0 16px; }
+.lora-subsection h3 { margin: 0; font-size: 1.25rem; letter-spacing: -.025em; }
+.lora-subsection p:not(.eyebrow) { margin: 7px 0 0; color: var(--muted); }
+#optimisation-lora > p { margin: 10px 0 0; color: var(--muted); font-size: 1.05rem; }
+#optimisation-lora > p + .table-card { margin-top: 12px; }
+#data-scaling > p { margin: 10px 0 0; color: var(--muted); font-size: 1.05rem; }
 .training-parameters { margin: -10px 0 16px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; }
 .training-parameters strong { color: var(--text); white-space: nowrap; }
 .evaluation-table .model-qwen-0-8b td { background: #172938; }.evaluation-table .model-qwen-0-8b:hover td { background: #213b50; }
@@ -55,6 +61,9 @@
 .base-bubbles article { padding: 17px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; }
 .base-bubbles strong { color: var(--text); font-weight: 750; }
 .base-bubbles .base-best { padding: 10px 14px; font-size: .74rem; }
+.scaling-bubbles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
+.scaling-bubbles article { padding: 17px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; font-weight: 650; letter-spacing: -.015em; white-space: nowrap; }
+.scaling-bubbles strong { color: var(--text); font-weight: 600; }
 @media (max-width: 720px) { .base-bubbles { grid-template-columns: 1fr; } }
 .example-tooltip { position: absolute; z-index: 5; bottom: calc(100% + 8px); left: 0; width: min(430px, calc(100vw - 48px)); padding: 13px 15px; border: 1px solid #49687a; border-radius: 10px; background: #0d1620; box-shadow: 0 12px 32px #0009; color: #dce7f2; font-size: .82rem; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s, transform .15s; }
 .example-tooltip p { margin: 0 0 7px; }.example-tooltip p:last-child { margin-bottom: 0; }

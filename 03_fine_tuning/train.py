@@ -117,6 +117,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--resume-from-checkpoint", type=str)
     parser.add_argument("--evaluate-run", type=Path,
                         help="Évalue les checkpoints déjà présents dans un dossier de run, sans réentraîner.")
+    parser.add_argument("--evaluate-test", action="store_true",
+                        help="Évalue le split test final après sélection sur validation. Désactivé par défaut pour éviter toute consultation du test durant les expériences.")
     return parser.parse_args()
 
 
@@ -522,7 +524,7 @@ def train_model(
         write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
         execution_reports.append(execution_report)
     selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports) if reports else None
-    if selected_test_epoch is not None:
+    if selected_test_epoch is not None and args.evaluate_test:
         model.set_adapter(f"epoch-{selected_test_epoch}")
         print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
         test_predictions, test_metrics = evaluate_test_execution(model, processor)
@@ -552,6 +554,7 @@ def train_model(
         "lowest_eval_loss_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
         "lowest_eval_loss": (best["eval_loss"] if best else None),
         "validation_execution_by_epoch": execution_reports,
+        "test_evaluation_requested": args.evaluate_test,
         "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
     })
     print(f"Run terminé : {run_dir}")
@@ -610,7 +613,7 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
         write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
         execution_reports.append(execution_report)
     selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports)
-    if selected_test_epoch is not None:
+    if selected_test_epoch is not None and args.evaluate_test:
         model.set_adapter(f"epoch-{selected_test_epoch}")
         print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
         test_predictions, test_metrics = evaluate_test_execution(model, processor)
@@ -623,6 +626,7 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
         write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
     write_json(run_dir / "training" / "recovery_evaluation.json", {
         "validation_execution_by_epoch": execution_reports,
+        "test_evaluation_requested": args.evaluate_test,
         "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
     })
 
