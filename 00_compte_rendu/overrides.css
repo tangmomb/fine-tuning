@@ -34,8 +34,10 @@
 .conclusion-box p { margin: 0; color: #f5f5f5; font-size: .88rem; }
 .conclusion-box ul { margin: 0; padding-left: 1.2rem; color: #f5f5f5; font-size: .88rem; }
 .conclusion-box li + li { margin-top: 5px; }
+.distribution-box { border-color: #27799b; border-left-color: #26c3ff; background: linear-gradient(110deg, #123443, #171d22); }
 
-#entrainements .section-heading,#optimisation-lora .section-heading,#data-scaling .section-heading { max-width: none; }
+#entrainements .section-heading,#optimisation-lora .section-heading,#data-scaling .section-heading,#quelles-donnees .section-heading { max-width: none; }
+.section-heading > .eyebrow { color: #60d3ff; }
 .lora-subsection { margin: 30px 0 16px; }
 .lora-subsection h3 { margin: 0; font-size: 1.25rem; letter-spacing: -.025em; }
 .lora-subsection p:not(.eyebrow) { margin: 7px 0 0; color: var(--muted); }
@@ -64,6 +66,33 @@
 .scaling-bubbles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 14px; }
 .scaling-bubbles article { padding: 17px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; font-weight: 650; letter-spacing: -.015em; white-space: nowrap; }
 .scaling-bubbles strong { color: var(--text); font-weight: 600; }
+.difficulty-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }
+.difficulty-bars article { padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.difficulty-bar-label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; color: var(--muted); font-size: .82rem; }
+.difficulty-bar-label strong { color: var(--text); font-size: .92rem; }
+.difficulty-count-correct { color: #55c995; }
+.difficulty-count-error { color: #e27c7c; }
+.difficulty-bar-track { display: flex; min-height: 28px; overflow: hidden; border-radius: 7px; background: #26313f; }
+.difficulty-bar-track span { display: flex; align-items: center; justify-content: center; min-width: 0; color: #fff; font-size: .72rem; font-weight: 750; white-space: nowrap; }
+.difficulty-bar-track .difficulty-correct { background: #286d52; }
+.difficulty-bar-track .difficulty-error { background: #934343; color: #fff; }
+.difficulty-example { margin-top: 12px; color: var(--muted); font-size: .78rem; }
+.difficulty-example > span { color: var(--blue); font-size: .68rem; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+.difficulty-example p { display: inline; margin: 0 0 0 6px; color: var(--text); }
+.difficulty-example code { display: block; overflow-wrap: anywhere; color: #a9d9fb; font: .68rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace; }
+
+/* Tableau de plan d'experiences : volontairement discret. */
+.experiment-plan { border-color: #1d2835; background: #0e151e; box-shadow: none; }
+.experiment-plan .table-scroll { overflow: visible; }
+.experiment-plan .evaluation-table { min-width: 0; }
+.experiment-plan .evaluation-table th { background: #111923; color: #9aaaba; }
+.experiment-plan .evaluation-table .model-qwen-2b td { background: #0e151e; }
+.experiment-plan .evaluation-table .model-qwen-2b:hover td { background: #141e29; }
+.experiment-plan-row { display: flex; align-items: center; gap: 28px; }
+.experiment-plan-goal { flex: 1; margin: 0; color: var(--muted); }
+.experiment-plan-goal strong { color: var(--text); }
+@media (min-width: 721px) { .experiment-plan { width: 50%; } }
+@media (max-width: 720px) { .experiment-plan-row { display: block; }.experiment-plan-goal { margin-top: 16px; } }
 @media (max-width: 720px) { .base-bubbles { grid-template-columns: 1fr; } }
 .example-tooltip { position: absolute; z-index: 5; bottom: calc(100% + 8px); left: 0; width: min(430px, calc(100vw - 48px)); padding: 13px 15px; border: 1px solid #49687a; border-radius: 10px; background: #0d1620; box-shadow: 0 12px 32px #0009; color: #dce7f2; font-size: .82rem; opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity .15s, transform .15s; }
 .example-tooltip p { margin: 0 0 7px; }.example-tooltip p:last-child { margin-bottom: 0; }

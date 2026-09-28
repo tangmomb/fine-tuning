@@ -1,0 +1,11 @@
+{
+  "experiment": "C",
+  "model": "gpt-5.6-luna",
+  "submitted_at": "2026-09-27T23:36:10.172696+00:00",
+  "request_file": "C_requests.jsonl",
+  "input_file_id": "file-1Q1Xmpi2ojEbrEKhpW9Zsm",
+  "batch_id": "batch_6ab9a86ac7bc8190853f4c867d5a4aaf",
+  "status": "completed",
+  "checked_at": 1790553648,
+  "raw_output_file": "C_batch_6ab9a86ac7bc8190853f4c867d5a4aaf_output.jsonl"
+}

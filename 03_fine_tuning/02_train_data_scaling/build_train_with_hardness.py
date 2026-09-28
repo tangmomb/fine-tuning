@@ -12,14 +12,14 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TRAIN_DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
 TRANSLATIONS_DIR = ROOT / "01_data" / "04_merge_translations" / "03_production"
 RAW_SPIDER_DIR = ROOT / "BRUT_spider-original" / "data" / "spider_data"
 CHECKS_DIR = ROOT / "01_data" / "05_quality_control" / "03_production" / "01_deterministic_checks"
 JUDGMENTS = ROOT / "01_data" / "05_quality_control" / "03_production" / "09_judgments" / "sol_judgments.jsonl"
 CORRECTIONS = ROOT / "01_data" / "05_quality_control" / "03_production" / "02_manual_corrections" / "manual_corrections.jsonl"
-ENRICHED_TRAIN_DATASET = ROOT / "03_fine_tuning" / "train_with_hardness.jsonl"
+ENRICHED_TRAIN_DATASET = ROOT / "03_fine_tuning" / "02_train_data_scaling" / "train_with_hardness.jsonl"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:

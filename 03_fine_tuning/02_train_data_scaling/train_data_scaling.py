@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 TRAIN_DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
 VALIDATION_DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "validation.jsonl"
 TRANSLATIONS_DIR = ROOT / "01_data" / "04_merge_translations" / "03_production"
@@ -28,11 +28,11 @@ RAW_SPIDER_DIR = ROOT / "BRUT_spider-original" / "data" / "spider_data"
 CHECKS_DIR = ROOT / "01_data" / "05_quality_control" / "03_production" / "01_deterministic_checks"
 JUDGMENTS = ROOT / "01_data" / "05_quality_control" / "03_production" / "09_judgments" / "sol_judgments.jsonl"
 CORRECTIONS = ROOT / "01_data" / "05_quality_control" / "03_production" / "02_manual_corrections" / "manual_corrections.jsonl"
-TRAIN_SCRIPT = Path(__file__).with_name("train.py")
+TRAIN_SCRIPT = ROOT / "03_fine_tuning" / "01_train_main" / "train.py"
 PERCENTAGES = (25, 50, 75, 100)
 TRAINING_PERCENTAGES = (25, 50, 75)
 EXISTING_FULL_RUN = ROOT / "03_fine_tuning" / "artifacts" / "qwen3.5-2b-20260926-125948Z_r8_alpha16_lr1e-4"
-ENRICHED_TRAIN_DATASET = ROOT / "03_fine_tuning" / "train_with_hardness.jsonl"
+ENRICHED_TRAIN_DATASET = ROOT / "03_fine_tuning" / "02_train_data_scaling" / "train_with_hardness.jsonl"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:

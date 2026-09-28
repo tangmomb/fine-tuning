@@ -25,7 +25,7 @@ from torch.utils.data import Dataset
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
 VALIDATION_DATASET = ROOT / "01_data" / "06_training_dataset" / "03_production" / "validation.jsonl"
 VALIDATION_TRANSLATIONS = ROOT / "01_data" / "04_merge_translations" / "03_production" / "dev.jsonl"
