@@ -10,8 +10,10 @@ import argparse
 import importlib
 import json
 import math
+import os
 import random
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -184,6 +186,17 @@ def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
         if suffixes:
             run_name = f"{args.run_name}-{'-'.join(suffixes)}"
     run_dir = args.output_root / run_name
+    rank = int(os.environ.get("RANK", "0"))
+    if rank:
+        # Sous torchrun, le rang 0 est seul responsable de créer les
+        # artefacts. Les autres rangs attendent ce dossier partagé avant de
+        # construire leur Trainer ; cela évite les collisions d'écriture.
+        deadline = time.monotonic() + 60
+        while not run_dir.is_dir() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        if not run_dir.is_dir():
+            raise TimeoutError(f"Création du dossier de run par le rang 0 expirée : {run_dir}")
+        return run_dir
     if run_dir.exists():
         raise FileExistsError(f"Le dossier de run existe déjà : {run_dir}. Choisissez --run-name différent.")
     for directory in ("checkpoints", "tokenizer", "training", "eval", "logs"):
@@ -197,6 +210,15 @@ def write_json(path: Path, payload: dict[str, Any]) -> None:
 
 def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
     path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+
+
+def preferred_attention_implementation() -> str:
+    """Utilise les kernels Flash Attention de H100 lorsqu'ils sont installés."""
+    try:
+        import flash_attn  # noqa: F401
+    except (ImportError, OSError):
+        return "sdpa"
+    return "flash_attention_2"
 
 
 def validation_execution_rows(validation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -349,7 +371,10 @@ class RunArtifactCallback(TrainerCallback):
 
     def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
                     metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        if not state.is_world_process_zero:
+            return control
         model = kwargs["model"]
+        model = getattr(model, "module", model)
         epoch = int(round(float(state.epoch or 0)))
         checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
         model.save_pretrained(checkpoint_dir, safe_serialization=True)
@@ -374,9 +399,68 @@ class JsonlLogCallback(TrainerCallback):
 
     def on_log(self, args: TrainingArguments, state: Any, control: Any,
                logs: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        if not state.is_world_process_zero:
+            return control
         record = {"step": state.global_step, "epoch": state.epoch, **(logs or {})}
         with self.log_path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return control
+
+
+class GpuTelemetryCallback(TrainerCallback):
+    """Conserve les mesures nécessaires pour ajuster batch et accumulation après un run."""
+
+    def __init__(self, run_dir: Path) -> None:
+        self.rank = int(os.environ.get("RANK", "0"))
+        self.path = run_dir / "logs" / f"gpu_rank-{self.rank}_telemetry.jsonl"
+        self.started_at = 0.0
+        self.last_log_at = 0.0
+        self.last_step = 0
+
+    def write(self, record: dict[str, Any]) -> None:
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    def on_train_begin(self, args: TrainingArguments, state: Any, control: Any, **kwargs: Any) -> Any:
+        device = torch.cuda.current_device()
+        torch.cuda.reset_peak_memory_stats(device)
+        self.started_at = self.last_log_at = time.perf_counter()
+        self.write({
+            "event": "train_begin", "rank": self.rank, "device": device,
+            "gpu_name": torch.cuda.get_device_name(device),
+            "total_memory_gib": round(torch.cuda.get_device_properties(device).total_memory / 2**30, 2),
+        })
+        return control
+
+    def on_log(self, args: TrainingArguments, state: Any, control: Any,
+               logs: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        step = state.global_step
+        if step <= self.last_step:
+            return control
+        now = time.perf_counter()
+        elapsed = now - self.last_log_at
+        steps = step - self.last_step
+        device = torch.cuda.current_device()
+        self.write({
+            "event": "log", "rank": self.rank, "step": step, "epoch": state.epoch,
+            "window_steps": steps, "window_seconds": round(elapsed, 3),
+            "steps_per_second": round(steps / elapsed, 4) if elapsed else None,
+            "memory_allocated_gib": round(torch.cuda.memory_allocated(device) / 2**30, 3),
+            "memory_reserved_gib": round(torch.cuda.memory_reserved(device) / 2**30, 3),
+            "max_memory_allocated_gib": round(torch.cuda.max_memory_allocated(device) / 2**30, 3),
+            "trainer_metrics": logs or {},
+        })
+        self.last_log_at, self.last_step = now, step
+        return control
+
+    def on_train_end(self, args: TrainingArguments, state: Any, control: Any, **kwargs: Any) -> Any:
+        device = torch.cuda.current_device()
+        self.write({
+            "event": "train_end", "rank": self.rank, "step": state.global_step,
+            "train_seconds": round(time.perf_counter() - self.started_at, 3),
+            "max_memory_allocated_gib": round(torch.cuda.max_memory_allocated(device) / 2**30, 3),
+            "max_memory_reserved_gib": round(torch.cuda.max_memory_reserved(device) / 2**30, 3),
+        })
         return control
 
 
@@ -443,13 +527,18 @@ def train_model(
     if not model_path.is_dir():
         raise FileNotFoundError(f"Checkpoint absent : {model_path}")
     run_dir = make_run_directory(model_name, args)
-    write_run_readme(run_dir, model_name)
+    if int(os.environ.get("RANK", "0")) == 0:
+        write_run_readme(run_dir, model_name)
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
     tokenizer = processor.tokenizer
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
+    attention_implementation = preferred_attention_implementation()
+    print(f"{model_name} : attention {attention_implementation}.")
+    torch.set_float32_matmul_precision("high")
     model = AutoModelForCausalLM.from_pretrained(
-        model_path, torch_dtype=torch.bfloat16, local_files_only=True, attn_implementation="sdpa"
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True,
+        attn_implementation=attention_implementation,
     )
     fp32_parameters = restore_fp32_checkpoint_parameters(model, model_path)
     if fp32_parameters:
@@ -492,9 +581,18 @@ def train_model(
         callbacks=[
             RunArtifactCallback(run_dir, len(validation_rows)),
             JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
+            GpuTelemetryCallback(run_dir),
         ],
     )
     trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    # Le Trainer synchronise tous les rangs à la fin du train. Les sauvegardes
+    # finales et les évaluations par génération sont ensuite faites une seule
+    # fois pour ne pas dupliquer les fichiers ni l'inférence de validation.
+    if not trainer.is_world_process_zero():
+        # Attendre les évaluations/sauvegardes du rang 0 avant le prochain
+        # modèle ou learning rate du sweep ; sinon les rangs divergeraient.
+        trainer.accelerator.wait_for_everyone()
+        return
     processor.save_pretrained(run_dir / "tokenizer")
     torch.save(training_args, run_dir / "training" / "training_args.bin")
     validation_reports = sorted((run_dir / "eval").glob("epoch-*/epoch-*-validation.json"))
@@ -544,6 +642,7 @@ def train_model(
         "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
         "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
         "bf16": True, "restored_fp32_base_parameters": fp32_parameters,
+        "attention_implementation": attention_implementation,
         "lora_preset": args.lora_preset,
         "lora": {"r": lora["r"], "alpha": lora["alpha"], "dropout": 0.05, "target_modules": "all-linear"},
         "epochs": args.epochs, "learning_rate": args.learning_rate, "warmup_ratio": args.warmup_ratio,
@@ -560,6 +659,7 @@ def train_model(
     print(f"Run terminé : {run_dir}")
     if best:
         print(f"Meilleure eval_loss : checkpoints/epoch-{best['epoch']} ({best['eval_loss']:.4f})")
+    trainer.accelerator.wait_for_everyone()
 
 
 def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_rows: list[dict[str, Any]]) -> None:
@@ -587,7 +687,8 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
     first_epoch = reports[0]["epoch"]
     base_model = AutoModelForCausalLM.from_pretrained(
-        model_path, torch_dtype=torch.bfloat16, local_files_only=True, attn_implementation="sdpa"
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True,
+        attn_implementation=preferred_attention_implementation(),
     )
     restore_fp32_checkpoint_parameters(base_model, model_path)
     model = PeftModel.from_pretrained(

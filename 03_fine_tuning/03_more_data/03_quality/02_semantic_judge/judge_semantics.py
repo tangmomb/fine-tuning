@@ -24,8 +24,10 @@ def ask_experiment(value: str | None) -> str:
     return choice
 def api_key() -> str:
     if os.environ.get("OPENAI_API_KEY"): return os.environ["OPENAI_API_KEY"]
-    for line in (ROOT / ".env").read_text(encoding="utf-8").splitlines():
-        if line.startswith("OPENAI_API_KEY="): return line.partition("=")[2].strip().strip('"')
+    for env_path in (ROOT / ".env", ROOT.parent / ".env", ROOT.parents[1] / ".env"):
+        if not env_path.is_file(): continue
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            if line.startswith("OPENAI_API_KEY="): return line.partition("=")[2].strip().strip('"')
     raise RuntimeError("OPENAI_API_KEY est absent.")
 def get(url: str, token: str) -> bytes:
     req = request.Request(url, headers={"Authorization": f"Bearer {token}"})
@@ -45,13 +47,44 @@ def output_text(response: dict) -> str | None:
             if content.get("type") == "output_text" and isinstance(content.get("text"), str): return content["text"]
     return None
 
-def prepare(experiment: str, model: str) -> Path:
-    source = ROOT / "03_quality" / "01_deterministic_checks" / experiment / "validated.jsonl"
+def stratified_sample(candidates: list[dict], size: int, rng: random.Random) -> list[dict]:
+    """Sample proportionally by difficulty and distribute each quota across databases."""
+    target = min(size, len(candidates))
+    by_hardness: dict[str, list[dict]] = defaultdict(list)
+    for row in candidates: by_hardness[row["hardness"]].append(row)
+    total = len(candidates)
+    quotas = {hardness: target * len(rows) // total for hardness, rows in by_hardness.items()}
+    remaining = target - sum(quotas.values())
+    fractions = sorted(
+        by_hardness,
+        key=lambda hardness: (target * len(by_hardness[hardness]) % total, hardness),
+        reverse=True,
+    )
+    for hardness in fractions[:remaining]: quotas[hardness] += 1
+
+    sample = []
+    for hardness, quota in quotas.items():
+        by_database: dict[str, list[dict]] = defaultdict(list)
+        for row in by_hardness[hardness]: by_database[row["db_id"]].append(row)
+        for rows in by_database.values(): rng.shuffle(rows)
+        while quota:
+            database_ids = [db_id for db_id, rows in by_database.items() if rows]
+            rng.shuffle(database_ids)
+            for db_id in database_ids:
+                if not quota: break
+                sample.append(by_database[db_id].pop())
+                quota -= 1
+    rng.shuffle(sample)
+    return sample
+
+def prepare(experiment: str, model: str, exhaustive: bool = False) -> Path:
+    source = ROOT / "03_quality" / "01_deterministic_checks" / experiment / "selected.jsonl"
     grouped: dict[str, list[dict]] = defaultdict(list)
     candidates = read(source)
-    sample = random.Random(RANDOM_SEED).sample(candidates, min(SAMPLE_SIZE, len(candidates)))
-    write(WORK / "01_requests" / f"{experiment}_sample.jsonl", sample)
-    for row in sample: grouped[row["db_id"]].append(row)
+    audited = candidates if exhaustive else stratified_sample(candidates, SAMPLE_SIZE, random.Random(RANDOM_SEED))
+    audit_name = "audit" if exhaustive else "sample"
+    write(WORK / "01_requests" / f"{experiment}_{audit_name}.jsonl", audited)
+    for row in audited: grouped[row["db_id"]].append(row)
     lines = []
     for db_id, examples in sorted(grouped.items()):
         prompt = ("Évalue chaque paire question/SQL pour ce schéma SQLite. Une paire est pass seulement si la question française décrit exactement le SQL ; "
@@ -60,11 +93,12 @@ def prepare(experiment: str, model: str) -> Path:
         body = {"model": model, "input": [{"role": "system", "content": "Tu es un juge qualité text-to-SQL strict et indépendant."}, {"role": "user", "content": prompt}], "max_output_tokens": 16000, "text": {"format": {"type": "json_schema", "name": "semantic_verdicts", "strict": True, "schema": SCHEMA}}}
         lines.append(json.dumps({"custom_id": f"judge:{experiment}:{db_id}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
     path = WORK / "01_requests" / f"{experiment}_judge_requests.jsonl"; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"{len(sample)} exemples échantillonnés dans {len(lines)} requêtes de jugement : {path}"); return path
+    scope = "exemples à vérifier exhaustivement" if exhaustive else "exemples échantillonnés"
+    print(f"{len(audited)} {scope} dans {len(lines)} requêtes de jugement : {path}"); return path
 
-def submit(experiment: str, model: str, path: Path) -> None:
+def submit(experiment: str, model: str, path: Path, exhaustive: bool) -> None:
     token = api_key(); uploaded = upload(path, token); batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "more-data-semantic-judge", "experiment": experiment, "model": model}}, token)
-    state = {"experiment": experiment, "model": model, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
+    state = {"experiment": experiment, "model": model, "exhaustive": exhaustive, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
     state_path = WORK / "02_submissions" / f"{experiment}_judge_state.json"; state_path.parent.mkdir(parents=True, exist_ok=True); state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"Batch de jugement soumis : {batch['id']}")
 
 def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: str) -> None:
@@ -77,18 +111,21 @@ def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: 
         except (json.JSONDecodeError, KeyError, TypeError): continue
         for answer in answers:
             if answer.get("verdict") in {"pass", "fail", "uncertain"} and isinstance(answer.get("id"), str) and isinstance(answer.get("issues"), list): verdicts[answer["id"]] = answer
-    sample = read(WORK / "01_requests" / f"{experiment}_sample.jsonl")
-    judged = [{**row, **verdicts.get(row["id"], {"verdict": "uncertain", "issues": ["Verdict absent."]})} for row in sample]
-    output_dir = WORK / "04_judgments"; write(output_dir / f"{experiment}_judged_sample.jsonl", judged)
-    manifest = {"experiment": experiment, "sample_size": len(judged), "sample_seed": RANDOM_SEED, "verdicts": dict(Counter(row["verdict"] for row in judged)), "raw_response": raw.name}; (output_dir / f"{experiment}_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    state["status"] = "collected"; state["raw_output_file"] = raw.name; state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"{len(judged)} jugements d’échantillon écrits dans {output_dir}")
+    audit_name = "audit" if state.get("exhaustive") else "sample"
+    audited = read(WORK / "01_requests" / f"{experiment}_{audit_name}.jsonl")
+    judged = [{**row, **verdicts.get(row["id"], {"verdict": "uncertain", "issues": ["Verdict absent."]})} for row in audited]
+    output_dir = WORK / "04_judgments"
+    judged_name = "judged" if state.get("exhaustive") else "judged_sample"
+    write(output_dir / f"{experiment}_{judged_name}.jsonl", judged)
+    manifest = {"experiment": experiment, "exhaustive": bool(state.get("exhaustive")), "audited_size": len(judged), "sample_seed": None if state.get("exhaustive") else RANDOM_SEED, "verdicts": dict(Counter(row["verdict"] for row in judged)), "raw_response": raw.name}; (output_dir / f"{experiment}_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    state["status"] = "collected"; state["raw_output_file"] = raw.name; state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"{len(judged)} jugements écrits dans {output_dir}")
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--submit", action="store_true"); args = parser.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--submit", action="store_true"); parser.add_argument("--all", action="store_true", help="Juge exhaustivement les exemples sélectionnés."); args = parser.parse_args()
     experiment = ask_experiment(args.experiment); model = args.model or input(f"Modèle juge [{MODEL}] : ").strip() or MODEL; state_path = WORK / "02_submissions" / f"{experiment}_judge_state.json"
     if not state_path.is_file():
-        path = prepare(experiment, model)
-        if args.submit or input("Soumettre le Batch de jugement à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}: submit(experiment, model, path)
+        path = prepare(experiment, model, args.all)
+        if args.submit or input("Soumettre le Batch de jugement à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}: submit(experiment, model, path, args.all)
         return
     token = api_key(); state = json.loads(state_path.read_text(encoding="utf-8")); batch = json.loads(get(f"https://api.openai.com/v1/batches/{state['batch_id']}", token)); counts = batch.get("request_counts", {})
     print(f"Statut : {batch.get('status')} · {counts.get('completed', 0)}/{counts.get('total', 0)} terminées · {counts.get('failed', 0)} échouées")

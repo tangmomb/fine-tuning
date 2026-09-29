@@ -1,0 +1,840 @@
+{
+  "experiment": "A",
+  "requested": 10491,
+  "target": 5000,
+  "valid_candidates": 9801,
+  "selected": 5000,
+  "hardness_candidates": {
+    "easy": 2168,
+    "extra": 2151,
+    "medium": 3329,
+    "hard": 2153
+  },
+  "hardness_target": {
+    "easy": 1149,
+    "extra": 1011,
+    "hard": 1112,
+    "medium": 1728
+  },
+  "hardness_selected": {
+    "easy": 1149,
+    "extra": 1011,
+    "medium": 1728,
+    "hard": 1112
+  },
+  "hardness_shortfall": {},
+  "target_shortfall": 0,
+  "shortfall_by_database": {},
+  "rejected": 201,
+  "reasons": {
+    "sql_execution_error": 5,
+    "duplicate": 188,
+    "spider_parse_error": 8
+  },
+  "rejections": [
+    {
+      "id": "A:academic:hard:3:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "A:academic:hard:3:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "A:academic:hard:3:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "A:bike_1:medium:38:56",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:candidate_poll:medium:54:9",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:candidate_poll:medium:54:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:chinook_1:easy:56:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:club_1:easy:71:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:club_1:easy:71:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_1:easy:80:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_1:easy:80:23",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_2:medium:85:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_3:easy:87:14",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_3:easy:87:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_3:medium:88:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_3:medium:88:13",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:college_3:medium:88:15",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:company_office:easy:96:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:company_office:medium:97:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:cre_Doc_Tracking_DB:easy:107:19",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:cre_Doc_Tracking_DB:easy:107:37",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:cre_Doc_Tracking_DB:medium:108:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:cre_Docs_and_Epenses:medium:112:17",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:culture_company:medium:128:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customer_deliveries:easy:134:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_addresses:easy:138:26",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_addresses:medium:140:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_invoices:easy:142:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_invoices:easy:142:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_invoices:medium:143:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_invoices:medium:143:44",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_products_contacts:easy:146:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_products_contacts:medium:147:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_products_contacts:medium:147:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_products_contacts:medium:147:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_and_products_contacts:hard:149:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_campaigns_ecommerce:easy:150:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_campaigns_ecommerce:medium:151:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:easy:154:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:easy:154:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:easy:154:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:medium:155:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:medium:155:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:medium:155:8",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:customers_card_transactions:medium:155:42",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_management:easy:164:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:medium:168:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:medium:168:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:medium:168:7",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:medium:168:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:medium:168:21",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:department_store:easy:169:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:document_management:medium:176:8",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:dorm_1:easy:180:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:dorm_1:easy:180:17",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:dorm_1:medium:181:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:dorm_1:medium:181:12",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:dorm_1:medium:181:27",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:easy:184:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:easy:184:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:medium:185:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:medium:185:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:medium:185:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:driving_school:medium:185:44",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_government:medium:188:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_government:medium:188:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_learning:easy:192:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_learning:easy:192:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_learning:medium:193:26",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:e_learning:medium:193:28",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:entrepreneur:medium:207:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:epinions_1:easy:209:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:film_rank:hard:219:9",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:flight_1:easy:221:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:flight_1:medium:222:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:flight_4:easy:225:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:flight_company:medium:230:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:easy:237:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:easy:237:7",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:easy:237:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:medium:238:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:medium:238:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:game_1:medium:238:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:gas_company:easy:244:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:hard:249:84",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:hard:249:85",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:hard:249:231",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:hard:249:232",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:easy:250:123",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:geo:easy:250:152",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hospital_1:easy:258:20",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hospital_1:medium:259:8",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hr_1:medium:260:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hr_1:medium:260:20",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hr_1:easy:261:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:hr_1:easy:261:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:icfp_1:easy:264:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:imdb:easy:268:9",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:imdb:medium:271:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:inn_1:easy:274:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:inn_1:easy:274:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:insurance_and_eClaims:easy:276:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:insurance_fnol:easy:280:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:insurance_fnol:easy:280:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:insurance_fnol:medium:282:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:loan_1:easy:292:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:loan_1:easy:292:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:loan_1:medium:293:15",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:manufactory_1:easy:310:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:manufactory_1:medium:311:21",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:manufactory_1:medium:311:22",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:medicine_enzyme_interaction:easy:322:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:movie_1:easy:330:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:music_1:medium:334:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:music_1:easy:335:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:music_2:easy:338:7",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:music_2:medium:339:15",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:music_4:easy:342:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:musical:easy:346:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:network_2:medium:349:8",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:party_people:easy:361:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:party_people:easy:361:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:party_people:medium:362:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:party_people:medium:362:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:perpetrator:easy:368:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:perpetrator:easy:368:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:perpetrator:easy:368:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "A:perpetrator:medium:369:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:perpetrator:medium:369:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:perpetrator:medium:369:3",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:products_gen_characteristics:easy:389:21",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:products_gen_characteristics:medium:390:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:race_track:medium:402:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:race_track:medium:402:9",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:restaurant_1:easy:409:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:restaurant_1:medium:410:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:restaurant_1:medium:410:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:restaurant_1:medium:410:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:riding_club:easy:416:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sakila_1:easy:424:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sakila_1:easy:424:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sakila_1:medium:426:8",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sakila_1:medium:426:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sakila_1:medium:426:22",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:scholar:easy:431:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:ship_mission:easy:452:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:ship_mission:medium:453:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:shop_membership:medium:456:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:small_bank_1:easy:460:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:soccer_2:easy:466:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:soccer_2:easy:466:14",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:solvency_ii:easy:470:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:solvency_ii:medium:471:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:solvency_ii:medium:471:7",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sports_competition:easy:473:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:sports_competition:easy:473:22",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:easy:482:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:easy:482:7",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:easy:482:14",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:6",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:21",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:26",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:28",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:33",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:43",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_1:medium:483:46",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:store_product:medium:485:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_1:medium:493:24",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_1:medium:493:25",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_1:medium:493:26",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_assessment:medium:498:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_assessment:medium:498:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:student_assessment:medium:498:2",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:theme_gallery:easy:504:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_grants_for_research:easy:511:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_orders:medium:512:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_orders:medium:512:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_orders:easy:513:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_orders:easy:513:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_orders:hard:515:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_software_problems:medium:520:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_software_problems:medium:520:12",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_software_problems:medium:520:13",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:tracking_software_problems:easy:522:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:train_station:medium:525:4",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:voter_2:easy:536:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:voter_2:easy:536:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:voter_2:easy:536:5",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:voter_2:medium:537:3",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:wedding:medium:541:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:wrestler:easy:551:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "A:yelp:easy:554:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:yelp:easy:554:6",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:yelp:easy:554:13",
+      "reason": "duplicate"
+    },
+    {
+      "id": "A:yelp:medium:555:17",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:yelp:hard:556:11",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:yelp:extra:557:10",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:yelp:extra:557:11",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:yelp:extra:557:12",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "A:cre_Doc_Tracking_DB:hard:1:562:4",
+      "reason": "duplicate"
+    }
+  ]
+}

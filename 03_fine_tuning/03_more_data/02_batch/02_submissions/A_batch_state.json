@@ -1,11 +1,22 @@
 {
   "experiment": "A",
   "model": "gpt-5.6-luna",
-  "submitted_at": "2026-09-27T23:06:17.876202+00:00",
+  "mode": "consolidated",
+  "requested_examples": 10491,
+  "cumulative_requested_examples": 10491,
+  "raw_output_files": [
+    "A_consolidated_output.jsonl"
+  ],
+  "submitted_at": "2026-09-28T21:58:56.217784+00:00",
   "request_file": "A_requests.jsonl",
-  "input_file_id": "file-XaPVttcvVyJ299ZneGJoYc",
-  "batch_id": "batch_6ab9a169b3988190b5d2291625bd03f9",
+  "input_file_id": "file-9R3ZcsUb2Hc58jw984B99t",
+  "batch_id": "batch_6abae31ff3148190aae61b9f93a4cf8f",
   "status": "completed",
-  "checked_at": 1790551961,
-  "raw_output_file": "A_batch_6ab9a169b3988190b5d2291625bd03f9_output.jsonl"
+  "checked_at": 1790633614,
+  "raw_output_file": "A_consolidated_output.jsonl",
+  "source_batch_ids": [
+    "batch_6abaa0c3a4c88190966a526ef80f8341",
+    "batch_6abadc8319f88190b03387fd8975ede7",
+    "batch_6abae31ff3148190aae61b9f93a4cf8f"
+  ]
 }

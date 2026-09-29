@@ -39,6 +39,9 @@ def main() -> None:
         if replace not in {"o", "oui"}: return
     output.write_bytes(get(f"https://api.openai.com/v1/files/{file_id}/content", token))
     state["raw_output_file"] = output.name
+    raw_output_files = list(state.get("raw_output_files", []))
+    if output.name not in raw_output_files: raw_output_files.append(output.name)
+    state["raw_output_files"] = raw_output_files
     state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
     print(f"Réponse téléchargée : {output}")
     error_file_id = batch.get("error_file_id")

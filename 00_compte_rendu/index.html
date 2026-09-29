@@ -467,15 +467,15 @@
           >) et construits par échantillonnage contrôlé selon les
           <code>db_id</code> et la difficulté Spider (<code>easy</code>,
           <code>medium</code>, <code>hard</code>, <code>extra</code>) : chaque
-          base et chaque niveau de difficulté y contribueront proportionnellement
-          à leur nombre d’exemples. Cela permet de conserver une diversité
-          raisonnablement représentative des bases, schémas et requêtes à chaque
-          niveau.
+          base et chaque niveau de difficulté y contribueront
+          proportionnellement à leur nombre d’exemples. Cela permet de conserver
+          une diversité raisonnablement représentative des bases, schémas et
+          requêtes à chaque niveau.
         </p>
         <p>
           Spider ne fournit pas directement ces niveaux de difficulté dans ses
-          fichiers train. Ils sont recalculés à partir de l’AST SQL gold avec les
-          règles de son évaluateur officiel, qui classe chaque requête en
+          fichiers train. Ils sont recalculés à partir de l’AST SQL gold avec
+          les règles de son évaluateur officiel, qui classe chaque requête en
           <code>easy</code>, <code>medium</code>, <code>hard</code> ou
           <code>extra</code>.
         </p>
@@ -542,8 +542,17 @@
         <aside class="conclusion-box" aria-labelledby="conclusion-data-scaling">
           <h3 id="conclusion-data-scaling">Que peut-on conclure&nbsp;?</h3>
           <ul>
-            <li>Augmenter le nombre d’exemples d’entraînement <strong>améliore systématiquement</strong> l’Execution Accuracy de validation.</li>
-            <li>Les gains deviennent toutefois <strong>de plus en plus faibles</strong> : +4,45 points entre 25 % et 50 %, puis +1,94 point et +1,64 point pour les volumes suivants.</li>
+            <li>
+              Augmenter le nombre d’exemples d’entraînement
+              <strong>améliore systématiquement</strong> l’Execution Accuracy de
+              validation.
+            </li>
+            <li>
+              Les gains deviennent toutefois
+              <strong>de plus en plus faibles</strong> : +4,45 points entre 25 %
+              et 50 %, puis +1,94 point et +1,64 point pour les volumes
+              suivants.
+            </li>
           </ul>
         </aside>
       </section>
@@ -551,26 +560,140 @@
       <section id="quelles-donnees" class="section">
         <div class="section-heading">
           <p class="eyebrow">06 · Qualité et diversité</p>
-          <h2>Ajouter des données d’entraînement, oui mais lesquelles&nbsp;?</h2>
+          <h2>
+            Ajouter des données d’entraînement, oui mais lesquelles&nbsp;?
+          </h2>
           <p>
             Le data scaling montre qu’augmenter le volume améliore les
             résultats, mais que chaque lot supplémentaire apporte un gain plus
-            faible que le précédent. La prochaine étape n’est donc pas
-            seulement d’ajouter des exemples : il faut choisir ceux qui
-            complètent le mieux ce que le modèle sait déjà faire.
+            faible que le précédent. La prochaine étape n’est donc pas seulement
+            d’ajouter des exemples : il faut choisir ceux qui complètent le
+            mieux ce que le modèle sait déjà faire.
           </p>
         </div>
-        <p>Commençons d’abord par regarder où notre modèle fait le plus d’erreurs.</p>
+        <p>
+          Commençons d’abord par regarder où notre modèle fait le plus
+          d’erreurs.
+        </p>
         <p>
           Le run entraîné sur 100 % des données est évalué sur les 1&nbsp;034
           exemples de validation. Les niveaux de difficulté sont calculés avec
           les règles de l’évaluateur officiel Spider.
         </p>
-        <div class="difficulty-bars" aria-label="Réponses correctes et erreurs par niveau de difficulté Spider">
-          <article><div class="difficulty-bar-label"><strong>Easy</strong><span>248 exemples · <b class="difficulty-count-correct">209 corrects</b> · <b class="difficulty-count-error">39 erreurs</b></span></div><div class="difficulty-bar-track" role="img" aria-label="Easy : 84,27 % de réponses correctes et 15,73 % d’erreurs"><span class="difficulty-correct" style="width:84.27%">84,27 %</span><span class="difficulty-error" style="width:15.73%">15,73 %</span></div><div class="difficulty-example"><span>Exemple</span><p>« Donnez le nombre de vols. »</p><code>SELECT count(*) FROM FLIGHTS</code></div></article>
-          <article><div class="difficulty-bar-label"><strong>Medium</strong><span>446 exemples · <b class="difficulty-count-correct">302 corrects</b> · <b class="difficulty-count-error">144 erreurs</b></span></div><div class="difficulty-bar-track" role="img" aria-label="Medium : 67,71 % de réponses correctes et 32,29 % d’erreurs"><span class="difficulty-correct" style="width:67.71%">67,71 %</span><span class="difficulty-error" style="width:32.29%">32,29 %</span></div><div class="difficulty-example"><span>Exemple</span><p>« Combien pèse le chien le plus jeune ? »</p><code>SELECT weight FROM pets ORDER BY pet_age LIMIT 1</code></div></article>
-          <article><div class="difficulty-bar-label"><strong>Hard</strong><span>174 exemples · <b class="difficulty-count-correct">101 corrects</b> · <b class="difficulty-count-error">73 erreurs</b></span></div><div class="difficulty-bar-track" role="img" aria-label="Hard : 58,05 % de réponses correctes et 41,95 % d’erreurs"><span class="difficulty-correct" style="width:58.05%">58,05 %</span><span class="difficulty-error" style="width:41.95%">41,95 %</span></div><div class="difficulty-example"><span>Exemple</span><p>« Quelle année a compté le plus de matchs ? »</p><code>SELECT YEAR FROM matches GROUP BY YEAR ORDER BY count(*) DESC LIMIT 1</code></div></article>
-          <article><div class="difficulty-bar-label"><strong>Extra</strong><span>166 exemples · <b class="difficulty-count-correct">75 corrects</b> · <b class="difficulty-count-error">91 erreurs</b></span></div><div class="difficulty-bar-track" role="img" aria-label="Extra : 45,18 % de réponses correctes et 54,82 % d’erreurs"><span class="difficulty-correct" style="width:45.18%">45,18 %</span><span class="difficulty-error" style="width:54.82%">54,82 %</span></div><div class="difficulty-example"><span>Exemple</span><p>« Combien de chiens n’ont suivi aucun traitement ? »</p><code>SELECT count(*) FROM Dogs WHERE dog_id NOT IN (SELECT dog_id FROM Treatments)</code></div></article>
+        <div
+          class="difficulty-bars"
+          aria-label="Réponses correctes et erreurs par niveau de difficulté Spider"
+        >
+          <article>
+            <div class="difficulty-bar-label">
+              <strong>Easy</strong
+              ><span
+                >248 exemples ·
+                <b class="difficulty-count-correct">209 corrects</b> ·
+                <b class="difficulty-count-error">39 erreurs</b></span
+              >
+            </div>
+            <div
+              class="difficulty-bar-track"
+              role="img"
+              aria-label="Easy : 84,27 % de réponses correctes et 15,73 % d’erreurs"
+            >
+              <span class="difficulty-correct" style="width: 84.27%"
+                >84,27 %</span
+              ><span class="difficulty-error" style="width: 15.73%"
+                >15,73 %</span
+              >
+            </div>
+            <div class="difficulty-example">
+              <span>Exemple</span>
+              <p>« Donnez le nombre de vols. »</p>
+              <code>SELECT count(*) FROM FLIGHTS</code>
+            </div>
+          </article>
+          <article>
+            <div class="difficulty-bar-label">
+              <strong>Medium</strong
+              ><span
+                >446 exemples ·
+                <b class="difficulty-count-correct">302 corrects</b> ·
+                <b class="difficulty-count-error">144 erreurs</b></span
+              >
+            </div>
+            <div
+              class="difficulty-bar-track"
+              role="img"
+              aria-label="Medium : 67,71 % de réponses correctes et 32,29 % d’erreurs"
+            >
+              <span class="difficulty-correct" style="width: 67.71%"
+                >67,71 %</span
+              ><span class="difficulty-error" style="width: 32.29%"
+                >32,29 %</span
+              >
+            </div>
+            <div class="difficulty-example">
+              <span>Exemple</span>
+              <p>« Combien pèse le chien le plus jeune ? »</p>
+              <code>SELECT weight FROM pets ORDER BY pet_age LIMIT 1</code>
+            </div>
+          </article>
+          <article>
+            <div class="difficulty-bar-label">
+              <strong>Hard</strong
+              ><span
+                >174 exemples ·
+                <b class="difficulty-count-correct">101 corrects</b> ·
+                <b class="difficulty-count-error">73 erreurs</b></span
+              >
+            </div>
+            <div
+              class="difficulty-bar-track"
+              role="img"
+              aria-label="Hard : 58,05 % de réponses correctes et 41,95 % d’erreurs"
+            >
+              <span class="difficulty-correct" style="width: 58.05%"
+                >58,05 %</span
+              ><span class="difficulty-error" style="width: 41.95%"
+                >41,95 %</span
+              >
+            </div>
+            <div class="difficulty-example">
+              <span>Exemple</span>
+              <p>« Quelle année a compté le plus de matchs ? »</p>
+              <code
+                >SELECT YEAR FROM matches GROUP BY YEAR ORDER BY count(*) DESC
+                LIMIT 1</code
+              >
+            </div>
+          </article>
+          <article>
+            <div class="difficulty-bar-label">
+              <strong>Extra</strong
+              ><span
+                >166 exemples ·
+                <b class="difficulty-count-correct">75 corrects</b> ·
+                <b class="difficulty-count-error">91 erreurs</b></span
+              >
+            </div>
+            <div
+              class="difficulty-bar-track"
+              role="img"
+              aria-label="Extra : 45,18 % de réponses correctes et 54,82 % d’erreurs"
+            >
+              <span class="difficulty-correct" style="width: 45.18%"
+                >45,18 %</span
+              ><span class="difficulty-error" style="width: 54.82%"
+                >54,82 %</span
+              >
+            </div>
+            <div class="difficulty-example">
+              <span>Exemple</span>
+              <p>« Combien de chiens n’ont suivi aucun traitement ? »</p>
+              <code
+                >SELECT count(*) FROM Dogs WHERE dog_id NOT IN (SELECT dog_id
+                FROM Treatments)</code
+              >
+            </div>
+          </article>
         </div>
         <p>
           Nous allons maintenant tenter quatre expériences (A, B, C et D), en
@@ -590,7 +713,7 @@
                 </thead>
                 <tbody>
                   <tr class="model-qwen-2b">
-                    <td>Random</td>
+                    <td>Cas tous niveaux</td>
                     <td><strong>A</strong></td>
                     <td><strong>B</strong></td>
                   </tr>
@@ -607,19 +730,159 @@
             L’objectif est de mesurer si l’ajout de nouvelles données améliore
             les performances, selon qu’elles proviennent de bases déjà présentes
             dans le jeu d’entraînement ou de nouvelles bases, et selon leur
-            niveau de difficulté.<br>
+            niveau de difficulté.<br />
             <strong>On vise 5k exemples en plus pour chaque expérience.</strong>
           </p>
         </div>
         <aside class="conclusion-box distribution-box">
           <p>
-          Le jeu de train actuel couvre <strong>146 bases de données</strong>
-          pour 8&nbsp;651 exemples, mais leur poids est très inégal&nbsp;: de
-          7 à 569 exemples par base (écart-type&nbsp;: 69), les 5 bases les plus
-          représentées concentrant à elles seules 19,04&nbsp;% du train&nbsp;; les
-          données synthétiques chercheront à conserver ces proportions.
+            Le jeu de train actuel couvre <strong>146 bases de données</strong>
+            pour 8&nbsp;651 exemples, mais leur poids est très inégal&nbsp;: de
+            7 à 569 exemples par base (écart-type&nbsp;: 69), les 5 bases les
+            plus représentées concentrant à elles seules 19,04&nbsp;% du
+            train&nbsp;; les données synthétiques chercheront à conserver ces
+            proportions ainsi que les proportions de difficulté par base.
           </p>
         </aside>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.1 · Préparation des nouvelles données</p>
+          <h3>Générer et contrôler les nouveaux datasets A à D</h3>
+        </div>
+        <div
+          class="dataset-cards-carousel"
+          aria-label="Détails des datasets A à D"
+        >
+        <div class="training-parameters dataset-card">
+          <p>Dataset A</p>
+          <strong>Génération</strong>
+          <p>
+            <strong>Bases SQL :</strong> identiques au train set initial (146
+            bases, proportionnalité à respecter) ·
+            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question en
+            français - requête SQL attendue) ·
+            <strong>Demande via batch GPT 5.6 luna :</strong> 6&nbsp;250 paires
+            (pour anticiper de potentielles erreurs) ·
+            <strong>Niveau demandé pour les nouvelle requêtes :</strong>
+            <code>easy</code> à <code>extra</code> (proportionnalité à respecter
+            par base).
+          </p>
+          <strong>Vérification</strong>
+          <p>
+            2 étapes de vérification :
+            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+            qu’il est en lecture seule, exécution sur la base SQLite concernée,
+            dédoublonnage et vérification de la difficulté selon les règles
+            Spider. <strong>2) Sémantique :</strong> audit stratifié de 200
+            paires valides par GPT-5.6 Terra, qui vérifie que la question
+            française décrit fidèlement le SQL (<code>pass</code>,
+            <code>fail</code> ou <code>uncertain</code>). Seulement 200 paires
+            sont vérifiées pour limiter le coût de l’audit.
+          </p>
+          <strong>Résultat final</strong>
+          <p>
+            5&nbsp;000 paires valides, avec un niveau de difficulté Spider
+            <code>easy</code> à <code>extra</code>, réparti ainsi :
+          </p>
+        </div>
+        <div class="training-parameters dataset-card">
+          <p>Dataset B</p>
+          <strong>Génération</strong>
+          <p>
+            <strong>Bases SQL :</strong> nouvelles bases, fournies dans un
+            catalogue externe avec leur schéma et leur fichier SQLite ·
+            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+            en français - requête SQL attendue) ·
+            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
+            (pour anticiper de potentielles erreurs) ·
+            <strong>Répartition :</strong> proportionnelle au volume de
+            référence indiqué pour chaque nouvelle base ·
+            <strong>Niveau demandé :</strong> diversité libre, de
+            <code>easy</code> à <code>extra</code>.
+          </p>
+          <strong>Vérification</strong>
+          <p>
+            2 étapes de vérification :
+            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+            qu’il est en lecture seule, exécution sur la base SQLite concernée,
+            dédoublonnage et calcul de la difficulté selon les règles Spider.
+            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
+            valides par GPT-5.6 Terra, qui vérifie que la question française
+            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
+            <code>uncertain</code>).
+          </p>
+          <strong>Résultat final</strong>
+          <p>
+            Jusqu’à 5&nbsp;000 paires valides, réparties entre les nouvelles
+            bases selon leurs quotas respectifs.
+          </p>
+        </div>
+        <div class="training-parameters dataset-card">
+          <p>Dataset C</p>
+          <strong>Génération</strong>
+          <p>
+            <strong>Bases SQL :</strong> identiques au train set initial (146
+            bases, proportionnalité à respecter) ·
+            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+            en français - requête SQL attendue) ·
+            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
+            (pour anticiper de potentielles erreurs) ·
+            <strong>Niveau demandé :</strong> <code>hard</code> ou
+            <code>extra</code>, dans les proportions observées pour ces deux
+            niveaux dans chaque base.
+          </p>
+          <strong>Vérification</strong>
+          <p>
+            2 étapes de vérification :
+            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+            qu’il est en lecture seule, exécution sur la base SQLite concernée,
+            dédoublonnage et vérification de la difficulté selon les règles
+            Spider. Seules les paires respectant le quota
+            <code>hard</code>/<code>extra</code> de leur base sont retenues.
+            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
+            valides par GPT-5.6 Terra, qui vérifie que la question française
+            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
+            <code>uncertain</code>).
+          </p>
+          <strong>Résultat final</strong>
+          <p>
+            5&nbsp;000 paires valides de niveau Spider <code>hard</code> ou
+            <code>extra</code>, réparties selon les quotas par base.
+          </p>
+        </div>
+        <div class="training-parameters dataset-card">
+          <p>Dataset D</p>
+          <strong>Génération</strong>
+          <p>
+            <strong>Bases SQL :</strong> nouvelles bases, fournies dans un
+            catalogue externe avec leur schéma et leur fichier SQLite ·
+            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+            en français - requête SQL attendue) ·
+            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
+            (pour anticiper de potentielles erreurs) ·
+            <strong>Répartition :</strong> proportionnelle au volume de
+            référence indiqué pour chaque nouvelle base ·
+            <strong>Niveau demandé :</strong> requêtes complexes, privilégiant
+            lorsque pertinent jointures, agrégations, sous-requêtes ou
+            opérations ensemblistes.
+          </p>
+          <strong>Vérification</strong>
+          <p>
+            2 étapes de vérification :
+            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+            qu’il est en lecture seule, exécution sur la base SQLite concernée,
+            dédoublonnage et calcul de la difficulté selon les règles Spider.
+            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
+            valides par GPT-5.6 Terra, qui vérifie que la question française
+            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
+            <code>uncertain</code>).
+          </p>
+          <strong>Résultat final</strong>
+          <p>
+            Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, avec la
+            difficulté Spider mesurée après génération.
+          </p>
+        </div>
+        </div>
       </section>
     </main>
     <script src="app.js"></script>

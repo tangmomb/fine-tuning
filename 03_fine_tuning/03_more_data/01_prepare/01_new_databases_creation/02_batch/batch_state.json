@@ -1,0 +1,8 @@
+{
+  "batch_id": "consolidated",
+  "status": "completed",
+  "requested_databases": 100,
+  "request_file": "new_databases_requests.jsonl",
+  "raw_output_file": "new_databases_output.jsonl",
+  "consolidated": true
+}

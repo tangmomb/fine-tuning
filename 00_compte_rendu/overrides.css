@@ -46,6 +46,15 @@
 #data-scaling > p { margin: 10px 0 0; color: var(--muted); font-size: 1.05rem; }
 .training-parameters { margin: -10px 0 16px; padding: 13px 16px; border: 1px solid var(--border); border-radius: 12px; background: #141d28; color: var(--muted); font-size: .84rem; }
 .training-parameters strong { color: var(--text); white-space: nowrap; }
+.dataset-card { margin-top: 0; padding: 20px; border-color: var(--border); border-left: 4px solid var(--border); background: #141d28; line-height: 1.6; }
+.dataset-card > p:first-child { display: inline-block; margin: 0 0 13px; padding: 3px 10px; border: 1px solid #27799b; border-radius: 999px; color: #60d3ff; font-size: .72rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.dataset-card > strong { display: block; margin: 14px 0 3px; color: #60d3ff; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; }
+.dataset-card > strong:first-of-type { margin-top: 0; }
+.dataset-card > p:not(:first-child) { margin: 0; }
+.dataset-card > p > strong:not(:first-child)::before { content: ""; display: block; height: 8px; }
+.dataset-cards-carousel { display: flex; gap: 14px; margin-top: 16px; overflow-x: auto; padding: 0 0 14px; scroll-snap-type: x mandatory; }
+.dataset-cards-carousel .dataset-card { flex: 0 0 calc(50% - 7px); min-width: 0; margin: 0; scroll-snap-align: start; }
+@media (max-width: 720px) { .dataset-cards-carousel .dataset-card { flex-basis: calc(100% - 20px); } }
 .evaluation-table .model-qwen-0-8b td { background: #172938; }.evaluation-table .model-qwen-0-8b:hover td { background: #213b50; }
 .evaluation-table .model-qwen-2b td { background: #182f36; }.evaluation-table .model-qwen-2b:hover td { background: #22434c; }
 .evaluation-table .model-qwen-4b td { background: #252b40; }.evaluation-table .model-qwen-4b:hover td { background: #353f5c; }

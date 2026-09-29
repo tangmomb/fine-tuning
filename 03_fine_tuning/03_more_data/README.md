@@ -4,12 +4,12 @@ Ce dossier prépare les quatre expériences du compte rendu.
 
 | Expérience | Sélection SQL | Bases |
 | --- | --- | --- |
-| A | aléatoire | déjà présentes dans le train |
+| A | distribution historique des difficultés | déjà présentes dans le train |
 | B | aléatoire | nouvelles |
 | C | difficile | déjà présentes dans le train |
 | D | difficile | nouvelles |
 
-Un seul job OpenAI Batch contient une requête par base : pour A, les 146 schémas Spider sont donc envoyés une seule fois chacun. GPT-5.6 Luna produit 6 250 paires (25 % de marge), puis les contrôles conservent au plus 5 000 exemples, selon les quotas par schéma. Chaque SQL généré est exécuté sur SQLite avant export.
+Un seul job OpenAI Batch contient une requête par base : pour A, les 146 schémas Spider sont donc envoyés une seule fois chacun. GPT-5.6 Luna produit 6 250 paires (25 % de marge), puis les contrôles conservent au plus 5 000 exemples, selon les quotas par schéma et par difficulté. Chaque SQL généré est exécuté sur SQLite avant export.
 
 ## Contrat d'entrée
 
@@ -45,5 +45,5 @@ Dans `02_batch`, `01_requests` contient le JSONL exact envoyé, `02_submissions`
 - Le modèle est `gpt-5.6-luna`, configurable avec `--model`.
 - La génération autorise jusqu’à 128&nbsp;000 tokens de sortie par prompt, pour que les bases aux quotas élevés puissent fermer leur JSON structuré.
 - Le contrôle déterministe exclut les questions vides ou dupliquées et les SQL qui ne sont pas des lectures SQLite exécutables, mais conserve les surplus valides comme réserve.
-- Un second Batch, confié à GPT-5.6 Terra, juge aléatoirement 200 paires question/SQL afin de mesurer la fidélité sémantique sans facturer un jugement exhaustif.
+- Un second Batch, confié à GPT-5.6 Terra, juge 200 paires question/SQL via un échantillon stratifié par difficulté et réparti entre les bases, afin de mesurer la fidélité sémantique sans facturer un jugement exhaustif.
 - Une revue humaine/LLM est recommandée avant un entraînement définitif.

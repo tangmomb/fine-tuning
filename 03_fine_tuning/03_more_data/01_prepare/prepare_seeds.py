@@ -7,7 +7,7 @@ surproduction (1,25×) pour couvrir les rejets de validation.
 """
 from __future__ import annotations
 import argparse, json
-from collections import defaultdict
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +33,8 @@ def existing_databases() -> list[dict[str, Any]]:
     for db_id, rows in grouped.items():
         user = json.loads(rows[0]["messages"][1]["content"])
         database = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "database" / db_id / f"{db_id}.sqlite"
-        result.append({"db_id": db_id, "schema": user["schema"], "database_path": str(database), "source_examples": len(rows)})
+        hardness_counts = Counter(row.get("hardness") for row in rows if row.get("hardness") in {"easy", "medium", "hard", "extra"})
+        result.append({"db_id": db_id, "schema": user["schema"], "database_path": str(database), "source_examples": len(rows), "hardness_counts": dict(hardness_counts)})
     return result
 
 def external_databases(path: Path) -> list[dict[str, Any]]:
@@ -55,7 +56,7 @@ def main() -> None:
     args = parser.parse_args(); args.source = ask_source(args.source)
     args.count = args.count if args.count is not None else int(input("Nombre final visé [5000] : ").strip() or "5000")
     args.oversample_factor = args.oversample_factor if args.oversample_factor is not None else float(input("Facteur de surproduction [1.25] : ").strip() or "1.25")
-    default_input = HERE / "01_prepare" / "00_input" / "new_databases.jsonl"
+    default_input = HERE / "01_prepare" / "01_new_databases_creation" / "04_final" / "new_databases.jsonl"
     input_path = args.input
     if args.source == "new" and input_path is None:
         input_path = Path(input(f"Catalogue des nouvelles bases [{default_input}] : ").strip() or default_input)
