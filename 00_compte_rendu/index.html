@@ -42,7 +42,10 @@
           <p>
             Pour découvrir en détail la préparation des données et le pipeline
             associé,
-            <a href="../01_data/01_00_documentation/pipeline_visualisation/"
+            <a
+              href="../01_data/01_00_documentation/pipeline_visualisation/index.html"
+              target="_blank"
+              rel="noopener noreferrer"
               >cliquez ici</a
             >.
           </p>
@@ -718,7 +721,7 @@
                     <td><strong>B</strong></td>
                   </tr>
                   <tr class="model-qwen-2b">
-                    <td>Cas difficiles</td>
+                    <td>Cas difficiles (hard, extra)</td>
                     <td><strong>C</strong></td>
                     <td><strong>D</strong></td>
                   </tr>
@@ -752,139 +755,358 @@
           class="dataset-cards-carousel"
           aria-label="Détails des datasets A à D"
         >
-        <div class="training-parameters dataset-card">
-          <p>Dataset A</p>
-          <strong>Génération</strong>
-          <p>
-            <strong>Bases SQL :</strong> identiques au train set initial (146
-            bases, proportionnalité à respecter) ·
-            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question en
-            français - requête SQL attendue) ·
-            <strong>Demande via batch GPT 5.6 luna :</strong> 6&nbsp;250 paires
-            (pour anticiper de potentielles erreurs) ·
-            <strong>Niveau demandé pour les nouvelle requêtes :</strong>
-            <code>easy</code> à <code>extra</code> (proportionnalité à respecter
-            par base).
-          </p>
-          <strong>Vérification</strong>
-          <p>
-            2 étapes de vérification :
-            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
-            qu’il est en lecture seule, exécution sur la base SQLite concernée,
-            dédoublonnage et vérification de la difficulté selon les règles
-            Spider. <strong>2) Sémantique :</strong> audit stratifié de 200
-            paires valides par GPT-5.6 Terra, qui vérifie que la question
-            française décrit fidèlement le SQL (<code>pass</code>,
-            <code>fail</code> ou <code>uncertain</code>). Seulement 200 paires
-            sont vérifiées pour limiter le coût de l’audit.
-          </p>
-          <strong>Résultat final</strong>
-          <p>
-            5&nbsp;000 paires valides, avec un niveau de difficulté Spider
-            <code>easy</code> à <code>extra</code>, réparti ainsi :
-          </p>
+          <div class="training-parameters dataset-card">
+            <p>Dataset A</p>
+            <strong>Génération</strong>
+            <p>
+              <strong>Bases SQL :</strong> identiques au train set initial (146
+              bases, proportionnalité à respecter).
+              <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+              en français - requête SQL attendue).
+              <strong>Demande via batch GPT 5.6 luna :</strong> 6&nbsp;250
+              paires (pour anticiper de potentielles erreurs).
+              <strong>Niveau demandé pour les nouvelle requêtes :</strong>
+              <code>easy</code> à <code>extra</code> (proportionnalité à
+              respecter par base).
+            </p>
+            <strong>Vérification</strong>
+            <p>
+              2 étapes de vérification :
+              <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+              qu’il est en lecture seule, exécution sur la base SQLite
+              concernée, dédoublonnage et vérification de la difficulté selon
+              les règles Spider. <strong>2) Sémantique :</strong> audit des 5000
+              paires valides par GPT-5.6 Terra, qui vérifie que la question
+              française décrit fidèlement le SQL (<code>pass</code>,
+              <code>fail</code> ou <code>uncertain</code>). Les cas "fail" ou
+              "uncertain" sont soumis à une correction supplémentaire.
+            </p>
+            <strong>Résultat final</strong>
+            <p>
+              5&nbsp;000 paires valides, avec un niveau de difficulté Spider
+              <code>easy</code> à <code>extra</code>, réparti ainsi :
+            </p>
+            <div class="difficulty-comparison" aria-label="Comparaison des répartitions Spider">
+              <div>
+                <span class="difficulty-source">Dataset A · 5&nbsp;000</span>
+                <div class="difficulty-bubbles">
+                  <span><code>easy</code><strong>1&nbsp;149</strong></span>
+                  <span><code>medium</code><strong>1&nbsp;728</strong></span>
+                  <span><code>hard</code><strong>1&nbsp;112</strong></span>
+                  <span><code>extra</code><strong>1&nbsp;011</strong></span>
+                </div>
+              </div>
+              <div>
+                <span class="difficulty-source">Train original · 8&nbsp;651</span>
+                <div class="difficulty-bubbles">
+                  <span><code>easy</code><strong>1&nbsp;980</strong></span>
+                  <span><code>medium</code><strong>2&nbsp;998</strong></span>
+                  <span><code>hard</code><strong>1&nbsp;919</strong></span>
+                  <span><code>extra</code><strong>1&nbsp;754</strong></span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="training-parameters dataset-card">
+            <p>Dataset B</p>
+            <strong>Génération</strong>
+            <p>
+              <strong>Bases SQL :</strong> 100 nouvelles bases fictives créées
+              via script et batch GPT 5.6 Luna, fournies dans un catalogue
+              externe avec leur schéma et leur fichier SQLite.
+              <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+              en français - requête SQL attendue).
+              <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250
+              paires (pour anticiper de potentielles erreurs).
+              <strong>Répartition :</strong> proportionnelle au volume de
+              référence indiqué pour chaque nouvelle base.
+              <strong>Niveau demandé :</strong> diversité libre, de
+              <code>easy</code> à <code>extra</code>.
+            </p>
+            <strong>Vérification</strong>
+            <p>
+              2 étapes de vérification :
+              <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+              qu’il est en lecture seule, exécution sur la base SQLite
+              concernée, dédoublonnage et calcul de la difficulté selon les
+              règles Spider. <strong>2) Sémantique :</strong> audit stratifié de
+              200 paires valides par GPT-5.6 Terra, qui vérifie que la question
+              française décrit fidèlement le SQL (<code>pass</code>,
+              <code>fail</code> ou <code>uncertain</code>).
+            </p>
+            <strong>Résultat final</strong>
+            <p>
+              Jusqu’à 5&nbsp;000 paires valides, réparties entre les nouvelles
+              bases selon leurs quotas respectifs.
+            </p>
+          </div>
+          <div class="training-parameters dataset-card">
+            <p>Dataset C</p>
+            <strong>Génération</strong>
+            <p>
+              <strong>Bases SQL :</strong> identiques au train set initial (146
+              bases, proportionnalité à respecter).
+              <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+              en français - requête SQL attendue).
+              <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250
+              paires (pour anticiper de potentielles erreurs).
+              <strong>Niveau demandé :</strong> <code>hard</code> ou
+              <code>extra</code>, dans les proportions observées pour ces deux
+              niveaux dans chaque base.
+            </p>
+            <strong>Vérification</strong>
+            <p>
+              2 étapes de vérification :
+              <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+              qu’il est en lecture seule, exécution sur la base SQLite
+              concernée, dédoublonnage et vérification de la difficulté selon
+              les règles Spider. Seules les paires respectant le quota
+              <code>hard</code>/<code>extra</code> de leur base sont retenues.
+              <strong>2) Sémantique :</strong> audit stratifié de 200 paires
+              valides par GPT-5.6 Terra, qui vérifie que la question française
+              décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
+              <code>uncertain</code>).
+            </p>
+            <strong>Résultat final</strong>
+            <p>
+              5&nbsp;000 paires valides de niveau Spider <code>hard</code> ou
+              <code>extra</code>, réparties selon les quotas par base.
+            </p>
+          </div>
+          <div class="training-parameters dataset-card">
+            <p>Dataset D</p>
+            <strong>Génération</strong>
+            <p>
+              <strong>Bases SQL :</strong> 100 nouvelles bases fictives créées
+              via script et batch GPT 5.6 Luna, fournies dans un catalogue
+              externe avec leur schéma et leur fichier SQLite.
+              <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
+              en français - requête SQL attendue).
+              <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250
+              paires (pour anticiper de potentielles erreurs).
+              <strong>Répartition :</strong> proportionnelle au volume de
+              référence indiqué pour chaque nouvelle base.
+              <strong>Niveau demandé :</strong> requêtes complexes, privilégiant
+              lorsque pertinent jointures, agrégations, sous-requêtes ou
+              opérations ensemblistes.
+            </p>
+            <strong>Vérification</strong>
+            <p>
+              2 étapes de vérification :
+              <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
+              qu’il est en lecture seule, exécution sur la base SQLite
+              concernée, dédoublonnage et calcul de la difficulté selon les
+              règles Spider. <strong>2) Sémantique :</strong> audit stratifié de
+              200 paires valides par GPT-5.6 Terra, qui vérifie que la question
+              française décrit fidèlement le SQL (<code>pass</code>,
+              <code>fail</code> ou <code>uncertain</code>).
+            </p>
+            <strong>Résultat final</strong>
+            <p>
+              Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, avec la
+              difficulté Spider mesurée après génération.
+            </p>
+          </div>
         </div>
-        <div class="training-parameters dataset-card">
-          <p>Dataset B</p>
-          <strong>Génération</strong>
-          <p>
-            <strong>Bases SQL :</strong> nouvelles bases, fournies dans un
-            catalogue externe avec leur schéma et leur fichier SQLite ·
-            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
-            en français - requête SQL attendue) ·
-            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
-            (pour anticiper de potentielles erreurs) ·
-            <strong>Répartition :</strong> proportionnelle au volume de
-            référence indiqué pour chaque nouvelle base ·
-            <strong>Niveau demandé :</strong> diversité libre, de
-            <code>easy</code> à <code>extra</code>.
-          </p>
-          <strong>Vérification</strong>
-          <p>
-            2 étapes de vérification :
-            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
-            qu’il est en lecture seule, exécution sur la base SQLite concernée,
-            dédoublonnage et calcul de la difficulté selon les règles Spider.
-            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
-            valides par GPT-5.6 Terra, qui vérifie que la question française
-            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
-            <code>uncertain</code>).
-          </p>
-          <strong>Résultat final</strong>
-          <p>
-            Jusqu’à 5&nbsp;000 paires valides, réparties entre les nouvelles
-            bases selon leurs quotas respectifs.
-          </p>
+        <p>Pipeline de création des 100 bases fictives</p>
+        <div
+          class="new-databases-carousel"
+          aria-label="Étapes de création des 100 nouvelles bases SQLite"
+        >
+          <article class="new-database-step">
+            <span class="new-database-step-number">01</span>
+            <p>
+              <strong>100 domaines métiers</strong> variés sont associés aux
+              bases fictives. <i>Exemple : librairie, réseau de bus...</i>
+            </p>
+          </article>
+          <article class="new-database-step">
+            <div class="new-database-step-head">
+              <span class="new-database-step-number">02</span>
+              <div class="new-database-actions" aria-label="Exemples de Batch">
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="request"
+                  aria-haspopup="dialog"
+                >
+                  Demande
+                </button>
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="response"
+                  aria-haspopup="dialog"
+                >
+                  Réponse
+                </button>
+              </div>
+            </div>
+            <p>
+              <strong>GPT-5.6 Luna</strong> génère pour chaque base un schéma,
+              des données cohérentes et des clés étrangères.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">03</span>
+            <p>
+              Avec le module Python <strong><code>sqlite3</code></strong> qui
+              utilise le moteur SQLite local, le script exécute d’abord
+              <code>ddl</code>, puis <code>data</code> dans un fichier
+              <code>.sqlite</code>. Une fois la base créée et contrôlée, il
+              reconstruit son <code>schema</code> depuis SQLite et l’écrit dans
+              le catalogue JSONL. En principe, le <code>ddl</code> et ce
+              <code>schema</code> décrivent la même structure, avec parfois de
+              légères différences de forme (ordre, espaces ou retours à la
+              ligne).
+            </p>
+          </article>
+          <article class="new-database-step">
+            <div class="new-database-step-head">
+              <span class="new-database-step-number">04</span>
+              <div class="new-database-actions">
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="catalog"
+                  aria-haspopup="dialog"
+                >
+                  Exemple
+                </button>
+              </div>
+            </div>
+            <p>
+              Le <strong>catalogue JSONL final</strong> récupère le schéma dans
+              chaque SQLite validée, <strong>pas le DDL brut</strong> du Batch.
+            </p>
+            <dl class="new-database-catalog-keys">
+              <div>
+                <dt><code>db_id</code></dt>
+                <dd>identifiant unique</dd>
+              </div>
+              <div>
+                <dt><code>schema</code></dt>
+                <dd>schéma lu dans SQLite</dd>
+              </div>
+              <div>
+                <dt><code>description</code></dt>
+                <dd>résumé métier</dd>
+              </div>
+              <div>
+                <dt><code>source_examples</code></dt>
+                <dd>poids des quotas</dd>
+              </div>
+              <div>
+                <dt><code>database_path</code></dt>
+                <dd>chemin du fichier</dd>
+              </div>
+              <div>
+                <dt><code>table_row_counts</code></dt>
+                <dd>lignes par table</dd>
+              </div>
+            </dl>
+          </article>
         </div>
-        <div class="training-parameters dataset-card">
-          <p>Dataset C</p>
-          <strong>Génération</strong>
-          <p>
-            <strong>Bases SQL :</strong> identiques au train set initial (146
-            bases, proportionnalité à respecter) ·
-            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
-            en français - requête SQL attendue) ·
-            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
-            (pour anticiper de potentielles erreurs) ·
-            <strong>Niveau demandé :</strong> <code>hard</code> ou
-            <code>extra</code>, dans les proportions observées pour ces deux
-            niveaux dans chaque base.
-          </p>
-          <strong>Vérification</strong>
-          <p>
-            2 étapes de vérification :
-            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
-            qu’il est en lecture seule, exécution sur la base SQLite concernée,
-            dédoublonnage et vérification de la difficulté selon les règles
-            Spider. Seules les paires respectant le quota
-            <code>hard</code>/<code>extra</code> de leur base sont retenues.
-            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
-            valides par GPT-5.6 Terra, qui vérifie que la question française
-            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
-            <code>uncertain</code>).
-          </p>
-          <strong>Résultat final</strong>
-          <p>
-            5&nbsp;000 paires valides de niveau Spider <code>hard</code> ou
-            <code>extra</code>, réparties selon les quotas par base.
-          </p>
+        <p>Pipeline de création des nouvelles données d’entraînement</p>
+        <div
+          class="new-databases-carousel data-creation-carousel"
+          aria-label="Étapes de création et de contrôle des nouvelles données text-to-SQL"
+        >
+          <article class="new-database-step">
+            <span class="new-database-step-number">01</span>
+            <p>
+              Un <strong>plan de quotas</strong> est calculé pour chaque base à
+              partir de son poids dans le train. Il fixe les
+              <code>5&nbsp;000</code> exemples visés et une marge de génération
+              de <code>25&nbsp;%</code>.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">02</span>
+            <p>
+              <strong>GPT-5.6 Luna</strong> reçoit le schéma SQLite et produit
+              par Batch des paires structurées
+              <code>question&nbsp;FR + SQL</code>, selon les difficultés
+              demandées pour A, B, C ou D.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">03</span>
+            <p>
+              Les réponses brutes sont <strong>téléchargées et
+              consolidées</strong>. Un Batch de complément peut ensuite cibler
+              uniquement les quotas encore manquants par base et par niveau
+              Spider.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">04</span>
+            <p>
+              Le <strong>contrôle déterministe</strong> normalise le SQL,
+              refuse les écritures, l’exécute sur la bonne base SQLite,
+              élimine les doublons et recalcule sa difficulté avec les règles
+              officielles de Spider.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">05</span>
+            <p>
+              Les candidats valides sont ramenés aux <strong>quotas exacts</strong>
+              par base et difficulté. Pour A&nbsp;: <code>9&nbsp;801</code>
+              candidats valides parmi <code>10&nbsp;491</code> demandés, puis
+              <code>5&nbsp;000</code> paires sélectionnées.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">06</span>
+            <p>
+              <strong>GPT-5.6 Terra</strong> vérifie que chaque question décrit
+              fidèlement son SQL. Pour A&nbsp;: <code>4&nbsp;876 pass</code>,
+              <code>122 fail</code> et <code>2 uncertain</code> sur les
+              5&nbsp;000 paires auditées.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">07</span>
+            <p>
+              Les questions <code>fail</code> ou <code>uncertain</code> sont
+              <strong>réécrites sans modifier le SQL</strong>, puis jugées à
+              nouveau. Pour A, les 124 corrections ont toutes été validées
+              après deux passages.
+            </p>
+          </article>
+          <article class="new-database-step">
+            <span class="new-database-step-number">08</span>
+            <p>
+              Le résultat est converti au <strong>format SFT JSONL</strong>
+              attendu pour le fine-tuning&nbsp;: message système, question et
+              schéma côté utilisateur, puis SQL cible côté assistant.
+            </p>
+          </article>
         </div>
-        <div class="training-parameters dataset-card">
-          <p>Dataset D</p>
-          <strong>Génération</strong>
-          <p>
-            <strong>Bases SQL :</strong> nouvelles bases, fournies dans un
-            catalogue externe avec leur schéma et leur fichier SQLite ·
-            <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
-            en français - requête SQL attendue) ·
-            <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250 paires
-            (pour anticiper de potentielles erreurs) ·
-            <strong>Répartition :</strong> proportionnelle au volume de
-            référence indiqué pour chaque nouvelle base ·
-            <strong>Niveau demandé :</strong> requêtes complexes, privilégiant
-            lorsque pertinent jointures, agrégations, sous-requêtes ou
-            opérations ensemblistes.
-          </p>
-          <strong>Vérification</strong>
-          <p>
-            2 étapes de vérification :
-            <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
-            qu’il est en lecture seule, exécution sur la base SQLite concernée,
-            dédoublonnage et calcul de la difficulté selon les règles Spider.
-            <strong>2) Sémantique :</strong> audit stratifié de 200 paires
-            valides par GPT-5.6 Terra, qui vérifie que la question française
-            décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
-            <code>uncertain</code>).
-          </p>
-          <strong>Résultat final</strong>
-          <p>
-            Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, avec la
-            difficulté Spider mesurée après génération.
-          </p>
-        </div>
+        <div
+          class="report-lightbox"
+          id="report-lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="report-lightbox-title"
+          hidden
+        >
+          <div class="report-lightbox-panel">
+            <button
+              type="button"
+              class="report-lightbox-close"
+              aria-label="Fermer l’exemple"
+            >
+              ×
+            </button>
+            <p id="report-lightbox-title"></p>
+            <div id="report-lightbox-content"></div>
+          </div>
         </div>
       </section>
     </main>
-    <script src="app.js"></script>
+    <script src="app.js?v=20260929-7"></script>
+    <script src="new-database-examples.js?v=20260929-4"></script>
   </body>
 </html>

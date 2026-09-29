@@ -78,29 +78,54 @@ document.querySelector("#tokenized-example").innerHTML = smallestTokenizedExampl
   return `<span class="token-chip ${kind}">${id} · ${escapeHtml(token)}</span>${breakAfter}`;
 }).join("");
 
+const reportLightbox = (() => {
+  const lightbox = document.querySelector("#report-lightbox");
+  const panel = lightbox.querySelector(".report-lightbox-panel");
+  const title = document.querySelector("#report-lightbox-title");
+  const content = document.querySelector("#report-lightbox-content");
+  const closeButton = lightbox.querySelector(".report-lightbox-close");
+  let trigger = null;
+
+  const close = () => {
+    if (lightbox.hidden) return;
+    lightbox.hidden = true;
+    document.body.classList.remove("has-open-lightbox");
+    trigger?.setAttribute("aria-expanded", "false");
+    trigger?.focus();
+  };
+  const open = ({ title: nextTitle, html, source, wide = false }) => {
+    trigger?.setAttribute("aria-expanded", "false");
+    trigger = source;
+    trigger?.setAttribute("aria-expanded", "true");
+    title.textContent = nextTitle;
+    content.innerHTML = html;
+    panel.classList.toggle("is-wide", wide);
+    lightbox.hidden = false;
+    document.body.classList.add("has-open-lightbox");
+    closeButton.focus();
+  };
+
+  closeButton.addEventListener("click", close);
+  lightbox.addEventListener("click", event => { if (event.target === lightbox) close(); });
+  document.addEventListener("keydown", event => { if (event.key === "Escape") close(); });
+  return { open, close };
+})();
+window.reportLightbox = reportLightbox;
+
 document.querySelector("#dataset-summary").innerHTML = [
   ["Train", "8 651", "146", "train_spider + train_others", "01_data/01_06_training_dataset/01_06_03_production/train.jsonl", "book_2", "Combien y a-t-il de livres ?", "book(Book_ID, Title, Issues, Writer)", "SELECT count(*) FROM book"],
   ["Validation", "1 034", "20", "split dev", "01_data/01_06_training_dataset/01_06_03_production/validation.jsonl", "course_teach", "Combien y a-t-il de professeurs ?", "teacher(Teacher_ID, Name, Age, Hometown)", "SELECT count(*) FROM teacher"],
   ["Test", "2 147", "40", "évaluation finale", "01_data/01_07_evaluation_dataset/01_07_03_production/test_inputs.jsonl", "soccer_3", "Combien y a-t-il de clubs ?", "club(Club_ID, Name, Manager, Captain, …)", "SELECT count(*) FROM club"],
-].map(([split, examples, databases, detail, path]) => `<article><span>${split}</span><div class="card-metrics"><div class="metric-line metric-examples"><strong>${examples}</strong><small>exemples</small></div><div class="metric-line metric-databases"><strong>${databases}</strong><small>bases</small></div></div><small>${detail}</small><code class="file-path">${path}</code><div class="dataset-example"><button type="button" aria-label="Afficher le premier exemple JSONL de ${split}" aria-expanded="false">Exemple JSONL</button><div class="example-tooltip" role="dialog" aria-label="Premier exemple JSONL ${split}"><button type="button" class="close-example" aria-label="Fermer l’exemple">×</button><div class="popup-grid"><section><h3>JSONL brut</h3><pre class="json-code">${colorJson(rawExamples[split])}</pre></section><section><h3>Après le chat template Qwen · mode non-thinking</h3><pre class="json-code chat-code">${colorChat(rawExamples[split])}</pre></section><section class="prediction-target${split === "Test" ? " test-prediction-target" : ""}"><h3>${split === "Test" ? "Inférence et évaluation" : "Suite à prédire"}</h3><pre class="json-code">${predictionTarget(rawExamples[split])}</pre></section></div></div></div></article>`).join("");
+].map(([split, examples, databases, detail, path]) => `<article><span>${split}</span><div class="card-metrics"><div class="metric-line metric-examples"><strong>${examples}</strong><small>exemples</small></div><div class="metric-line metric-databases"><strong>${databases}</strong><small>bases</small></div></div><small>${detail}</small><code class="file-path">${path}</code><div class="dataset-example"><button type="button" data-split="${split}" aria-label="Afficher le premier exemple JSONL de ${split}" aria-haspopup="dialog" aria-expanded="false">Exemple JSONL</button></div></article>`).join("");
 document.querySelectorAll(".dataset-example button").forEach(button => button.addEventListener("click", () => {
-  if (button.classList.contains("close-example")) return;
-  const example = button.parentElement;
-  const isOpen = example.classList.toggle("is-open");
-  button.setAttribute("aria-expanded", String(isOpen));
-}));
-document.querySelectorAll(".close-example").forEach(button => button.addEventListener("click", () => {
-  const example = button.closest(".dataset-example");
-  example.classList.remove("is-open");
-  example.querySelector("button:not(.close-example)").setAttribute("aria-expanded", "false");
-}));
-document.addEventListener("keydown", event => {
-  if (event.key !== "Escape") return;
-  document.querySelectorAll(".dataset-example.is-open").forEach(example => {
-    example.classList.remove("is-open");
-    example.querySelector("button:not(.close-example)").setAttribute("aria-expanded", "false");
+  const split = button.dataset.split;
+  reportLightbox.open({
+    title: `Premier exemple JSONL · ${split}`,
+    source: button,
+    wide: true,
+    html: `<div class="popup-grid"><section><h3>JSONL brut</h3><pre class="json-code">${colorJson(rawExamples[split])}</pre></section><section><h3>Après le chat template Qwen · mode non-thinking</h3><pre class="json-code chat-code">${colorChat(rawExamples[split])}</pre></section><section class="prediction-target${split === "Test" ? " test-prediction-target" : ""}"><h3>${split === "Test" ? "Inférence et évaluation" : "Suite à prédire"}</h3><pre class="json-code">${predictionTarget(rawExamples[split])}</pre></section></div>`,
   });
-});
+}));
 document.querySelector("#dataset-rows").innerHTML = datasets.map(([group, split, records, bytes, sequence]) => `<tr><td><b>${split}</b><small>${group}</small></td><td>${nf.format(records)}</td><td>${nf.format(sequence[0])}</td><td>${nf.format(sequence[1])}</td><td>${nf.format(sequence[2])}</td><td>${nf.format(sequence[3])}</td><td>${nf.format(sequence[4])}&nbsp;%</td><td>${nf.format(sequence[5])}&nbsp;%</td><td>${nf.format(sequence[6])}&nbsp;%</td><td>${size(bytes)}</td></tr>`).join("");
 
 document.querySelector("#evaluation-head").innerHTML = `<tr><th>Modèle</th><th>Configuration</th><th>Execution accuracy</th><th>Exact match</th><th>SQL exécutable</th><th>SQL valide</th><th>Erreurs d’exécution</th><th>SQL invalides</th><th>Timeouts</th></tr>`;

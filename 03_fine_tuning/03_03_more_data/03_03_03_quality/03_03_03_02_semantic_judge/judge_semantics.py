@@ -78,12 +78,12 @@ def stratified_sample(candidates: list[dict], size: int, rng: random.Random) -> 
     return sample
 
 def prepare(experiment: str, model: str, exhaustive: bool = False) -> Path:
-    source = ROOT / "03_quality" / "01_deterministic_checks" / experiment / "selected.jsonl"
+    source = ROOT / "03_03_03_quality" / "03_03_03_01_deterministic_checks" / experiment / "selected.jsonl"
     grouped: dict[str, list[dict]] = defaultdict(list)
     candidates = read(source)
     audited = candidates if exhaustive else stratified_sample(candidates, SAMPLE_SIZE, random.Random(RANDOM_SEED))
     audit_name = "audit" if exhaustive else "sample"
-    write(WORK / "01_requests" / f"{experiment}_{audit_name}.jsonl", audited)
+    write(WORK / "03_03_03_02_01_requests" / f"{experiment}_{audit_name}.jsonl", audited)
     for row in audited: grouped[row["db_id"]].append(row)
     lines = []
     for db_id, examples in sorted(grouped.items()):
@@ -92,17 +92,17 @@ def prepare(experiment: str, model: str, exhaustive: bool = False) -> Path:
                   + json.dumps({"schema": examples[0]["schema"], "examples": [{"id": row["id"], "question": row["question"], "sql": row["sql"]} for row in examples]}, ensure_ascii=False))
         body = {"model": model, "input": [{"role": "system", "content": "Tu es un juge qualité text-to-SQL strict et indépendant."}, {"role": "user", "content": prompt}], "max_output_tokens": 16000, "text": {"format": {"type": "json_schema", "name": "semantic_verdicts", "strict": True, "schema": SCHEMA}}}
         lines.append(json.dumps({"custom_id": f"judge:{experiment}:{db_id}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
-    path = WORK / "01_requests" / f"{experiment}_judge_requests.jsonl"; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    path = WORK / "03_03_03_02_01_requests" / f"{experiment}_judge_requests.jsonl"; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     scope = "exemples à vérifier exhaustivement" if exhaustive else "exemples échantillonnés"
     print(f"{len(audited)} {scope} dans {len(lines)} requêtes de jugement : {path}"); return path
 
 def submit(experiment: str, model: str, path: Path, exhaustive: bool) -> None:
     token = api_key(); uploaded = upload(path, token); batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "more-data-semantic-judge", "experiment": experiment, "model": model}}, token)
     state = {"experiment": experiment, "model": model, "exhaustive": exhaustive, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
-    state_path = WORK / "02_submissions" / f"{experiment}_judge_state.json"; state_path.parent.mkdir(parents=True, exist_ok=True); state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"Batch de jugement soumis : {batch['id']}")
+    state_path = WORK / "03_03_03_02_02_submissions" / f"{experiment}_judge_state.json"; state_path.parent.mkdir(parents=True, exist_ok=True); state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"Batch de jugement soumis : {batch['id']}")
 
 def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: str) -> None:
-    raw = WORK / "03_responses" / f"{experiment}_{state['batch_id']}_judge_output.jsonl"; raw.parent.mkdir(parents=True, exist_ok=True)
+    raw = WORK / "03_03_03_02_03_responses" / f"{experiment}_{state['batch_id']}_judge_output.jsonl"; raw.parent.mkdir(parents=True, exist_ok=True)
     if not raw.exists(): raw.write_bytes(get(f"https://api.openai.com/v1/files/{batch['output_file_id']}/content", token))
     verdicts = {}
     for line in read(raw):
@@ -112,9 +112,9 @@ def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: 
         for answer in answers:
             if answer.get("verdict") in {"pass", "fail", "uncertain"} and isinstance(answer.get("id"), str) and isinstance(answer.get("issues"), list): verdicts[answer["id"]] = answer
     audit_name = "audit" if state.get("exhaustive") else "sample"
-    audited = read(WORK / "01_requests" / f"{experiment}_{audit_name}.jsonl")
+    audited = read(WORK / "03_03_03_02_01_requests" / f"{experiment}_{audit_name}.jsonl")
     judged = [{**row, **verdicts.get(row["id"], {"verdict": "uncertain", "issues": ["Verdict absent."]})} for row in audited]
-    output_dir = WORK / "04_judgments"
+    output_dir = WORK / "03_03_03_02_04_judgments"
     judged_name = "judged" if state.get("exhaustive") else "judged_sample"
     write(output_dir / f"{experiment}_{judged_name}.jsonl", judged)
     manifest = {"experiment": experiment, "exhaustive": bool(state.get("exhaustive")), "audited_size": len(judged), "sample_seed": None if state.get("exhaustive") else RANDOM_SEED, "verdicts": dict(Counter(row["verdict"] for row in judged)), "raw_response": raw.name}; (output_dir / f"{experiment}_manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -122,7 +122,7 @@ def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--submit", action="store_true"); parser.add_argument("--all", action="store_true", help="Juge exhaustivement les exemples sélectionnés."); args = parser.parse_args()
-    experiment = ask_experiment(args.experiment); model = args.model or input(f"Modèle juge [{MODEL}] : ").strip() or MODEL; state_path = WORK / "02_submissions" / f"{experiment}_judge_state.json"
+    experiment = ask_experiment(args.experiment); model = args.model or input(f"Modèle juge [{MODEL}] : ").strip() or MODEL; state_path = WORK / "03_03_03_02_02_submissions" / f"{experiment}_judge_state.json"
     if not state_path.is_file():
         path = prepare(experiment, model, args.all)
         if args.submit or input("Soumettre le Batch de jugement à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}: submit(experiment, model, path, args.all)

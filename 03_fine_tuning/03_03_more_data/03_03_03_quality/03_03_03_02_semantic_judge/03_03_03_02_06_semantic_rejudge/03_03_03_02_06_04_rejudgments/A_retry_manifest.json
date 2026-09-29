@@ -1,0 +1,8 @@
+{
+  "experiment": "A",
+  "input_count": 5,
+  "verdicts": {
+    "pass": 5
+  },
+  "raw_response": "A_batch_6abb88af408c8190b41b7e874a216996_rejudge_output.jsonl"
+}
