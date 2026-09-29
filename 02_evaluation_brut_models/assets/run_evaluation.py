@@ -24,12 +24,12 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "01_data" / "00_shared" / "01_python"))
+sys.path.insert(0, str(ROOT / "01_data" / "01_00_shared" / "01_00_01_python"))
 from sql_utils import normalize_sql
 
-INPUTS = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_inputs.jsonl"
-GOLD = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_gold.jsonl"
-FEW_SHOT_SOURCE = ROOT / "01_data" / "06_training_dataset" / "03_production" / "train.jsonl"
+INPUTS = ROOT / "01_data" / "01_07_evaluation_dataset" / "01_07_03_production" / "test_inputs.jsonl"
+GOLD = ROOT / "01_data" / "01_07_evaluation_dataset" / "01_07_03_production" / "test_gold.jsonl"
+FEW_SHOT_SOURCE = ROOT / "01_data" / "01_06_training_dataset" / "01_06_03_production" / "train.jsonl"
 DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
 OUTPUT_ROOT = ROOT / "02_evaluation_brut_models" / "runs"
 SQL_EXECUTION_TIMEOUT_SECONDS = 5.0

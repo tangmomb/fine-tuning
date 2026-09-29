@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 RUNNER = ROOT / "02_evaluation_brut_models" / "assets" / "run_evaluation.py"
 OUTPUT_ROOT = ROOT / "02_evaluation_brut_models" / "runs"
-TEST_INPUTS = ROOT / "01_data" / "07_evaluation_dataset" / "03_production" / "test_inputs.jsonl"
+TEST_INPUTS = ROOT / "01_data" / "01_07_evaluation_dataset" / "01_07_03_production" / "test_inputs.jsonl"
 
 
 def parse_args(default_device: str) -> argparse.Namespace:

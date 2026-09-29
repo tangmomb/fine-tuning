@@ -1,0 +1,769 @@
+"""Fine-tuning LoRA BF16 des checkpoints Qwen Text-to-SQL sur une H100.
+
+Le script apprend exclusivement sur train.jsonl. Le split test Spider reste
+réservé à 02_evaluation_brut_models afin d'éviter toute fuite de données.
+"""
+
+from __future__ import annotations
+
+import argparse
+import importlib
+import json
+import math
+import os
+import random
+import sys
+import time
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+import torch
+from peft import LoraConfig, PeftModel, TaskType, get_peft_model
+from safetensors import safe_open
+from torch.nn.utils.rnn import pad_sequence
+from torch.utils.data import Dataset
+from tqdm.auto import tqdm
+from transformers import AutoModelForCausalLM, AutoProcessor, Trainer, TrainerCallback, TrainingArguments, set_seed
+
+ROOT = Path(__file__).resolve().parents[2]
+DATASET = ROOT / "01_data" / "01_06_training_dataset" / "01_06_03_production" / "train.jsonl"
+VALIDATION_DATASET = ROOT / "01_data" / "01_06_training_dataset" / "01_06_03_production" / "validation.jsonl"
+VALIDATION_TRANSLATIONS = ROOT / "01_data" / "01_04_merge_translations" / "01_04_03_production" / "dev.jsonl"
+VALIDATION_CHECKS = ROOT / "01_data" / "01_05_quality_control" / "01_05_03_production" / "01_05_03_01_deterministic_checks" / "dev_deterministic_checks.jsonl"
+VALIDATION_JUDGMENTS = ROOT / "01_data" / "01_05_quality_control" / "01_05_03_production" / "01_05_03_09_judgments" / "sol_judgments.jsonl"
+VALIDATION_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "database"
+TEST_INPUTS = ROOT / "01_data" / "01_07_evaluation_dataset" / "01_07_03_production" / "test_inputs.jsonl"
+TEST_GOLD = ROOT / "01_data" / "01_07_evaluation_dataset" / "01_07_03_production" / "test_gold.jsonl"
+TEST_DATABASES = ROOT / "BRUT_spider-original" / "data" / "spider_data" / "test_database"
+EVALUATION_BATCH_SIZE = 8
+DEFAULT_MODELS = ("Qwen3.5-0.8B", "Qwen3.5-2B", "Qwen3.5-4B", "Qwen3.5-9B")
+LORA_PRESETS = {
+    "A": {"r": 8, "alpha": 16},
+    "classique": {"r": 16, "alpha": 32},
+    "B": {"r": 32, "alpha": 64},
+}
+LEARNING_RATE_PRESETS = (5e-5, 1e-4, 2e-4)
+
+
+def read_jsonl(path: Path) -> list[dict[str, Any]]:
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+class SqlDataset(Dataset):
+    """Tokenise et masque le prompt : la loss ne porte que sur le SQL assistant."""
+
+    def __init__(self, rows: list[dict[str, Any]], processor: Any, max_length: int) -> None:
+        self.rows = rows
+        self.processor = processor
+        self.max_length = max_length
+        self.eos_token_id = processor.tokenizer.eos_token_id
+
+    def __len__(self) -> int:
+        return len(self.rows)
+
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
+        messages = self.rows[index]["messages"]
+        if len(messages) != 3 or messages[-1].get("role") != "assistant":
+            raise ValueError(f"Exemple {index} invalide : trois messages system/user/assistant attendus.")
+        prompt = self.processor.apply_chat_template(
+            messages[:-1], add_generation_prompt=True, tokenize=True,
+            return_dict=True, return_tensors="pt", enable_thinking=False,
+        )["input_ids"][0]
+        answer = self.processor.tokenizer(
+            messages[-1]["content"], add_special_tokens=False, return_tensors="pt"
+        )["input_ids"][0]
+        ids = torch.cat((prompt, answer, torch.tensor([self.eos_token_id], dtype=torch.long)))[: self.max_length]
+        labels = ids.clone()
+        labels[: min(len(prompt), len(ids))] = -100
+        return {"input_ids": ids, "attention_mask": torch.ones_like(ids), "labels": labels}
+
+
+@dataclass
+class SqlCollator:
+    pad_token_id: int
+
+    def __call__(self, features: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
+        return {
+            "input_ids": pad_sequence([x["input_ids"] for x in features], batch_first=True, padding_value=self.pad_token_id),
+            "attention_mask": pad_sequence([x["attention_mask"] for x in features], batch_first=True, padding_value=0),
+            "labels": pad_sequence([x["labels"] for x in features], batch_first=True, padding_value=-100),
+        }
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--models", nargs="+", choices=DEFAULT_MODELS,
+                        help="Modèle(s) à entraîner. Sans cette option, un choix interactif est proposé.")
+    parser.add_argument("--dataset", type=Path, default=DATASET)
+    parser.add_argument("--validation-dataset", type=Path, default=VALIDATION_DATASET)
+    parser.add_argument("--output-root", type=Path, default=ROOT / "03_fine_tuning" / "artifacts")
+    parser.add_argument("--run-name", type=str,
+                        help="Nom du dossier de run. Par défaut : qwen3.5-<taille>-<date_heure_utc>.")
+    parser.add_argument("--max-seq-length", type=int, default=3072,
+                        help="3 072 couvre le maximum observé (2 769 tokens) sans troncature.")
+    parser.add_argument("--per-device-batch-size", type=int, default=2)
+    parser.add_argument("--gradient-accumulation-steps", type=int, default=32,
+                        help="2 x 32 = batch effectif 64 sur une H100 mono-GPU.")
+    parser.add_argument("--epochs", type=float,
+                        help="Nombre d'époques. Sans cette option, une valeur est demandée au terminal.")
+    parser.add_argument("--learning-rate", type=float,
+                        help="Limite le lancement à un seul learning rate. Sans cette option, les trois valeurs sont testées.")
+    parser.add_argument("--warmup-ratio", type=float, default=0.03)
+    parser.add_argument("--lr-scheduler", choices=("cosine", "linear"), default="cosine")
+    parser.add_argument("--lora-preset", choices=LORA_PRESETS,
+                        help="Preset LoRA : A (r=8, alpha=16), classique (r=16, alpha=32) ou B (r=32, alpha=64). "
+                             "Sans cette option, un choix interactif est proposé.")
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--resume-from-checkpoint", type=str)
+    parser.add_argument("--evaluate-run", type=Path,
+                        help="Évalue les checkpoints déjà présents dans un dossier de run, sans réentraîner.")
+    parser.add_argument("--evaluate-test", action="store_true",
+                        help="Évalue le split test final après sélection sur validation. Désactivé par défaut pour éviter toute consultation du test durant les expériences.")
+    return parser.parse_args()
+
+
+def choose_epochs() -> float:
+    """Demande un nombre d'époques positif, avec 3 comme valeur recommandée."""
+    while True:
+        value = input("Nombre d'époques [3] : ").strip() or "3"
+        try:
+            epochs = float(value)
+        except ValueError:
+            print("Entrez un nombre positif, par exemple 1 ou 3.")
+            continue
+        if epochs <= 0:
+            print("Le nombre d'époques doit être strictement positif.")
+            continue
+        return epochs
+
+
+def choose_lora_preset() -> str:
+    """Demande le preset LoRA, en conservant la configuration historique par défaut."""
+    print("Choisissez le preset LoRA :")
+    for name, config in LORA_PRESETS.items():
+        print(f"  {name}) r={config['r']}, alpha={config['alpha']} (alpha/r={config['alpha'] / config['r']:.0f})")
+    while True:
+        choice = input("Choix [classique] : ").strip() or "classique"
+        if choice.lower() in {"a", "b"}:
+            choice = choice.upper()
+        elif choice.lower() in {"actuel", "classique"}:
+            choice = "classique"
+        if choice in LORA_PRESETS:
+            return choice
+        print("Choix invalide : entrez A, B ou classique.")
+
+
+def choose_learning_rates() -> tuple[float, ...]:
+    """Demande un LR unique ou le balayage des trois valeurs prévues."""
+    print("Choisissez le learning rate :")
+    labels = ("5e-5", "1e-4", "2e-4")
+    for index, (learning_rate, label) in enumerate(zip(LEARNING_RATE_PRESETS, labels), start=1):
+        suffix = " — classique" if learning_rate == 1e-4 else ""
+        print(f"  {index}) {label}{suffix}")
+    print("  4) Les trois learning rates")
+    while True:
+        choice = input("Choix [4] : ").strip() or "4"
+        if choice.isdigit() and 1 <= int(choice) <= len(LEARNING_RATE_PRESETS):
+            return (LEARNING_RATE_PRESETS[int(choice) - 1],)
+        if choice == "4":
+            return LEARNING_RATE_PRESETS
+        print("Choix invalide : entrez 1, 2, 3 ou 4.")
+
+
+def make_run_directory(model_name: str, args: argparse.Namespace) -> Path:
+    """Crée un dossier de run autonome et horodaté, sans écraser un run existant."""
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+    default_name = f"{model_name.lower()}-{args.lora_preset.lower()}-lr-{args.learning_rate:g}-{timestamp}"
+    run_name = args.run_name or default_name
+    if args.run_name:
+        suffixes = []
+        if len(args.models or ()) > 1:
+            suffixes.append(model_name.lower())
+        if len(args.learning_rates) > 1:
+            suffixes.append(f"lr-{args.learning_rate:g}")
+        if suffixes:
+            run_name = f"{args.run_name}-{'-'.join(suffixes)}"
+    run_dir = args.output_root / run_name
+    rank = int(os.environ.get("RANK", "0"))
+    if rank:
+        # Sous torchrun, le rang 0 est seul responsable de créer les
+        # artefacts. Les autres rangs attendent ce dossier partagé avant de
+        # construire leur Trainer ; cela évite les collisions d'écriture.
+        deadline = time.monotonic() + 60
+        while not run_dir.is_dir() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        if not run_dir.is_dir():
+            raise TimeoutError(f"Création du dossier de run par le rang 0 expirée : {run_dir}")
+        return run_dir
+    if run_dir.exists():
+        raise FileExistsError(f"Le dossier de run existe déjà : {run_dir}. Choisissez --run-name différent.")
+    for directory in ("checkpoints", "tokenizer", "training", "eval", "logs"):
+        (run_dir / directory).mkdir(parents=True, exist_ok=False)
+    return run_dir
+
+
+def write_json(path: Path, payload: dict[str, Any]) -> None:
+    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def write_jsonl(path: Path, rows: list[dict[str, Any]]) -> None:
+    path.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows), encoding="utf-8")
+
+
+def preferred_attention_implementation() -> str:
+    """Utilise les kernels Flash Attention de H100 lorsqu'ils sont installés."""
+    try:
+        import flash_attn  # noqa: F401
+    except (ImportError, OSError):
+        return "sdpa"
+    return "flash_attention_2"
+
+
+def validation_execution_rows(validation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Retrouve les IDs, SQL gold et bases SQLite du split dev conservé pour le SFT."""
+    translations = read_jsonl(VALIDATION_TRANSLATIONS)
+    checks = {row["id"]: row for row in read_jsonl(VALIDATION_CHECKS)}
+    judgments = {row["id"]: row for row in read_jsonl(VALIDATION_JUDGMENTS)}
+    selected: list[tuple[str, dict[str, Any]]] = []
+    for index, translation in enumerate(translations):
+        identifier = f"dev:{index}"
+        judgment = judgments.get(identifier)
+        if judgment and judgment.get("verdict") != "pass":
+            continue
+        if not judgment and checks[identifier].get("status") != "pass":
+            continue
+        selected.append((identifier, translation))
+    if len(selected) != len(validation_rows):
+        raise ValueError(
+            f"Validation SFT ({len(validation_rows)}) et métadonnées exécutables ({len(selected)}) divergent."
+        )
+    rows = []
+    for sft_row, (identifier, translation) in zip(validation_rows, selected):
+        messages = sft_row["messages"]
+        prompt = json.loads(messages[1]["content"])
+        if prompt != {"question": translation["question"], "schema": translation["schema"]}:
+            raise ValueError(f"Validation SFT non alignée avec la traduction {identifier}.")
+        rows.append({
+            "id": identifier,
+            "db_id": translation["db_id"],
+            "sql": messages[2]["content"],
+            "messages": messages[:2],
+        })
+    return rows
+
+
+def evaluate_execution(
+    model: Any, processor: Any, records: list[dict[str, Any]], databases: Path, progress_label: str
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Génère et score le SQL pour un split dont les SQL gold et bases sont disponibles."""
+    assets_dir = str(ROOT / "02_evaluation_brut_models" / "assets")
+    if assets_dir not in sys.path:
+        sys.path.insert(0, assets_dir)
+    evaluator = importlib.import_module("run_evaluation")
+    evaluator.DATABASES = databases
+    device = next(model.parameters()).device
+    processor.tokenizer.padding_side = "left"
+    # L'ordre n'a pas d'incidence sur le score (les IDs sont conservés), mais
+    # regrouper les prompts de taille proche évite le padding inutile.
+    indexed_records = list(enumerate(records))
+    def prompt_length(item: tuple[int, dict[str, Any]]) -> int:
+        encoded = processor.apply_chat_template(
+            item[1]["messages"], add_generation_prompt=True, tokenize=True,
+            return_dict=True, return_tensors="pt", enable_thinking=False,
+        )
+        return int(encoded["attention_mask"].sum().item())
+    lengths = [
+        (prompt_length(item), item)
+        for item in tqdm(indexed_records, desc=f"{progress_label} · préparation", unit="prompt")
+    ]
+    ordered_records = [record for _, (_, record) in sorted(lengths, key=lambda item: item[0])]
+    original_positions = {record["id"]: index for index, record in indexed_records}
+    predictions: list[dict[str, Any]] = []
+    was_training = model.training
+    use_cache = model.config.use_cache
+    model.eval()
+    model.config.use_cache = True
+    try:
+        starts = range(0, len(ordered_records), EVALUATION_BATCH_SIZE)
+        for start in tqdm(starts, desc=f"{progress_label} · inférence", unit="batch"):
+            batch = ordered_records[start:start + EVALUATION_BATCH_SIZE]
+            message_batches = [row["messages"] for row in batch]
+            inputs = processor.apply_chat_template(
+                message_batches, add_generation_prompt=True, tokenize=True, return_dict=True,
+                return_tensors="pt", enable_thinking=False, processor_kwargs={"padding": True},
+            )
+            inputs.pop("mm_token_type_ids", None)
+            inputs = {key: value.to(device) for key, value in inputs.items()}
+            with torch.inference_mode():
+                output = model.generate(**inputs, max_new_tokens=256, do_sample=False)
+            generated = output[:, inputs["input_ids"].shape[1]:]
+            for row, text in zip(batch, processor.batch_decode(generated, skip_special_tokens=True)):
+                predictions.append({"id": row["id"], "raw_output": text})
+    finally:
+        model.config.use_cache = use_cache
+        if was_training:
+            model.train()
+    gold = [{key: row[key] for key in ("id", "db_id", "sql")} for row in records]
+    results, metrics = evaluator.score(predictions, gold)
+    results.sort(key=lambda row: original_positions[row["id"]])
+    return results, metrics
+
+
+def evaluate_validation_execution(
+    model: Any, processor: Any, validation_rows: list[dict[str, Any]], progress_label: str
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Génère et score le SQL sur le split validation sans consulter le split test."""
+    return evaluate_execution(
+        model, processor, validation_execution_rows(validation_rows), VALIDATION_DATABASES, progress_label
+    )
+
+
+def test_execution_rows() -> list[dict[str, Any]]:
+    """Associe les prompts test aux SQL gold et aux bases SQLite de test."""
+    inputs = read_jsonl(TEST_INPUTS)
+    gold = {row["id"]: row for row in read_jsonl(TEST_GOLD)}
+    if set(row["id"] for row in inputs) != set(gold):
+        raise ValueError("Les IDs de test_inputs et test_gold ne correspondent pas.")
+    return [
+        {"id": row["id"], "db_id": gold[row["id"]]["db_id"], "sql": gold[row["id"]]["sql"], "messages": row["messages"]}
+        for row in inputs
+    ]
+
+
+def evaluate_test_execution(model: Any, processor: Any) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    return evaluate_execution(model, processor, test_execution_rows(), TEST_DATABASES, "Test final")
+
+
+def choose_checkpoint_for_test(
+    validation_reports: list[dict[str, Any]], execution_reports: list[dict[str, Any]]
+) -> int | None:
+    """Affiche les métriques dev et demande quel adaptateur, s'il y en a un, tester."""
+    loss_by_epoch = {report["epoch"]: report["eval_loss"] for report in validation_reports}
+    execution_by_epoch = {report["epoch"]: report for report in execution_reports}
+    print("\nRésultats de validation par checkpoint :")
+    for epoch in sorted(loss_by_epoch):
+        execution = execution_by_epoch.get(epoch, {})
+        accuracy = execution.get("execution_accuracy")
+        accuracy_text = "indisponible" if accuracy is None else f"{accuracy * 100:.2f}%"
+        print(f"  epoch-{epoch} : eval_loss={loss_by_epoch[epoch]:.4f} | execution_accuracy={accuracy_text}")
+    choices = "/".join(str(epoch) for epoch in sorted(loss_by_epoch))
+    answer = input(f"\nTester un checkpoint sur les 2 147 exemples test ? [o/N] : ").strip().lower()
+    if answer not in {"o", "oui", "y", "yes"}:
+        return None
+    while True:
+        selected = input(f"Époque à tester [{choices}] : ").strip()
+        if selected.isdigit() and int(selected) in loss_by_epoch:
+            epoch = int(selected)
+            break
+        print(f"Choix invalide : indique une époque parmi {choices}.")
+    confirmation = input(f"Lancer le test final avec epoch-{epoch} ? [o/N] : ").strip().lower()
+    return epoch if confirmation in {"o", "oui", "y", "yes"} else None
+
+
+class RunArtifactCallback(TrainerCallback):
+    """Archive l'adaptateur et les métriques à chaque validation d'époque."""
+
+    def __init__(self, run_dir: Path, validation_examples: int) -> None:
+        self.run_dir = run_dir
+        self.validation_examples = validation_examples
+
+    def on_evaluate(self, args: TrainingArguments, state: Any, control: Any,
+                    metrics: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        if not state.is_world_process_zero:
+            return control
+        model = kwargs["model"]
+        model = getattr(model, "module", model)
+        epoch = int(round(float(state.epoch or 0)))
+        checkpoint_dir = self.run_dir / "checkpoints" / f"epoch-{epoch}"
+        model.save_pretrained(checkpoint_dir, safe_serialization=True)
+        report = {
+            **(metrics or {}),
+            "epoch": epoch,
+            "global_step": state.global_step,
+            "validation_examples": self.validation_examples,
+            "selection_metric": "eval_loss",
+        }
+        eval_dir = self.run_dir / "eval" / f"epoch-{epoch}"
+        eval_dir.mkdir(parents=True, exist_ok=True)
+        write_json(eval_dir / f"epoch-{epoch}-validation.json", report)
+        return control
+
+
+class JsonlLogCallback(TrainerCallback):
+    """Écrit les métriques brutes du Trainer au fil de l'eau, y compris en cas d'arrêt."""
+
+    def __init__(self, log_path: Path) -> None:
+        self.log_path = log_path
+
+    def on_log(self, args: TrainingArguments, state: Any, control: Any,
+               logs: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        if not state.is_world_process_zero:
+            return control
+        record = {"step": state.global_step, "epoch": state.epoch, **(logs or {})}
+        with self.log_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+        return control
+
+
+class GpuTelemetryCallback(TrainerCallback):
+    """Conserve les mesures nécessaires pour ajuster batch et accumulation après un run."""
+
+    def __init__(self, run_dir: Path) -> None:
+        self.rank = int(os.environ.get("RANK", "0"))
+        self.path = run_dir / "logs" / f"gpu_rank-{self.rank}_telemetry.jsonl"
+        self.started_at = 0.0
+        self.last_log_at = 0.0
+        self.last_step = 0
+
+    def write(self, record: dict[str, Any]) -> None:
+        with self.path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    def on_train_begin(self, args: TrainingArguments, state: Any, control: Any, **kwargs: Any) -> Any:
+        device = torch.cuda.current_device()
+        torch.cuda.reset_peak_memory_stats(device)
+        self.started_at = self.last_log_at = time.perf_counter()
+        self.write({
+            "event": "train_begin", "rank": self.rank, "device": device,
+            "gpu_name": torch.cuda.get_device_name(device),
+            "total_memory_gib": round(torch.cuda.get_device_properties(device).total_memory / 2**30, 2),
+        })
+        return control
+
+    def on_log(self, args: TrainingArguments, state: Any, control: Any,
+               logs: dict[str, float] | None = None, **kwargs: Any) -> Any:
+        step = state.global_step
+        if step <= self.last_step:
+            return control
+        now = time.perf_counter()
+        elapsed = now - self.last_log_at
+        steps = step - self.last_step
+        device = torch.cuda.current_device()
+        self.write({
+            "event": "log", "rank": self.rank, "step": step, "epoch": state.epoch,
+            "window_steps": steps, "window_seconds": round(elapsed, 3),
+            "steps_per_second": round(steps / elapsed, 4) if elapsed else None,
+            "memory_allocated_gib": round(torch.cuda.memory_allocated(device) / 2**30, 3),
+            "memory_reserved_gib": round(torch.cuda.memory_reserved(device) / 2**30, 3),
+            "max_memory_allocated_gib": round(torch.cuda.max_memory_allocated(device) / 2**30, 3),
+            "trainer_metrics": logs or {},
+        })
+        self.last_log_at, self.last_step = now, step
+        return control
+
+    def on_train_end(self, args: TrainingArguments, state: Any, control: Any, **kwargs: Any) -> Any:
+        device = torch.cuda.current_device()
+        self.write({
+            "event": "train_end", "rank": self.rank, "step": state.global_step,
+            "train_seconds": round(time.perf_counter() - self.started_at, 3),
+            "max_memory_allocated_gib": round(torch.cuda.max_memory_allocated(device) / 2**30, 3),
+            "max_memory_reserved_gib": round(torch.cuda.max_memory_reserved(device) / 2**30, 3),
+        })
+        return control
+
+
+def write_run_readme(run_dir: Path, model_name: str) -> None:
+    (run_dir / "README.md").write_text(
+        f"# Fine-tuning LoRA — {model_name}\n\n"
+        "- `checkpoints/epoch-N/` : adaptateur LoRA sauvegardé après la validation de l'époque N.\n"
+        "- `tokenizer/` : tokenizer et template de chat requis au rechargement.\n"
+        "- `training/` : arguments et configuration reproductible du run.\n"
+        "- `eval/epoch-N/` : loss, métriques et prédictions de validation du checkpoint N, ainsi que "
+        "l'évaluation finale éventuellement lancée avec ce checkpoint (`final_test/`).\n"
+        "- `logs/training_log.jsonl` : métriques brutes émises pendant l'entraînement.\n",
+        encoding="utf-8",
+    )
+
+
+def choose_models() -> list[str]:
+    print("Choisissez le(s) modèle(s) à entraîner :")
+    for index, model_name in enumerate(DEFAULT_MODELS, start=1):
+        print(f"  {index}) {model_name}")
+    print("  5) Les quatre modèles")
+    choice = input("Choix [5] : ").strip() or "5"
+    choices = {str(index): [model_name] for index, model_name in enumerate(DEFAULT_MODELS, start=1)}
+    choices["5"] = list(DEFAULT_MODELS)
+    if choice not in choices:
+        raise ValueError("Choix invalide. Entrez un nombre entre 1 et 5.")
+    return choices[choice]
+
+
+def restore_fp32_checkpoint_parameters(model: Any, model_path: Path) -> int:
+    """Préserve les rares paramètres volontairement publiés en FP32.
+
+    Les 0.8B/2B Qwen contiennent notamment ``linear_attn.A_log`` et des
+    normalisations en FP32. ``torch_dtype=bfloat16`` est souhaité pour les
+    couches principales mais convertir ces tenseurs de stabilité serait une
+    perte de précision inutile. Ils ne représentent qu'une fraction minime de
+    la VRAM et ne sont pas des cibles LoRA.
+    """
+    parameters = dict(model.named_parameters())
+    restored = 0
+    for weight_file in model_path.glob("*.safetensors"):
+        with safe_open(str(weight_file), framework="pt", device="cpu") as archive:
+            for name in archive.keys():
+                if archive.get_slice(name).get_dtype() != "F32":
+                    continue
+                # Les checkpoints Qwen multimodaux préfixent les poids texte
+                # par ``model.language_model``. AutoModelForCausalLM charge
+                # toutefois le sous-modèle texte directement sous ``model``.
+                # Traduire ce préfixe permet de restaurer les rares poids de
+                # stabilité FP32 après le chargement BF16.
+                parameter_name = name.replace("model.language_model.", "model.", 1)
+                if parameter_name not in parameters:
+                    raise KeyError(f"Paramètre FP32 introuvable dans le modèle : {name}")
+                parameter = parameters[parameter_name]
+                parameter.data = archive.get_tensor(name).to(dtype=torch.float32)
+                restored += 1
+    return restored
+
+
+def train_model(
+    model_name: str, args: argparse.Namespace, rows: list[dict[str, Any]], validation_rows: list[dict[str, Any]]
+) -> None:
+    model_path = ROOT / "models" / model_name
+    if not model_path.is_dir():
+        raise FileNotFoundError(f"Checkpoint absent : {model_path}")
+    run_dir = make_run_directory(model_name, args)
+    if int(os.environ.get("RANK", "0")) == 0:
+        write_run_readme(run_dir, model_name)
+    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+    tokenizer = processor.tokenizer
+    if tokenizer.pad_token_id is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    attention_implementation = preferred_attention_implementation()
+    print(f"{model_name} : attention {attention_implementation}.")
+    torch.set_float32_matmul_precision("high")
+    model = AutoModelForCausalLM.from_pretrained(
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True,
+        attn_implementation=attention_implementation,
+    )
+    fp32_parameters = restore_fp32_checkpoint_parameters(model, model_path)
+    if fp32_parameters:
+        print(f"{model_name} : {fp32_parameters} paramètres de stabilité conservés en FP32.")
+    model.config.use_cache = False
+    lora = LORA_PRESETS[args.lora_preset]
+    model = get_peft_model(model, LoraConfig(
+        task_type=TaskType.CAUSAL_LM, r=lora["r"], lora_alpha=lora["alpha"], lora_dropout=0.05,
+        target_modules="all-linear", bias="none",
+    ))
+    model.print_trainable_parameters()
+    # Transformers 5 utilise warmup_steps (warmup_ratio a été retiré).
+    # Le lanceur vise une H100 mono-GPU ; le batch effectif détermine donc le
+    # nombre de mises à jour par époque.
+    updates_per_epoch = math.ceil(
+        len(rows) / (args.per_device_batch_size * args.gradient_accumulation_steps)
+    )
+    warmup_steps = math.ceil(args.warmup_ratio * updates_per_epoch * args.epochs)
+    training_args = TrainingArguments(
+        # Les artefacts utiles sont archivés par RunArtifactCallback. Le
+        # Trainer ne crée donc pas ses checkpoints internes redondants.
+        output_dir=str(run_dir / "training" / "trainer_state"), num_train_epochs=args.epochs,
+        per_device_train_batch_size=args.per_device_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        learning_rate=args.learning_rate, warmup_steps=warmup_steps,
+        lr_scheduler_type=args.lr_scheduler, optim="adamw_torch_fused", max_grad_norm=1.0,
+        bf16=True, tf32=True, logging_steps=10, save_strategy="no",
+        eval_strategy="epoch", per_device_eval_batch_size=args.per_device_batch_size,
+        load_best_model_at_end=False,
+        # Regroupe des séquences de longueurs proches : moins de padding et
+        # des pics de VRAM plus prévisibles pour les schémas SQL les plus longs.
+        train_sampling_strategy="group_by_length",
+        report_to="none", remove_unused_columns=False, seed=args.seed,
+    )
+    trainer = Trainer(
+        model=model, args=training_args,
+        train_dataset=SqlDataset(rows, processor, args.max_seq_length),
+        eval_dataset=SqlDataset(validation_rows, processor, args.max_seq_length),
+        data_collator=SqlCollator(tokenizer.pad_token_id),
+        callbacks=[
+            RunArtifactCallback(run_dir, len(validation_rows)),
+            JsonlLogCallback(run_dir / "logs" / "training_log.jsonl"),
+            GpuTelemetryCallback(run_dir),
+        ],
+    )
+    trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    # Le Trainer synchronise tous les rangs à la fin du train. Les sauvegardes
+    # finales et les évaluations par génération sont ensuite faites une seule
+    # fois pour ne pas dupliquer les fichiers ni l'inférence de validation.
+    if not trainer.is_world_process_zero():
+        # Attendre les évaluations/sauvegardes du rang 0 avant le prochain
+        # modèle ou learning rate du sweep ; sinon les rangs divergeraient.
+        trainer.accelerator.wait_for_everyone()
+        return
+    processor.save_pretrained(run_dir / "tokenizer")
+    torch.save(training_args, run_dir / "training" / "training_args.bin")
+    validation_reports = sorted((run_dir / "eval").glob("epoch-*/epoch-*-validation.json"))
+    reports = [json.loads(path.read_text(encoding="utf-8")) for path in validation_reports]
+    best = min(reports, key=lambda report: report["eval_loss"]) if reports else None
+    execution_reports = []
+    # Après la fin des époques, recharger chaque adaptateur gelé et l'évaluer
+    # séparément : l'inférence ne perturbe jamais l'entraînement ni son état.
+    for report in reports:
+        epoch = int(round(float(report["epoch"])))
+        report["epoch"] = epoch
+        checkpoint = run_dir / "checkpoints" / f"epoch-{epoch}"
+        adapter_name = f"epoch-{epoch}"
+        model.load_adapter(str(checkpoint), adapter_name=adapter_name)
+        model.set_adapter(adapter_name)
+        predictions, execution_metrics = evaluate_validation_execution(
+            model, processor, validation_rows, f"Validation epoch-{epoch}"
+        )
+        execution_report = {
+            "epoch": epoch,
+            "checkpoint": f"checkpoints/epoch-{epoch}",
+            "validation_examples": len(validation_rows),
+            **execution_metrics,
+        }
+        eval_dir = run_dir / "eval" / f"epoch-{epoch}"
+        write_json(eval_dir / "val_metrics.json", execution_report)
+        write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
+        execution_reports.append(execution_report)
+    selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports) if reports else None
+    if selected_test_epoch is not None and args.evaluate_test:
+        model.set_adapter(f"epoch-{selected_test_epoch}")
+        print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
+        test_predictions, test_metrics = evaluate_test_execution(model, processor)
+        final_test_dir = run_dir / "eval" / f"epoch-{selected_test_epoch}" / "final_test"
+        final_test_dir.mkdir(parents=True, exist_ok=True)
+        write_json(final_test_dir / "test_metrics.json", {
+            "checkpoint": f"checkpoints/epoch-{selected_test_epoch}",
+            "test_examples": len(test_predictions),
+            **test_metrics,
+        })
+        write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
+        print(
+            f"Évaluation test terminée : eval/epoch-{selected_test_epoch}/final_test/"
+            "test_metrics.json et test_predictions.jsonl"
+        )
+    write_json(run_dir / "training" / "run_config.json", {
+        "base_model": str(model_path), "dataset": str(args.dataset), "examples": len(rows),
+        "validation_dataset": str(args.validation_dataset), "validation_examples": len(validation_rows),
+        "bf16": True, "restored_fp32_base_parameters": fp32_parameters,
+        "attention_implementation": attention_implementation,
+        "lora_preset": args.lora_preset,
+        "lora": {"r": lora["r"], "alpha": lora["alpha"], "dropout": 0.05, "target_modules": "all-linear"},
+        "epochs": args.epochs, "learning_rate": args.learning_rate, "warmup_ratio": args.warmup_ratio,
+        "effective_batch_size": args.per_device_batch_size * args.gradient_accumulation_steps,
+        "max_seq_length": args.max_seq_length, "optimizer": "AdamW", "lr_scheduler": args.lr_scheduler,
+        "gradient_clipping": 1.0,
+        "run_directory": str(run_dir),
+        "lowest_eval_loss_checkpoint": (f"checkpoints/epoch-{best['epoch']}" if best else None),
+        "lowest_eval_loss": (best["eval_loss"] if best else None),
+        "validation_execution_by_epoch": execution_reports,
+        "test_evaluation_requested": args.evaluate_test,
+        "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
+    })
+    print(f"Run terminé : {run_dir}")
+    if best:
+        print(f"Meilleure eval_loss : checkpoints/epoch-{best['epoch']} ({best['eval_loss']:.4f})")
+    trainer.accelerator.wait_for_everyone()
+
+
+def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_rows: list[dict[str, Any]]) -> None:
+    """Reprend uniquement les évaluations d'un run déjà entraîné et checkpointé."""
+    if not run_dir.is_dir():
+        raise FileNotFoundError(f"Dossier de run introuvable : {run_dir}")
+    reports = [
+        json.loads(path.read_text(encoding="utf-8"))
+        for path in sorted((run_dir / "eval").glob("epoch-*/epoch-*-validation.json"))
+    ]
+    if not reports:
+        raise FileNotFoundError(f"Rapports epoch-N-validation.json introuvables dans : {run_dir / 'eval'}")
+    for report in reports:
+        report["epoch"] = int(round(float(report["epoch"])))
+    if args.models:
+        if len(args.models) != 1:
+            raise ValueError("--evaluate-run accepte exactement un modèle avec --models.")
+        model_name = args.models[0]
+    else:
+        matches = [name for name in DEFAULT_MODELS if run_dir.name.lower().startswith(name.lower())]
+        if len(matches) != 1:
+            raise ValueError("Impossible d'identifier le modèle du run. Ajoutez --models Qwen3.5-4B.")
+        model_name = matches[0]
+    model_path = ROOT / "models" / model_name
+    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+    first_epoch = reports[0]["epoch"]
+    base_model = AutoModelForCausalLM.from_pretrained(
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True,
+        attn_implementation=preferred_attention_implementation(),
+    )
+    restore_fp32_checkpoint_parameters(base_model, model_path)
+    model = PeftModel.from_pretrained(
+        base_model, str(run_dir / "checkpoints" / f"epoch-{first_epoch}"),
+        adapter_name=f"epoch-{first_epoch}",
+    )
+    model.to(torch.device("cuda"))
+    execution_reports = []
+    for index, report in enumerate(reports):
+        epoch = report["epoch"]
+        adapter_name = f"epoch-{epoch}"
+        if index:
+            model.load_adapter(str(run_dir / "checkpoints" / adapter_name), adapter_name=adapter_name)
+        model.set_adapter(adapter_name)
+        print(f"Évaluation validation de {adapter_name}…")
+        predictions, execution_metrics = evaluate_validation_execution(
+            model, processor, validation_rows, f"Validation epoch-{epoch}"
+        )
+        execution_report = {"epoch": epoch, "checkpoint": f"checkpoints/epoch-{epoch}",
+                            "validation_examples": len(validation_rows), **execution_metrics}
+        eval_dir = run_dir / "eval" / f"epoch-{epoch}"
+        write_json(eval_dir / "val_metrics.json", execution_report)
+        write_jsonl(eval_dir / "val_predictions.jsonl", predictions)
+        execution_reports.append(execution_report)
+    selected_test_epoch = choose_checkpoint_for_test(reports, execution_reports)
+    if selected_test_epoch is not None and args.evaluate_test:
+        model.set_adapter(f"epoch-{selected_test_epoch}")
+        print(f"\nInférence test en cours avec checkpoints/epoch-{selected_test_epoch} (2 147 exemples)...")
+        test_predictions, test_metrics = evaluate_test_execution(model, processor)
+        final_test_dir = run_dir / "eval" / f"epoch-{selected_test_epoch}" / "final_test"
+        final_test_dir.mkdir(parents=True, exist_ok=True)
+        write_json(final_test_dir / "test_metrics.json", {
+            "checkpoint": f"checkpoints/epoch-{selected_test_epoch}",
+            "test_examples": len(test_predictions), **test_metrics,
+        })
+        write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
+    write_json(run_dir / "training" / "recovery_evaluation.json", {
+        "validation_execution_by_epoch": execution_reports,
+        "test_evaluation_requested": args.evaluate_test,
+        "test_checkpoint": (f"checkpoints/epoch-{selected_test_epoch}" if selected_test_epoch is not None else None),
+    })
+
+
+def main() -> None:
+    args = parse_args()
+    if not torch.cuda.is_available():
+        raise RuntimeError("GPU CUDA requise : ce lanceur est prévu pour la H100.")
+    if not torch.cuda.is_bf16_supported():
+        raise RuntimeError("BF16 non pris en charge par cette GPU.")
+    validation_rows = read_jsonl(args.validation_dataset)
+    if not validation_rows:
+        raise ValueError("Le dataset de validation est vide.")
+    if args.evaluate_run:
+        evaluate_existing_run(args.evaluate_run, args, validation_rows)
+        return
+    if args.epochs is None:
+        args.epochs = choose_epochs()
+    elif args.epochs <= 0:
+        raise ValueError("--epochs doit être strictement positif.")
+    if args.lora_preset is None:
+        args.lora_preset = choose_lora_preset()
+    args.learning_rates = (args.learning_rate,) if args.learning_rate is not None else choose_learning_rates()
+    if len(args.learning_rates) > 1:
+        values = ", ".join(f"{learning_rate:g}" for learning_rate in args.learning_rates)
+        print(f"Le preset LoRA {args.lora_preset} sera entraîné successivement avec les learning rates : {values}.")
+    rows = read_jsonl(args.dataset)
+    random.Random(args.seed).shuffle(rows)
+    set_seed(args.seed)
+    for model_name in args.models or choose_models():
+        for args.learning_rate in args.learning_rates:
+            # Chaque LR repart de la même initialisation LoRA et de la même
+            # séquence aléatoire : seul le learning rate varie dans ce sweep.
+            set_seed(args.seed)
+            train_model(model_name, args, rows, validation_rows)
+
+
+if __name__ == "__main__":
+    main()

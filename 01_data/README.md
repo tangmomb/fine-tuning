@@ -5,7 +5,7 @@ Les dossiers suivent toujours l’ordre réel du pipeline. À chaque niveau, le 
 ```text
 00_documentation/pipeline_visualisation/       documentation HTML du pipeline
 00_documentation/dataset_statistics/            interface de statistiques des datasets finaux
-00_shared/01_python/                           utilitaires Python partagés
+01_00_shared/01_00_01_python/                           utilitaires Python partagés
 01_prepare/
   01_scripts/                                  vérifier et préparer Spider anglais
   02_output/                                   JSONL anglais enrichis du schéma
@@ -36,15 +36,15 @@ Le pipeline part de Spider original en anglais. `BRUT_spider-fr` reste une resso
 Ordre d’exécution — uniquement lorsqu’une nouvelle production est souhaitée :
 
 ```powershell
-python 01_data/01_prepare/01_scripts/01_check_original_dataset.py
-python 01_data/01_prepare/01_scripts/02_prepare_english_dataset.py
-python 01_data/02_translation_batches/01_scripts/01_create_and_send_batches.py
-python 01_data/03_batch_responses/01_scripts/01_download_batch_responses.py
-python 01_data/04_merge_translations/01_scripts/01_merge_translations.py
-python 01_data/05_quality_control/01_scripts/01_check_translations.py
-python 01_data/05_quality_control/01_scripts/02_judge_translations.py
-python 01_data/06_training_dataset/01_scripts/01_build_dataset.py
-python 01_data/07_evaluation_dataset/01_scripts/01_prepare_test.py
+python 01_data/01_01_prepare/01_01_01_scripts/01_check_original_dataset.py
+python 01_data/01_01_prepare/01_01_01_scripts/02_prepare_english_dataset.py
+python 01_data/01_02_translation_batches/01_02_01_scripts/01_create_and_send_batches.py
+python 01_data/01_03_batch_responses/01_03_01_scripts/01_download_batch_responses.py
+python 01_data/01_04_merge_translations/01_04_01_scripts/01_merge_translations.py
+python 01_data/01_05_quality_control/01_05_01_scripts/01_check_translations.py
+python 01_data/01_05_quality_control/01_05_01_scripts/02_judge_translations.py
+python 01_data/01_06_training_dataset/01_06_01_scripts/01_build_dataset.py
+python 01_data/01_07_evaluation_dataset/01_07_01_scripts/01_prepare_test.py
 ```
 
 Les artefacts existants ont été déplacés sans être recalculés. `test` passe par la traduction et les contrôles, mais ne rejoint pas le dataset de fine-tuning ; il est réservé à l’évaluation.

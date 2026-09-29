@@ -120,7 +120,7 @@ environnement et le mode à lancer. Il impose les mêmes paramètres pour les ru
 choisis :
 test complet, prompt contenu dans `test_inputs.jsonl`, schéma, température 0,
 limite de 256 tokens, et les mêmes quatre démonstrations (seed 42). Elles sont
-prélèvées en lecture seule depuis `01_data/06_training_dataset/03_production/train.jsonl` :
+prélèvées en lecture seule depuis `01_data/01_06_training_dataset/01_06_03_production/train.jsonl` :
 elles servent uniquement de contexte au prompt et ne modifient jamais le modèle.
 Le fichier `few_shot_examples.jsonl` de chaque run permet de vérifier ce point.
 Il demande aussi la taille de lot, puis si les prompts doivent être regroupés

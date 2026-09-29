@@ -25,7 +25,7 @@
     "platform": "Linux-6.8.0-139-generic-x86_64-with-glibc2.39"
   },
   "dataset": {
-    "inputs": "data/07_evaluation_dataset/03_production/test_inputs.jsonl",
+    "inputs": "data/01_07_evaluation_dataset/01_07_03_production/test_inputs.jsonl",
     "inputs_sha256": "13e62b914a26e3f715d6a8798f8f0a32217e75229a4ab1e8461f2b39b4ac404f",
     "examples": 2147
   },
