@@ -9,3 +9,4 @@ models/Qwen3.5-*/
 03_fine_tuning/artifacts/
 .hf/
 utils/ssh.png
+outputs/
