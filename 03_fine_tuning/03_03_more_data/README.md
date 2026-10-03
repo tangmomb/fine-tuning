@@ -6,14 +6,14 @@ Ce dossier prépare les quatre expériences du compte rendu.
 | --- | --- | --- |
 | A | distribution historique des difficultés | déjà présentes dans le train |
 | B | aléatoire | nouvelles |
-| C | difficile | déjà présentes dans le train |
-| D | difficile | nouvelles |
+| C | 50&nbsp;% hard / 50&nbsp;% extra | déjà présentes dans le train |
+| D | 50&nbsp;% hard / 50&nbsp;% extra | nouvelles |
 
-Un seul job OpenAI Batch contient une requête par base : pour A, les 146 schémas Spider sont donc envoyés une seule fois chacun. GPT-5.6 Luna produit 6 250 paires (25 % de marge), puis les contrôles conservent au plus 5 000 exemples, selon les quotas par schéma et par difficulté. Chaque SQL généré est exécuté sur SQLite avant export.
+Un seul job OpenAI Batch peut contenir plusieurs requêtes par base. Pour A, le comportement standard sépare automatiquement les difficultés : 566 prompts couvrent les 146 schémas Spider et demandent exactement 6 250 paires (25 % de marge). Chaque prompt cible une seule difficulté et les demandes supérieures à 80 exemples sont découpées. Les contrôles conservent ensuite au plus 5 000 exemples selon les quotas par schéma et par difficulté. Pour C et D, le quota de chaque base est partagé à 50/50 entre `hard` et `extra` ; les arrondis des quotas impairs sont distribués entre les bases afin de garder un équilibre global exact. Chaque SQL généré est exécuté sur SQLite avant export.
 
 ## Contrat d'entrée
 
-Les expériences A/C lisent les données Spider enrichies. Pour B/D, déposez un catalogue externe dans `01_prepare/00_input/new_databases.jsonl` (non versionné), une ligne par base :
+Les expériences A/C lisent les données Spider enrichies. Pour B/D, le catalogue est produit dans `03_03_01_prepare/03_03_01_01_new_databases_creation/03_03_01_01_04_final/new_databases.jsonl`, une ligne par base :
 
 ```json
 {"db_id":"ma_base","schema":"CREATE TABLE ...;","source_examples":120,"hardness":"mixed","database_path":"C:/.../ma_base.sqlite"}
@@ -28,16 +28,16 @@ Depuis la racine du dépôt :
 ```powershell
 python 03_fine_tuning/03_03_more_data/03_03_01_prepare/prepare_seeds.py --source existing
 python 03_fine_tuning/03_03_more_data/03_03_01_prepare/prepare_seeds.py --source new
-python 03_fine_tuning/03_03_more_data/03_03_02_batch/create_batch.py
+python 03_fine_tuning/03_03_more_data/03_03_02_batch/create_batch.py --experiment A
 python 03_fine_tuning/03_03_more_data/03_03_02_batch/download_batch.py
 python 03_fine_tuning/03_03_more_data/03_03_03_quality/03_03_03_01_deterministic_checks/deterministic_check.py
 python 03_fine_tuning/03_03_more_data/03_03_03_quality/03_03_03_02_semantic_judge/judge_semantics.py
 python 03_fine_tuning/03_03_more_data/03_03_04_export/build_sft.py
 ```
 
-La préparation écrit deux plans réutilisables : `01_prepare/existing_sql_bases.jsonl` (A/C) et `01_prepare/new_sql_bases.jsonl` (B/D). Les étapes suivantes demandent l’expérience ; la soumission à OpenAI nécessite une confirmation explicite. Chaque étape écrit ses résultats dans son propre dossier : `02_batch/01_requests/A_requests.jsonl`, puis les états et réponses brutes du Batch → `03_quality/01_deterministic_checks/A/selected.jsonl` → `04_export/synthetic_data_A.jsonl`. Le juge sémantique produit séparément un audit de 200 exemples dans `03_quality/02_semantic_judge/04_judgments/`.
+La préparation écrit deux plans réutilisables : `03_03_01_prepare/existing_sql_bases.jsonl` (A/C) et `03_03_01_prepare/new_sql_bases.jsonl` (B/D). Les étapes suivantes demandent l’expérience ; la soumission à OpenAI nécessite une confirmation explicite. Chaque étape écrit ses résultats dans son propre dossier : `03_03_02_batch/03_03_02_01_requests/A_requests.jsonl`, puis les états et réponses brutes du Batch → `03_03_03_quality/03_03_03_01_deterministic_checks/A/selected.jsonl` → `03_03_04_export/synthetic_data_A.jsonl`. Le juge sémantique produit séparément ses artefacts dans `03_03_03_quality/03_03_03_02_semantic_judge/`.
 
-Dans `02_batch`, `01_requests` contient le JSONL exact envoyé, `02_submissions` l’état et les identifiants associés, et `03_responses` les réponses et erreurs brutes téléchargées. Ces artefacts bruts ne sont jamais remplacés sans `--overwrite`.
+Dans `03_03_02_batch`, `03_03_02_01_requests` contient le JSONL exact envoyé, `03_03_02_02_submissions` l’état et les identifiants associés, et `03_03_02_03_responses` les réponses et erreurs brutes téléchargées. Ces artefacts bruts ne sont jamais remplacés sans `--overwrite`.
 
 ## Garde-fous
 

@@ -763,11 +763,14 @@
               bases, proportionnalité à respecter).
               <strong>Objectif :</strong> 5&nbsp;000 nouvelles paires (question
               en français - requête SQL attendue).
-              <strong>Demande via batch GPT 5.6 luna :</strong> 6&nbsp;250
-              paires (pour anticiper de potentielles erreurs).
-              <strong>Niveau demandé pour les nouvelle requêtes :</strong>
-              <code>easy</code> à <code>extra</code> (proportionnalité à
-              respecter par base).
+              <strong>Demande reproductible via Batch GPT-5.6 Luna :</strong>
+              6&nbsp;250 paires, soit une marge de 25&nbsp;%, réparties dans 566
+              prompts couvrant les 146 bases.
+              <strong>Niveau demandé pour les nouvelles requêtes :</strong>
+              chaque prompt impose un nombre exact de paires pour un seul niveau
+              parmi <code>easy</code>, <code>medium</code>, <code>hard</code> et
+              <code>extra</code>. L’ensemble respecte la distribution historique
+              de chaque base.
             </p>
             <strong>Vérification</strong>
             <p>
@@ -786,23 +789,52 @@
               5&nbsp;000 paires valides, avec un niveau de difficulté Spider
               <code>easy</code> à <code>extra</code>, réparti ainsi :
             </p>
-            <div class="difficulty-comparison" aria-label="Comparaison des répartitions Spider">
+            <div
+              class="difficulty-comparison"
+              aria-label="Comparaison des répartitions Spider"
+            >
               <div>
                 <span class="difficulty-source">Dataset A · 5&nbsp;000</span>
                 <div class="difficulty-bubbles">
-                  <span><code>easy</code><strong>1&nbsp;149</strong></span>
-                  <span><code>medium</code><strong>1&nbsp;728</strong></span>
-                  <span><code>hard</code><strong>1&nbsp;112</strong></span>
-                  <span><code>extra</code><strong>1&nbsp;011</strong></span>
+                  <span
+                    ><code>easy</code><strong>1&nbsp;149</strong
+                    ><small>22,98&nbsp;% des 5&nbsp;000</small></span
+                  >
+                  <span
+                    ><code>medium</code><strong>1&nbsp;728</strong
+                    ><small>34,56&nbsp;%</small></span
+                  >
+                  <span
+                    ><code>hard</code><strong>1&nbsp;112</strong
+                    ><small>22,24&nbsp;%</small></span
+                  >
+                  <span
+                    ><code>extra</code><strong>1&nbsp;011</strong
+                    ><small>20,22&nbsp;%</small></span
+                  >
                 </div>
               </div>
               <div>
-                <span class="difficulty-source">Train original · 8&nbsp;651</span>
+                <span class="difficulty-source"
+                  >Train original · 8&nbsp;651</span
+                >
                 <div class="difficulty-bubbles">
-                  <span><code>easy</code><strong>1&nbsp;980</strong></span>
-                  <span><code>medium</code><strong>2&nbsp;998</strong></span>
-                  <span><code>hard</code><strong>1&nbsp;919</strong></span>
-                  <span><code>extra</code><strong>1&nbsp;754</strong></span>
+                  <span
+                    ><code>easy</code><strong>1&nbsp;980</strong
+                    ><small>22,89&nbsp;% des 8&nbsp;651</small></span
+                  >
+                  <span
+                    ><code>medium</code><strong>2&nbsp;998</strong
+                    ><small>34,65&nbsp;%</small></span
+                  >
+                  <span
+                    ><code>hard</code><strong>1&nbsp;919</strong
+                    ><small>22,18&nbsp;%</small></span
+                  >
+                  <span
+                    ><code>extra</code><strong>1&nbsp;754</strong
+                    ><small>20,28&nbsp;%</small></span
+                  >
                 </div>
               </div>
             </div>
@@ -850,9 +882,10 @@
               en français - requête SQL attendue).
               <strong>Demande via batch GPT-5.6 Luna :</strong> 6&nbsp;250
               paires (pour anticiper de potentielles erreurs).
-              <strong>Niveau demandé :</strong> <code>hard</code> ou
-              <code>extra</code>, dans les proportions observées pour ces deux
-              niveaux dans chaque base.
+              <strong>Niveau demandé :</strong> <code>hard</code> et
+              <code>extra</code> à parts égales dans chaque base ; les arrondis
+              sont répartis entre les bases pour conserver un équilibre global
+              exact.
             </p>
             <strong>Vérification</strong>
             <p>
@@ -869,8 +902,8 @@
             </p>
             <strong>Résultat final</strong>
             <p>
-              5&nbsp;000 paires valides de niveau Spider <code>hard</code> ou
-              <code>extra</code>, réparties selon les quotas par base.
+              5&nbsp;000 paires valides de niveau Spider <code>hard</code> et
+              <code>extra</code> à 50/50, réparties selon les quotas par base.
             </p>
           </div>
           <div class="training-parameters dataset-card">
@@ -886,9 +919,10 @@
               paires (pour anticiper de potentielles erreurs).
               <strong>Répartition :</strong> proportionnelle au volume de
               référence indiqué pour chaque nouvelle base.
-              <strong>Niveau demandé :</strong> requêtes complexes, privilégiant
-              lorsque pertinent jointures, agrégations, sous-requêtes ou
-              opérations ensemblistes.
+              <strong>Niveau demandé :</strong> <code>hard</code> et
+              <code>extra</code> à parts égales dans chaque base, avec des
+              requêtes complexes utilisant lorsque pertinent jointures,
+              agrégations, sous-requêtes ou opérations ensemblistes.
             </p>
             <strong>Vérification</strong>
             <p>
@@ -896,15 +930,18 @@
               <strong>1) Déterministe :</strong> normalisation du SQL, contrôle
               qu’il est en lecture seule, exécution sur la base SQLite
               concernée, dédoublonnage et calcul de la difficulté selon les
-              règles Spider. <strong>2) Sémantique :</strong> audit stratifié de
-              200 paires valides par GPT-5.6 Terra, qui vérifie que la question
-              française décrit fidèlement le SQL (<code>pass</code>,
-              <code>fail</code> ou <code>uncertain</code>).
+              règles Spider. Seules les paires respectant le quota
+              <code>hard</code>/<code>extra</code> de leur base sont retenues.
+              <strong>2) Sémantique :</strong> audit stratifié de 200 paires
+              valides par GPT-5.6 Terra, qui vérifie que la question française
+              décrit fidèlement le SQL (<code>pass</code>, <code>fail</code> ou
+              <code>uncertain</code>).
             </p>
             <strong>Résultat final</strong>
             <p>
-              Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, avec la
-              difficulté Spider mesurée après génération.
+              Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, à 50/50
+              <code>hard</code>/<code>extra</code>, avec la difficulté Spider
+              recalculée après génération.
             </p>
           </div>
         </div>
@@ -1015,46 +1052,173 @@
           <article class="new-database-step">
             <span class="new-database-step-number">01</span>
             <p>
-              Un <strong>plan de quotas</strong> est calculé pour chaque base à
-              partir de son poids dans le train. Il fixe les
-              <code>5&nbsp;000</code> exemples visés et une marge de génération
-              de <code>25&nbsp;%</code>.
+              <strong>Idée générale</strong> : On souhaite 5 000 nouveaux
+              exemples par dataset. On prévoit quelques erreurs, soit des
+              exemples créés par le modèle mais invalides soit des exemples
+              valides mais dont Spider ne reconnaît pas la difficulté, donc on
+              en demande 25% en plus pour arriver à un batch demandant 6 250
+              exemples pour un dataset donné. Chaque prompt fournit au modèle :
             </p>
+            <ul class="quota-common-list">
+              <li>
+                le schéma SQL (obtenu à partir de SQLite directement) de la base
+                concernée
+              </li>
+              <li>une consigne propre à chaque niveau de difficulté</li>
+              <li>
+                un nombre de paires à fournir (question FR - requête SQL
+                associée)
+              </li>
+            </ul>
+            <p class="quota-variants-intro">
+              Des subtilités s’appliquent ensuite aux différents datasets :
+            </p>
+            <div
+              class="quota-variants"
+              aria-label="Différences de calcul des quotas entre les datasets A, B, C et D"
+            >
+              <section class="quota-variant">
+                <strong>Dataset A</strong>
+                <p>
+                  On conserve les 146 bases initiales. On veut garder la même
+                  proportion d'exemples par base et la même proportion de
+                  difficulté Spider intra-base.<br /><br />
+                  <i class="quota-variant-example"
+                    >Exemple : si la base 1 représente 10% des exemples du train
+                    set initial et que dans ces 10% on trouve 50% d'exemples de
+                    difficulté <code>easy</code>, 30&nbsp;% de
+                    <code>hard</code> et 10&nbsp;% chacun de
+                    <code>medium</code> et <code>extra</code>, on lui demandera
+                    625 nouveaux exemples (10&nbsp;% du Batch de 6&nbsp;250),
+                    distribués dans les mêmes proportions.</i
+                  >
+                  <br /><br />
+                  Après les contrôles, les candidats valides sont conservés
+                  <strong>dans l’ordre consolidé des réponses</strong>, jusqu’à
+                  remplir exactement chaque quota <code>base × difficulté</code>
+                  ; il n’y a pas de classement supplémentaire.
+                </p>
+              </section>
+              <section class="quota-variant">
+                <strong>Dataset B</strong>
+                <p>
+                  On utilise les 100 nouvelles bases. Leur quota est
+                  proportionnel à <code>source_examples</code> dans le
+                  catalogue. Sans historique Spider par base, la diversité des
+                  difficultés est laissée libre et mesurée après génération.
+                  <br /><br />
+                  <i class="quota-variant-example"
+                    >Exemple : si une base représente 10&nbsp;% de la somme des
+                    <code>source_examples</code>, on lui demandera 625 nouveaux
+                    exemples (10&nbsp;% du Batch de 6&nbsp;250), sans quota
+                    imposé entre <code>easy</code>, <code>medium</code>,
+                    <code>hard</code> et <code>extra</code>.</i
+                  >
+                  <br /><br />
+                  Après les contrôles, les candidats valides sont conservés dans
+                  l’ordre consolidé des réponses, jusqu’à remplir le quota de
+                  chaque base.
+                </p>
+              </section>
+              <section class="quota-variant">
+                <strong>Dataset C</strong>
+                <p>
+                  On conserve les 146 bases initiales et leur proportion
+                  d’exemples dans le train. C ne cible que <code>hard</code> et
+                  <code>extra</code>, à 50/50 dans chaque base ; chaque couple
+                  <code>base × difficulté</code> reçoit son propre prompt.
+                  <br /><br />
+                  <i class="quota-variant-example"
+                    >Exemple : si une base représente 10&nbsp;% du train, on lui
+                    demandera 625 nouveaux exemples (10&nbsp;% du Batch de
+                    6&nbsp;250), soit 312 ou 313 <code>hard</code> et le
+                    complément en <code>extra</code>. Les arrondis sont répartis
+                    entre les bases pour garder un 50/50 global.</i
+                  >
+                  <br /><br />
+                  Après les contrôles, les candidats valides sont conservés dans
+                  l’ordre consolidé des réponses, jusqu’à remplir chaque quota
+                  <code>base × difficulté</code>.
+                </p>
+              </section>
+              <section class="quota-variant">
+                <strong>Dataset D</strong>
+                <p>
+                  On utilise les 100 nouvelles bases. Leur quota est
+                  proportionnel à <code>source_examples</code> dans le
+                  catalogue. D ne cible que <code>hard</code> et
+                  <code>extra</code>, à 50/50 dans chaque base ; la difficulté
+                  est vérifiée après génération avant sélection. <br /><br />
+                  <i class="quota-variant-example"
+                    >Exemple : si une base représente 10&nbsp;% de la somme des
+                    <code>source_examples</code>, on lui demandera 625 nouveaux
+                    exemples (10&nbsp;% du Batch de 6&nbsp;250), soit 312 ou 313
+                    <code>hard</code> et le complément en <code>extra</code>.
+                    Les arrondis sont répartis entre les bases pour garder un
+                    50/50 global.</i
+                  >
+                  <br /><br />
+                  Après les contrôles, les candidats valides sont conservés dans
+                  l’ordre consolidé des réponses, jusqu’à remplir chaque quota
+                  <code>base × difficulté</code>.
+                </p>
+              </section>
+            </div>
           </article>
           <article class="new-database-step">
-            <span class="new-database-step-number">02</span>
+            <div class="new-database-step-head">
+              <span class="new-database-step-number">02</span>
+              <div class="new-database-actions" aria-label="Exemple de Batch">
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="data-request"
+                  aria-haspopup="dialog"
+                >
+                  Demande
+                </button>
+              </div>
+            </div>
             <p>
-              <strong>GPT-5.6 Luna</strong> reçoit le schéma SQLite et produit
-              par Batch des paires structurées
-              <code>question&nbsp;FR + SQL</code>, selon les difficultés
-              demandées pour A, B, C ou D.
+              Le script Python lit dans le catalogue le schéma SQL reconstruit
+              depuis SQLite, puis l’insère sous forme de texte dans le prompt
+              Batch envoyé à <strong>GPT-5.6 Luna</strong>. Le modèle produit
+              alors des paires structurées <code>question&nbsp;FR + SQL</code>.
+              Pour A, chaque prompt lui demande de produire un nombre exact de
+              paires d’une seule difficulté Spider et lui interdit de produire
+              les autres niveaux.
             </p>
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">03</span>
             <p>
-              Les réponses brutes sont <strong>téléchargées et
-              consolidées</strong>. Un Batch de complément peut ensuite cibler
-              uniquement les quotas encore manquants par base et par niveau
-              Spider.
+              Les réponses brutes sont
+              <strong>téléchargées et consolidées</strong>. Si la première passe
+              ne suffit pas, un Batch de complément cible uniquement les quotas
+              encore manquants par base et par niveau Spider. Lors de la
+              production historique de A, ces passes supplémentaires ont porté
+              le cumul à <code>10&nbsp;491</code> paires demandées.
             </p>
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">04</span>
             <p>
-              Le <strong>contrôle déterministe</strong> normalise le SQL,
-              refuse les écritures, l’exécute sur la bonne base SQLite,
-              élimine les doublons et recalcule sa difficulté avec les règles
-              officielles de Spider.
+              Le <strong>contrôle déterministe</strong> normalise le SQL, refuse
+              les écritures, l’exécute sur la bonne base SQLite, élimine les
+              doublons et recalcule sa difficulté avec les règles officielles de
+              Spider.
             </p>
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">05</span>
             <p>
-              Les candidats valides sont ramenés aux <strong>quotas exacts</strong>
-              par base et difficulté. Pour A&nbsp;: <code>9&nbsp;801</code>
-              candidats valides parmi <code>10&nbsp;491</code> demandés, puis
-              <code>5&nbsp;000</code> paires sélectionnées.
+              Les candidats valides sont ramenés aux
+              <strong>quotas exacts</strong> par base et difficulté. Pour
+              A&nbsp;: <code>9&nbsp;801</code> candidats valides parmi les
+              <code>10&nbsp;491</code> paires cumulées lors de la production
+              historique, puis <code>5&nbsp;000</code> paires sélectionnées. Le
+              fichier de demandes régénérable représente, lui, la première passe
+              de <code>6&nbsp;250</code> paires.
             </p>
           </article>
           <article class="new-database-step">
@@ -1071,8 +1235,8 @@
             <p>
               Les questions <code>fail</code> ou <code>uncertain</code> sont
               <strong>réécrites sans modifier le SQL</strong>, puis jugées à
-              nouveau. Pour A, les 124 corrections ont toutes été validées
-              après deux passages.
+              nouveau. Pour A, les 124 corrections ont toutes été validées après
+              deux passages.
             </p>
           </article>
           <article class="new-database-step">
@@ -1107,6 +1271,6 @@
       </section>
     </main>
     <script src="app.js?v=20260929-7"></script>
-    <script src="new-database-examples.js?v=20260929-4"></script>
+    <script src="new-database-examples.js?v=20261001-1"></script>
   </body>
 </html>

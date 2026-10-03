@@ -22,8 +22,16 @@ def largest_remainder(weights: dict[str, int], total: int) -> dict[str, int]:
 def difficulty_quotas(seed: dict[str, Any], experiment: str) -> dict[str, int] | None:
     counts = {key: int(value) for key, value in seed.get("hardness_counts", {}).items() if key in {"easy", "medium", "hard", "extra"} and int(value) > 0}
     if experiment == "A" and counts: return largest_remainder(counts, seed["target_quota"])
-    if experiment == "C": return largest_remainder({key: max(counts.get(key, 0), 1) for key in ("hard", "extra")}, seed["target_quota"])
     return None
+def difficulty_quota_plan(seeds: dict[str, dict[str, Any]], experiment: str) -> dict[str, dict[str, int] | None]:
+    if experiment == "A": return {db_id: difficulty_quotas(seed, experiment) for db_id, seed in seeds.items()}
+    if experiment not in {"C", "D"}: return {db_id: None for db_id in seeds}
+    plan = {db_id: {"hard": seed["target_quota"] // 2, "extra": seed["target_quota"] // 2} for db_id, seed in seeds.items()}
+    odd_databases = sorted(db_id for db_id, seed in seeds.items() if seed["target_quota"] % 2)
+    split = (len(odd_databases) + 1) // 2
+    for db_id in odd_databases[:split]: plan[db_id]["hard"] += 1
+    for db_id in odd_databases[split:]: plan[db_id]["extra"] += 1
+    return plan
 def output_text(response: dict[str, Any]) -> str | None:
     for item in response.get("response", {}).get("body", {}).get("output", []):
         for content in item.get("content", []):
@@ -86,6 +94,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--overwrite", action="store_true"); args = parser.parse_args(); args.experiment = ask_experiment(args.experiment)
     seed_source = "existing" if args.experiment in {"A", "C"} else "new"
     seeds = {f"{args.experiment}:{row['db_id']}": row for row in read(HERE / "01_prepare" / f"{seed_source}_sql_bases.jsonl")}
+    quota_plan = difficulty_quota_plan(seeds, args.experiment)
     generation_mode = "hard" if args.experiment in {"C", "D"} else "random"
     state_path = HERE / "02_batch" / "02_submissions" / f"{args.experiment}_batch_state.json"
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
@@ -124,14 +133,14 @@ def main() -> None:
     output.parent.mkdir(parents=True, exist_ok=True); output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in accepted), encoding="utf-8")
     selected, selected_by_db, selected_by_db_hardness = [], Counter(), Counter()
     for row in accepted:
-        seed = seeds[f"{args.experiment}:{row['db_id']}"]; quotas = difficulty_quotas(seed, args.experiment)
+        seed = seeds[f"{args.experiment}:{row['db_id']}"]; quotas = quota_plan[f"{args.experiment}:{row['db_id']}"]
         if selected_by_db[row["db_id"]] >= seed["target_quota"]: continue
         if quotas is not None and selected_by_db_hardness[row["db_id"], row["hardness"]] >= quotas.get(row["hardness"], 0): continue
         selected.append(row); selected_by_db[row["db_id"]] += 1; selected_by_db_hardness[row["db_id"], row["hardness"]] += 1
     shortfalls = {seed["db_id"]: seed["target_quota"] - selected_by_db[seed["db_id"]] for seed in seeds.values() if seed["target_quota"] > selected_by_db[seed["db_id"]]}
     target_hardness = Counter()
     for seed in seeds.values():
-        quotas = difficulty_quotas(seed, args.experiment)
+        quotas = quota_plan[f"{args.experiment}:{seed['db_id']}"]
         if quotas is not None: target_hardness.update(quotas)
     selected_hardness = Counter(row["hardness"] for row in selected)
     hardness_shortfall = {level: target_hardness[level] - selected_hardness[level] for level in target_hardness if target_hardness[level] > selected_hardness[level]}

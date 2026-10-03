@@ -13,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[3]
 HERE = Path(__file__).resolve().parents[1]
+PREPARE = HERE / "03_03_01_prepare"
 SOURCES = {"existing", "new"}
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -56,7 +57,7 @@ def main() -> None:
     args = parser.parse_args(); args.source = ask_source(args.source)
     args.count = args.count if args.count is not None else int(input("Nombre final visé [5000] : ").strip() or "5000")
     args.oversample_factor = args.oversample_factor if args.oversample_factor is not None else float(input("Facteur de surproduction [1.25] : ").strip() or "1.25")
-    default_input = HERE / "01_prepare" / "01_new_databases_creation" / "04_final" / "new_databases.jsonl"
+    default_input = PREPARE / "03_03_01_01_new_databases_creation" / "03_03_01_01_04_final" / "new_databases.jsonl"
     input_path = args.input
     if args.source == "new" and input_path is None:
         input_path = Path(input(f"Catalogue des nouvelles bases [{default_input}] : ").strip() or default_input)
@@ -68,7 +69,7 @@ def main() -> None:
     target_quotas = largest_remainder(weights, args.count)
     request_quotas = largest_remainder(weights, round(args.count * args.oversample_factor))
     output_rows = [{**row, "target_quota": target_quotas[row["db_id"]], "request_quota": request_quotas[row["db_id"]]} for row in sorted(databases, key=lambda item: item["db_id"])]
-    output = HERE / "01_prepare" / f"{args.source}_sql_bases.jsonl"
+    output = PREPARE / f"{args.source}_sql_bases.jsonl"
     if output.exists() and not args.overwrite:
         if input(f"{output.name} existe déjà. Le remplacer ? [o/N] ").strip().lower() not in {"o", "oui"}: return
     output.parent.mkdir(parents=True, exist_ok=True); output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in output_rows), encoding="utf-8")
