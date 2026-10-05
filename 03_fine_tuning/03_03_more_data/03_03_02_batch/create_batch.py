@@ -19,6 +19,7 @@ HARDNESS_RECIPES = {
     "hard": """Forme obligatoire hard : copie exactement cette structure, en choisissant seulement les noms existants : SELECT colonne_affichee FROM table WHERE cle IN (SELECT cle FROM table). La table et la clé de la sous-requête doivent être les mêmes que dans la requête externe. Aucun alias, DISTINCT, agrégat, jointure, GROUP BY, HAVING, ORDER BY, LIMIT, second filtre ni autre sous-requête.""",
     "extra": """Forme obligatoire extra : exactement SELECT colonne_de_groupe, COUNT(*) FROM table WHERE filtre_simple_1 AND filtre_simple_2 GROUP BY colonne_de_groupe. Les deux filtres sont des comparaisons simples compatibles avec le type des colonnes, sans sous-requête. Aucun alias de résultat, jointure, HAVING, ORDER BY ni LIMIT.""",
 }
+HARDNESS_LEVELS = ("easy", "medium", "hard", "extra")
 def rows(path: Path) -> list[dict]: return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 def largest_remainder(weights: dict[str, int], total: int) -> dict[str, int]:
     raw = {key: total * value / sum(weights.values()) for key, value in weights.items()}; quotas = {key: int(value) for key, value in raw.items()}
@@ -28,9 +29,19 @@ def difficulty_quotas(row: dict, experiment: str, total: int) -> dict[str, int]:
     counts = {key: int(value) for key, value in row.get("hardness_counts", {}).items() if key in {"easy", "medium", "hard", "extra"} and int(value) > 0}
     if experiment == "A" and counts: return largest_remainder(counts, total)
     return {}
+def uniform_hardness_plan(seeds: list[dict], totals: dict[str, int]) -> dict[str, dict[str, int]]:
+    """Répartit les arrondis entre les bases pour un équilibre global à 25 %."""
+    plan, cursor = {}, 0
+    for db_id in sorted(row["db_id"] for row in seeds):
+        quotient, remainder = divmod(totals[db_id], len(HARDNESS_LEVELS))
+        quotas = {hardness: quotient for hardness in HARDNESS_LEVELS}
+        for offset in range(remainder): quotas[HARDNESS_LEVELS[(cursor + offset) % len(HARDNESS_LEVELS)]] += 1
+        plan[db_id] = quotas; cursor += remainder
+    return plan
 def quota_plan(seeds: list[dict], experiment: str, totals: dict[str, int]) -> dict[str, dict[str, int]]:
-    """Répartit les quotas par difficulté, avec un 50/50 global pour C/D."""
+    """Répartit les quotas par difficulté."""
     if experiment == "A": return {row["db_id"]: difficulty_quotas(row, experiment, totals[row["db_id"]]) for row in seeds}
+    if experiment == "B": return uniform_hardness_plan(seeds, totals)
     if experiment not in {"C", "D"}: return {row["db_id"]: {} for row in seeds}
     plan = {row["db_id"]: {"hard": totals[row["db_id"]] // 2, "extra": totals[row["db_id"]] // 2} for row in seeds}
     odd_databases = sorted(row["db_id"] for row in seeds if totals[row["db_id"]] % 2)
@@ -83,7 +94,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--request-count", type=int, help="Nombre total d'exemples à répartir entre les bases."); parser.add_argument("--complement", action="store_true", help="Ne demande que les quotas Spider manquants après la sélection courante."); parser.add_argument("--max-examples-per-request", type=int, default=80, help="Taille maximale d'une réponse ciblant une base et une difficulté."); parser.add_argument("--oversample-factor", type=float, default=1.15, help="Marge appliquée au complément ciblé."); parser.add_argument("--submit", action="store_true"); parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(); args.experiment = ask_experiment(args.experiment); args.model = args.model or input(f"Modèle [{DEFAULT_MODEL}] : ").strip() or DEFAULT_MODEL
     seed_source = "existing" if args.experiment in {"A", "C"} else "new"
-    split_by_hardness = args.experiment in {"A", "C", "D"}
+    split_by_hardness = args.experiment in {"A", "B", "C", "D"}
     seeds = rows(PREPARE / f"{seed_source}_sql_bases.jsonl"); output = BATCH / "03_03_02_01_requests" / f"{args.experiment}_requests.jsonl"
     if args.request_count is not None and args.request_count < 1: raise ValueError("--request-count doit être positif.")
     if args.complement and args.request_count is not None: raise ValueError("--request-count est incompatible avec --complement.")
@@ -93,7 +104,11 @@ def main() -> None:
     if args.complement:
         request_quotas, complement_distributions = complement_plan(seeds, args.experiment, selected_path, args.oversample_factor)
     else:
-        request_quotas, complement_distributions = (largest_remainder({row["db_id"]: row["source_examples"] for row in seeds}, args.request_count) if args.request_count else {row["db_id"]: row["request_quota"] for row in seeds}), {}
+        weights = ({row["db_id"]: row["source_examples"] for row in seeds}
+                   if seed_source == "existing" else {row["db_id"]: 1 for row in seeds})
+        request_quotas = (largest_remainder(weights, args.request_count)
+                          if args.request_count else {row["db_id"]: row["request_quota"] for row in seeds})
+        complement_distributions = {}
     request_plan = quota_plan(seeds, args.experiment, request_quotas)
     if output.exists() and not args.overwrite:
         if input(f"{output.name} existe déjà. Le remplacer ? [o/N] ").strip().lower() not in {"o", "oui"}: return

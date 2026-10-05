@@ -37,7 +37,6 @@ Après des Batch de complément, `consolidate_artifacts.py --replace` peut
 réduire les artefacts à un unique fichier de demandes et un unique fichier de
 réponses, chacun avec les 100 bases finalement validées.
 
-Par défaut, les 100 bases ont le même poids (`source_examples: 1`) : le plan
-final attribue donc environ 50 exemples à chacune. Modifiez `--count` ou
-`--source-examples` au besoin. `--overwrite` est requis pour remplacer tout
-artefact ou fichier SQLite existant.
+Les 100 nouvelles bases reçoivent un quota uniforme : le plan final attribue
+donc environ 50 exemples à chacune. Modifiez `--count` au besoin.
+`--overwrite` est requis pour remplacer tout artefact ou fichier SQLite existant.

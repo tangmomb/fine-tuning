@@ -23,8 +23,19 @@ def difficulty_quotas(seed: dict[str, Any], experiment: str) -> dict[str, int] |
     counts = {key: int(value) for key, value in seed.get("hardness_counts", {}).items() if key in {"easy", "medium", "hard", "extra"} and int(value) > 0}
     if experiment == "A" and counts: return largest_remainder(counts, seed["target_quota"])
     return None
+HARDNESS_LEVELS = ("easy", "medium", "hard", "extra")
+def uniform_hardness_plan(seeds: dict[str, dict[str, Any]]) -> dict[str, dict[str, int]]:
+    """Répartit les arrondis entre les bases pour un équilibre global à 25 %."""
+    plan, cursor = {}, 0
+    for db_id in sorted(seeds):
+        quotient, remainder = divmod(seeds[db_id]["target_quota"], len(HARDNESS_LEVELS))
+        quotas = {hardness: quotient for hardness in HARDNESS_LEVELS}
+        for offset in range(remainder): quotas[HARDNESS_LEVELS[(cursor + offset) % len(HARDNESS_LEVELS)]] += 1
+        plan[db_id] = quotas; cursor += remainder
+    return plan
 def difficulty_quota_plan(seeds: dict[str, dict[str, Any]], experiment: str) -> dict[str, dict[str, int] | None]:
     if experiment == "A": return {db_id: difficulty_quotas(seed, experiment) for db_id, seed in seeds.items()}
+    if experiment == "B": return uniform_hardness_plan(seeds)
     if experiment not in {"C", "D"}: return {db_id: None for db_id in seeds}
     plan = {db_id: {"hard": seed["target_quota"] // 2, "extra": seed["target_quota"] // 2} for db_id, seed in seeds.items()}
     odd_databases = sorted(db_id for db_id, seed in seeds.items() if seed["target_quota"] % 2)

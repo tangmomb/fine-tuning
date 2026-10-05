@@ -5,7 +5,7 @@ Ce dossier prépare les quatre expériences du compte rendu.
 | Expérience | Sélection SQL | Bases |
 | --- | --- | --- |
 | A | distribution historique des difficultés | déjà présentes dans le train |
-| B | aléatoire | nouvelles |
+| B | 25&nbsp;% par difficulté | nouvelles |
 | C | 50&nbsp;% hard / 50&nbsp;% extra | déjà présentes dans le train |
 | D | 50&nbsp;% hard / 50&nbsp;% extra | nouvelles |
 
@@ -16,10 +16,11 @@ Un seul job OpenAI Batch peut contenir plusieurs requêtes par base. Pour A, le 
 Les expériences A/C lisent les données Spider enrichies. Pour B/D, le catalogue est produit dans `03_03_01_prepare/03_03_01_01_new_databases_creation/03_03_01_01_04_final/new_databases.jsonl`, une ligne par base :
 
 ```json
-{"db_id":"ma_base","schema":"CREATE TABLE ...;","source_examples":120,"hardness":"mixed","database_path":"C:/.../ma_base.sqlite"}
+{"db_id":"ma_base","schema":"CREATE TABLE ...;","database_path":"C:/.../ma_base.sqlite"}
 ```
 
-`database_path` est obligatoire : le pipeline y exécute chaque SQL généré. `source_examples` sert à répartir les 5 000 quotas proportionnellement au volume de chaque base.
+`database_path` est obligatoire : le pipeline y exécute chaque SQL généré. Les
+5 000 quotas des nouvelles bases sont répartis uniformément.
 
 ## Exécution
 

@@ -1,7 +1,8 @@
 """Prépare un plan JSONL de génération, avec un quota par base de données.
 
-A/C utilisent les bases existantes, B/D un catalogue externe. Les quotas,
-répartis selon ``source_examples``,
+A/C utilisent les bases existantes, B/D un catalogue externe. Les quotas sont
+pondérés selon ``source_examples`` pour les bases existantes et uniformes pour
+les nouvelles bases ; ils
 totalisent 5 000 exemples validés par défaut. ``request_quota`` applique une
 surproduction (1,25×) pour couvrir les rejets de validation.
 """
@@ -40,8 +41,8 @@ def existing_databases() -> list[dict[str, Any]]:
 
 def external_databases(path: Path) -> list[dict[str, Any]]:
     rows = read_jsonl(path)
-    required = {"db_id", "schema", "source_examples"}
-    if any(not required <= row.keys() for row in rows): raise ValueError("Corpus externe : db_id, schema et source_examples sont obligatoires.")
+    required = {"db_id", "schema"}
+    if any(not required <= row.keys() for row in rows): raise ValueError("Corpus externe : db_id et schema sont obligatoires.")
     return rows
 
 def ask_source(value: str | None) -> str:
@@ -63,8 +64,8 @@ def main() -> None:
         input_path = Path(input(f"Catalogue des nouvelles bases [{default_input}] : ").strip() or default_input)
     databases = existing_databases() if args.source == "existing" else external_databases(input_path)
     if not databases: raise ValueError(f"Aucune base disponible pour {args.source}.")
-    weights = {row["db_id"]: int(row["source_examples"]) for row in databases}
-    if len(weights) != len(databases) or any(value < 1 for value in weights.values()): raise ValueError("Chaque db_id doit être unique et source_examples positif.")
+    weights = {row["db_id"]: int(row["source_examples"]) for row in databases} if args.source == "existing" else {row["db_id"]: 1 for row in databases}
+    if len(weights) != len(databases) or any(value < 1 for value in weights.values()): raise ValueError("Chaque db_id doit être unique et le poids doit être positif.")
     if args.count < 1 or args.oversample_factor < 1: raise ValueError("--count doit être positif et --oversample-factor >= 1.")
     target_quotas = largest_remainder(weights, args.count)
     request_quotas = largest_remainder(weights, round(args.count * args.oversample_factor))

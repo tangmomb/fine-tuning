@@ -62,12 +62,9 @@ def build_database(path: Path, ddl: str, data: str) -> tuple[str, dict[str, int]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, help="Sortie Batch JSONL ; par défaut, celle enregistrée dans batch_state.json.")
-    parser.add_argument("--source-examples", type=int, default=1, help="Poids uniforme de chaque base dans le catalogue.")
     parser.add_argument("--append", action="store_true", help="Ajoute les bases validées au catalogue final existant (pour un Batch de complément).")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
-    if args.source_examples < 1:
-        raise ValueError("--source-examples doit être positif.")
     if args.input is None:
         state = json.loads((HERE / "02_batch" / "batch_state.json").read_text(encoding="utf-8"))
         args.input = HERE / "03_responses" / state["raw_output_file"]
@@ -91,8 +88,8 @@ def main() -> None:
                 raise FileExistsError("SQLite existe déjà")
             if db_path.exists():
                 db_path.unlink()
-            schema, counts = build_database(db_path, payload["ddl"], payload["data"])
-            accepted.append({"db_id": db_id, "schema": schema, "source_examples": args.source_examples, "database_path": str(db_path.resolve()), "description": payload["description"], "table_row_counts": counts})
+            schema, _counts = build_database(db_path, payload["ddl"], payload["data"])
+            accepted.append({"db_id": db_id, "schema": schema, "database_path": str(db_path.resolve()), "description": payload["description"]})
         except Exception as error:
             rejected.append({"id": identifier, "reason": str(error)})
             if 'db_path' in locals() and db_path.exists():
