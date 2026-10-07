@@ -20,7 +20,7 @@ def get(url: str, token: str) -> bytes:
         return response.read()
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--state", type=Path, default=HERE / "02_batch" / "batch_state.json"); parser.add_argument("--overwrite", action="store_true"); args = parser.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--state", type=Path, default=HERE / "03_03_01_01_02_batch" / "batch_state.json"); parser.add_argument("--overwrite", action="store_true"); args = parser.parse_args()
     state_path = args.state
     state = json.loads(state_path.read_text(encoding="utf-8")); token = module.api_key()
     batch = json.loads(get(f"https://api.openai.com/v1/batches/{state['batch_id']}", token))
@@ -30,7 +30,7 @@ def main() -> None:
     print(f"Statut : {batch.get('status')} · {counts.get('completed', 0)}/{counts.get('total', 0)} terminées · {counts.get('failed', 0)} échouées")
     if not batch.get("output_file_id"):
         return
-    output = HERE / "03_responses" / f"{state['batch_id']}_output.jsonl"
+    output = HERE / "03_03_01_01_03_responses" / f"{state['batch_id']}_output.jsonl"
     if output.exists() and not args.overwrite:
         raise FileExistsError(f"{output} existe déjà ; utilisez --overwrite pour le remplacer.")
     output.parent.mkdir(parents=True, exist_ok=True); output.write_bytes(get(f"https://api.openai.com/v1/files/{batch['output_file_id']}/content", token))

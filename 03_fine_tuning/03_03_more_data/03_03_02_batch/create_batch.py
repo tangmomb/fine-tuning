@@ -91,7 +91,7 @@ def ask_experiment(value: str | None) -> str:
     if choice not in "ABCD": raise ValueError("Choix attendu : A, B, C ou D.")
     return choice
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--request-count", type=int, help="Nombre total d'exemples à répartir entre les bases."); parser.add_argument("--complement", action="store_true", help="Ne demande que les quotas Spider manquants après la sélection courante."); parser.add_argument("--max-examples-per-request", type=int, default=80, help="Taille maximale d'une réponse ciblant une base et une difficulté."); parser.add_argument("--oversample-factor", type=float, default=1.15, help="Marge appliquée au complément ciblé."); parser.add_argument("--submit", action="store_true"); parser.add_argument("--overwrite", action="store_true")
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--request-count", type=int, help="Nombre total d'exemples à répartir entre les bases."); parser.add_argument("--complement", action="store_true", help="Ne demande que les quotas Spider manquants après la sélection courante."); parser.add_argument("--max-examples-per-request", type=int, default=80, help="Taille maximale d'une réponse ciblant une base et une difficulté."); parser.add_argument("--oversample-factor", type=float, default=1.70, help="Marge appliquée au complément ciblé."); parser.add_argument("--submit", action="store_true"); parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(); args.experiment = ask_experiment(args.experiment); args.model = args.model or input(f"Modèle [{DEFAULT_MODEL}] : ").strip() or DEFAULT_MODEL
     seed_source = "existing" if args.experiment in {"A", "C"} else "new"
     split_by_hardness = args.experiment in {"A", "B", "C", "D"}
@@ -109,7 +109,7 @@ def main() -> None:
         request_quotas = (largest_remainder(weights, args.request_count)
                           if args.request_count else {row["db_id"]: row["request_quota"] for row in seeds})
         complement_distributions = {}
-    request_plan = quota_plan(seeds, args.experiment, request_quotas)
+    request_plan = complement_distributions if args.complement else quota_plan(seeds, args.experiment, request_quotas)
     if output.exists() and not args.overwrite:
         if input(f"{output.name} existe déjà. Le remplacer ? [o/N] ").strip().lower() not in {"o", "oui"}: return
     lines = []
@@ -145,7 +145,8 @@ def main() -> None:
             body = {"model": args.model, "input": [{"role": "system", "content": "Tu produis des données text-to-SQL françaises fiables."}, {"role": "user", "content": prompt}], "max_output_tokens": MAX_OUTPUT_TOKENS, "text": {"format": {"type": "json_schema", "name": "synthetic_examples", "strict": True, "schema": SCHEMA}}}
             lines.append(json.dumps({"custom_id": f"{args.experiment}:{row['db_id']}:{chunk_number}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
     output.parent.mkdir(parents=True, exist_ok=True); output.write_text("\n".join(lines) + "\n", encoding="utf-8"); print(f"{len(lines)} prompts / {requested_total} exemples demandés écrits dans {output}")
-    if not args.submit and input("Soumettre ce Batch à OpenAI maintenant ? [o/N] ").strip().lower() not in {"o", "oui"}: return
+    if not args.submit:
+        return
     token = key(); uploaded = upload(output, token); batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "more-data", "experiment": args.experiment, "model": args.model}}, token)
     state_path = BATCH / "03_03_02_02_submissions" / f"{args.experiment}_batch_state.json"; state_path.parent.mkdir(parents=True, exist_ok=True)
     previous = json.loads(state_path.read_text(encoding="utf-8")) if args.complement and state_path.is_file() else {}

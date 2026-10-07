@@ -1044,11 +1044,15 @@
             <p>
               <strong>Idée générale</strong> : On souhaite 5 000 nouvelles
               paires d'exemples par dataset (question en français - requête SQL
-              attendue). On prévoit quelques erreurs lors de leurs créations,
-              soit des exemples invalides soit des exemples valides mais dont
-              Spider ne reconnaît pas la difficulté, soit refusés par nos juges
-              (étapes ultérieures), donc on en demande 25% en plus pour arriver
-              à un batch demandant 6 250 exemples pour un dataset donné.
+              attendue). On prévoit un nombre conséquent de rejets lors de leur
+              création. La cause principale est la validation par le classifieur
+              officiel Spider&nbsp;: un SQL peut être exécutable et correct,
+              mais être reconnu à une difficulté différente de celle demandée —
+              particulièrement pour les requêtes <code>hard</code>. S’y ajoutent
+              les erreurs d’exécution SQLite, les doublons et les éventuels
+              refus du juge sémantique aux étapes ultérieures. On demande donc
+              70&nbsp;% d’exemples supplémentaires, soit un batch de 8&nbsp;500
+              exemples pour viser 5&nbsp;000 exemples finaux par dataset.
             </p>
             <p class="quota-variants-intro">
               Des subtilités s’appliquent aux différents datasets :
@@ -1074,7 +1078,7 @@
                     difficulté <code>easy</code>, 30&nbsp;% de
                     <code>hard</code> et 10&nbsp;% chacun de
                     <code>medium</code> et <code>extra</code>, on lui demandera
-                    625 nouveaux exemples (10&nbsp;% du Batch de 6&nbsp;250),
+                    850 nouveaux exemples (10&nbsp;% du Batch de 8&nbsp;500),
                     distribués dans les mêmes proportions.</i
                   >
                 </p>
@@ -1086,12 +1090,12 @@
                     >On utilise les 100 nouvelles bases. Ici on veut tous les
                     niveaux de difficulté.</strong
                   >
-                  Chaque base reçoit 62 ou 63 demandes (6&nbsp;250 / 100). Les
+                  Chaque base reçoit 85 demandes (8&nbsp;500 / 100). Les
                   demandes sont réparties au plus près de 25&nbsp;% sur chacun
                   des quatre niveaux de difficulté Spider pour chaque base ; les
                   arrondis sont répartis entre les bases pour préserver un
                   équilibre global. On obtient un batch de 100 bases × 4
-                  difficultés = 400 prompts. Chaque prompt demande 15 ou 16
+                  difficultés = 400 prompts. Chaque prompt demande 21 ou 22
                   exemples.
                 </p>
               </section>
@@ -1118,13 +1122,13 @@
                     les difficultés <code>hard</code> et
                     <code>extra</code>.</strong
                   >
-                  Chaque base reçoit 62 ou 63 demandes (6&nbsp;250 / 100). Les
+                  Chaque base reçoit 85 demandes (8&nbsp;500 / 100). Les
                   demandes sont réparties au plus près de 50&nbsp;% entre les
                   difficultés <code>hard</code> et <code>extra</code> pour
                   chaque base ; les arrondis sont répartis entre les bases pour
                   préserver un équilibre global. On obtient un batch de 100
-                  bases × 2 difficultés = 200 prompts. Chaque prompt demande 31
-                  ou 32 exemples.
+                  bases × 2 difficultés = 200 prompts. Chaque prompt demande 42
+                  ou 43 exemples.
                 </p>
               </section>
             </div>
@@ -1178,66 +1182,103 @@
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">03</span>
-            <h4 class="new-database-step-title">Consolider les réponses</h4>
-            <p>
-              Les réponses brutes sont
-              <strong>téléchargées et consolidées</strong>. Si la première passe
-              ne suffit pas, un Batch de complément cible uniquement les quotas
-              encore manquants par base et par niveau Spider. Lors de la
-              production historique de A, ces passes supplémentaires ont porté
-              le cumul à <code>10&nbsp;491</code> paires demandées.
-            </p>
+            <h4 class="new-database-step-title">
+              Écarter les paires invalides
+              <span class="judge-badge">1er juge</span>
+            </h4>
+            <p>Le contrôle déterministe refuse une paire si&nbsp;:</p>
+            <ul class="quota-common-list">
+              <li>la question est vide, trop courte ou déjà présente&nbsp;;</li>
+              <li>
+                le SQL n’est pas une requête de lecture (<code>SELECT</code> ou
+                <code>WITH</code>)&nbsp;;
+              </li>
+              <li>
+                le SQL échoue, dépasse le délai d’exécution ou ne s’exécute pas
+                sur la base SQLite associée&nbsp;;
+              </li>
+              <li>
+                l’évaluateur officiel Spider ne parvient pas à l’analyser et à
+                en recalculer la difficulté.
+              </li>
+            </ul>
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">04</span>
-            <h4 class="new-database-step-title">Contrôler le SQL</h4>
+            <h4 class="new-database-step-title">Sélectionner les quotas</h4>
             <p>
-              Le <strong>contrôle déterministe</strong> normalise le SQL, refuse
-              les écritures, l’exécute sur la bonne base SQLite, élimine les
-              doublons et recalcule sa difficulté avec les règles officielles de
-              Spider.
+              Après le premier juge, les candidats valides sont conservés
+              <strong>dans l’ordre consolidé des réponses</strong>, jusqu’à
+              remplir exactement chaque quota <code>base × difficulté</code> ;
+              il n’y a pas de classement supplémentaire.
+              <br />
+              On pioche dans les réponses valides jusqu'à remplir le quota de
+              chaque base et de chaque niveau de difficulté de la base.
             </p>
           </article>
           <article class="new-database-step">
-            <span class="new-database-step-number">05</span>
-            <h4 class="new-database-step-title">Sélectionner les quotas</h4>
+            <div class="new-database-step-head">
+              <span class="new-database-step-number">05</span>
+              <div
+                class="new-database-actions"
+                aria-label="Exemple de refus Terra"
+              >
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="terra-refusal"
+                  aria-haspopup="dialog"
+                >
+                  Exemple
+                </button>
+              </div>
+            </div>
+            <h4 class="new-database-step-title">
+              Vérifier la sémantique <span class="judge-badge">2e juge</span>
+            </h4>
             <p>
-              Les candidats valides sont ramenés aux
-              <strong>quotas exacts</strong> par base et difficulté. Pour
-              A&nbsp;: <code>9&nbsp;801</code> candidats valides parmi les
-              <code>10&nbsp;491</code> paires cumulées lors de la production
-              historique, puis <code>5&nbsp;000</code> paires sélectionnées. Le
-              fichier de demandes régénérable représente, lui, la première passe
-              de <code>6&nbsp;250</code> paires.
+              <strong>GPT-5.6 Terra</strong> vérifie que chaque question décrit
+              fidèlement son SQL et classe la paire <code>pass</code>,
+              <code>fail</code> ou <code>uncertain</code>. En cas de
+              <code>fail</code> ou <code>uncertain</code>, il fournit aussi le
+              diagnostic qui guidera la correction.
             </p>
           </article>
           <article class="new-database-step">
             <span class="new-database-step-number">06</span>
-            <h4 class="new-database-step-title">Vérifier la sémantique</h4>
-            <p>
-              <strong>GPT-5.6 Terra</strong> vérifie que chaque question décrit
-              fidèlement son SQL. Pour A&nbsp;: <code>4&nbsp;876 pass</code>,
-              <code>122 fail</code> et <code>2 uncertain</code> sur les
-              5&nbsp;000 paires auditées.
-            </p>
-          </article>
-          <article class="new-database-step">
-            <span class="new-database-step-number">07</span>
             <h4 class="new-database-step-title">Corriger les questions</h4>
             <p>
               Les questions <code>fail</code> ou <code>uncertain</code> sont
               <strong>réécrites sans modifier le SQL</strong>, puis jugées à
-              nouveau. Pour A, les 124 corrections ont toutes été validées après
-              deux passages.
+              nouveau. Une boucle de correction reprend les paires encore
+              rejetées jusqu’à ce que la question décrive fidèlement la requête.
+              À l’issue de cette boucle, les
+              <strong>5&nbsp;000 paires finales</strong> ont été validées par
+              les deux juges (déterministe et sémantique).
             </p>
           </article>
           <article class="new-database-step">
-            <span class="new-database-step-number">08</span>
+            <div class="new-database-step-head">
+              <span class="new-database-step-number">07</span>
+              <div
+                class="new-database-actions"
+                aria-label="Premier exemple exporté"
+              >
+                <button
+                  type="button"
+                  class="new-database-example-button"
+                  data-example="sft-example"
+                  aria-haspopup="dialog"
+                >
+                  Exemple
+                </button>
+              </div>
+            </div>
             <h4 class="new-database-step-title">Exporter au format SFT</h4>
             <p>
               Le résultat est converti au <strong>format SFT JSONL</strong>
               attendu pour le fine-tuning&nbsp;: message système, question et
-              schéma côté utilisateur, puis SQL cible côté assistant.
+              schéma côté utilisateur, puis SQL cible à prédire côté assistant.
             </p>
           </article>
         </div>
@@ -1248,19 +1289,59 @@
           class="dataset-cards-carousel dataset-results-carousel"
           aria-label="Résultats finaux des datasets A à D"
         >
-          <div class="training-parameters dataset-card">
+          <div class="training-parameters dataset-card dataset-card-a">
             <p>Dataset A</p>
-            <strong>Résultat final</strong>
+            <p class="dataset-card-details">
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+                  <path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path>
+                  <path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7"></path>
+                </svg>
+                <span><strong>Bases SQL</strong>146 bases existantes.</span>
+              </span>
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4.5 19.5a10 10 0 1 1 15 0"></path>
+                  <path d="m12 13 4-4"></path>
+                  <path
+                    d="M12 4v1M5.64 6.64l.71.71M4 13h1M19 13h1M18.36 6.64l-.71.71"
+                  ></path>
+                </svg>
+                <span
+                  ><strong>Difficulté</strong
+                  ><span
+                    class="difficulty-levels"
+                    aria-label="Niveaux easy, medium, hard et extra"
+                    ><span class="difficulty-bubble difficulty-easy is-active"
+                      ><code>easy</code></span
+                    ><span class="difficulty-bubble difficulty-medium is-active"
+                      ><code>medium</code></span
+                    ><span class="difficulty-bubble difficulty-hard is-active"
+                      ><code>hard</code></span
+                    ><span class="difficulty-bubble difficulty-extra is-active"
+                      ><code>extra</code></span
+                    ></span
+                  ></span
+                >
+              </span>
+            </p>
+            <br />
             <p>
-              5&nbsp;000 paires valides, avec un niveau de difficulté Spider
-              <code>easy</code> à <code>extra</code>, réparti ainsi :
+              5&nbsp;000 paires valides, réparties sur les 146 bases existantes,
+              en respecant les proportions historiques
+              <i
+                >(si la base 1 avait 15 exemples, elle en aura aussi 15 dans ce
+                nouveau dataset, et si dans ces 15 exemples, il y en avait 5
+                hard, il y en aura à peu près 5 aussi)</i
+              >, avec un niveau de difficulté Spider <code>easy</code> à
+              <code>extra</code>, réparti ainsi :
             </p>
             <div
               class="difficulty-comparison"
               aria-label="Comparaison des répartitions Spider"
             >
               <div>
-                <span class="difficulty-source">Dataset A · 5&nbsp;000</span>
                 <div class="difficulty-bubbles">
                   <span
                     ><code>easy</code><strong>1&nbsp;149</strong
@@ -1280,54 +1361,227 @@
                   >
                 </div>
               </div>
-              <div>
-                <span class="difficulty-source"
-                  >Train original · 8&nbsp;651</span
+              <p>
+                Pour rappel, la répartition dans les 8&nbsp;651 exemples du
+                train set original : easy 22,89&nbsp;%, medium 34,65&nbsp;%,
+                hard 22,18&nbsp;% et extra 20,28&nbsp;%.
+              </p>
+            </div>
+          </div>
+          <div class="training-parameters dataset-card dataset-card-b">
+            <p>Dataset B</p>
+            <p class="dataset-card-details">
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+                  <path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path>
+                  <path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7"></path>
+                </svg>
+                <span><strong>Bases SQL</strong>100 nouvelles bases.</span>
+              </span>
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4.5 19.5a10 10 0 1 1 15 0"></path>
+                  <path d="m12 13 4-4"></path>
+                  <path
+                    d="M12 4v1M5.64 6.64l.71.71M4 13h1M19 13h1M18.36 6.64l-.71.71"
+                  ></path>
+                </svg>
+                <span
+                  ><strong>Difficulté</strong
+                  ><span
+                    class="difficulty-levels"
+                    aria-label="Niveaux easy, medium, hard et extra"
+                    ><span class="difficulty-bubble difficulty-easy is-active"
+                      ><code>easy</code></span
+                    ><span class="difficulty-bubble difficulty-medium is-active"
+                      ><code>medium</code></span
+                    ><span class="difficulty-bubble difficulty-hard is-active"
+                      ><code>hard</code></span
+                    ><span class="difficulty-bubble difficulty-extra is-active"
+                      ><code>extra</code></span
+                    ></span
+                  ></span
                 >
+              </span>
+            </p>
+            <br />
+            <p>
+              5&nbsp;000 paires valides, réparties sur les 100 nouvelles bases
+              de manière équitable, avec un niveau de difficulté Spider
+              <code>easy</code> à <code>extra</code>, réparti exactement à
+              25&nbsp;% par niveau de difficulté." :
+            </p>
+            <div
+              class="difficulty-comparison"
+              aria-label="Répartition Spider du dataset B"
+            >
+              <div>
                 <div class="difficulty-bubbles">
                   <span
-                    ><code>easy</code><strong>1&nbsp;980</strong
-                    ><small>22,89&nbsp;% des 8&nbsp;651</small></span
+                    ><code>easy</code><strong>1&nbsp;250</strong
+                    ><small>25&nbsp;% des 5&nbsp;000</small></span
                   >
                   <span
-                    ><code>medium</code><strong>2&nbsp;998</strong
-                    ><small>34,65&nbsp;%</small></span
+                    ><code>medium</code><strong>1&nbsp;250</strong
+                    ><small>25&nbsp;%</small></span
                   >
                   <span
-                    ><code>hard</code><strong>1&nbsp;919</strong
-                    ><small>22,18&nbsp;%</small></span
+                    ><code>hard</code><strong>1&nbsp;250</strong
+                    ><small>25&nbsp;%</small></span
                   >
                   <span
-                    ><code>extra</code><strong>1&nbsp;754</strong
-                    ><small>20,28&nbsp;%</small></span
+                    ><code>extra</code><strong>1&nbsp;250</strong
+                    ><small>25&nbsp;%</small></span
                   >
                 </div>
               </div>
+              <p>
+                Chaque base a donc exactement 50 paires valides, avec 12 ou 13
+                paires par niveau de difficulté.
+              </p>
             </div>
           </div>
-          <div class="training-parameters dataset-card">
-            <p>Dataset B</p>
-            <strong>Résultat final</strong>
-            <p>
-              Jusqu’à 5&nbsp;000 paires valides, réparties entre les nouvelles
-              bases selon leurs quotas respectifs.
-            </p>
-          </div>
-          <div class="training-parameters dataset-card">
+          <div class="training-parameters dataset-card dataset-card-c">
             <p>Dataset C</p>
-            <strong>Résultat final</strong>
+            <p class="dataset-card-details">
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+                  <path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path>
+                  <path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7"></path>
+                </svg>
+                <span><strong>Bases SQL</strong>146 bases existantes.</span>
+              </span>
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4.5 19.5a10 10 0 1 1 15 0"></path>
+                  <path d="m12 13 4-4"></path>
+                  <path
+                    d="M12 4v1M5.64 6.64l.71.71M4 13h1M19 13h1M18.36 6.64l-.71.71"
+                  ></path>
+                </svg>
+                <span
+                  ><strong>Difficulté</strong
+                  ><span
+                    class="difficulty-levels"
+                    aria-label="Niveaux hard et extra"
+                    ><span class="difficulty-bubble difficulty-hard is-active"
+                      ><code>hard</code></span
+                    ><span class="difficulty-bubble difficulty-extra is-active"
+                      ><code>extra</code></span
+                    ></span
+                  ></span
+                >
+              </span>
+            </p>
+            <br />
             <p>
-              5&nbsp;000 paires valides de niveau Spider <code>hard</code> et
-              <code>extra</code> à 50/50, réparties selon les quotas par base.
+              5&nbsp;000 paires finales, réparties sur les 146 bases
+              existantes selon leurs quotas historiques, avec un niveau de
+              difficulté Spider <code>hard</code> et <code>extra</code>
+              réparti exactement à 50&nbsp;% par niveau :
+            </p>
+            <div
+              class="difficulty-comparison"
+              aria-label="Répartition Spider du dataset C"
+            >
+              <div>
+                <div class="difficulty-bubbles">
+                  <span
+                    ><code>hard</code><strong>2&nbsp;500</strong
+                    ><small>50&nbsp;% des 5&nbsp;000</small></span
+                  >
+                  <span
+                    ><code>extra</code><strong>2&nbsp;500</strong
+                    ><small>50&nbsp;%</small></span
+                  >
+                </div>
+              </div>
+              <p>
+                Chaque base conserve son quota historique, partagé aussi
+                équitablement que possible entre <code>hard</code> et
+                <code>extra</code>.
+              </p>
+            </div>
+            <p class="train-distribution-reminder">
+              Le juge sémantique Terra a validé directement 4&nbsp;539 paires.
+              Parmi les 461 restantes, 438 ont été validées après un premier
+              cycle de correction et de re-jugement, 20 après un deuxième,
+              puis 2 après un troisième. Le dernier cas a été corrigé
+              manuellement pour expliciter la conservation des doublons,
+              conformément au SQL&nbsp;: les 5&nbsp;000 paires sont donc
+              finalisées.
             </p>
           </div>
-          <div class="training-parameters dataset-card">
+          <div class="training-parameters dataset-card dataset-card-d">
             <p>Dataset D</p>
-            <strong>Résultat final</strong>
+            <p class="dataset-card-details">
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <ellipse cx="12" cy="5" rx="8" ry="3"></ellipse>
+                  <path d="M4 5v7c0 1.66 3.58 3 8 3s8-1.34 8-3V5"></path>
+                  <path d="M4 12v7c0 1.66 3.58 3 8 3s8-1.34 8-3v-7"></path>
+                </svg>
+                <span><strong>Bases SQL</strong>100 nouvelles bases.</span>
+              </span>
+              <span class="dataset-card-detail">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4.5 19.5a10 10 0 1 1 15 0"></path>
+                  <path d="m12 13 4-4"></path>
+                  <path
+                    d="M12 4v1M5.64 6.64l.71.71M4 13h1M19 13h1M18.36 6.64l-.71.71"
+                  ></path>
+                </svg>
+                <span
+                  ><strong>Difficulté</strong
+                  ><span
+                    class="difficulty-levels"
+                    aria-label="Niveaux hard et extra"
+                    ><span class="difficulty-bubble difficulty-hard is-active"
+                      ><code>hard</code></span
+                    ><span class="difficulty-bubble difficulty-extra is-active"
+                      ><code>extra</code></span
+                    ></span
+                  ></span
+                >
+              </span>
+            </p>
+            <br />
             <p>
-              Jusqu’à 5&nbsp;000 paires valides sur de nouvelles bases, à 50/50
-              <code>hard</code>/<code>extra</code>, avec la difficulté Spider
-              recalculée après génération.
+              5&nbsp;000 paires finales, réparties équitablement sur les 100
+              nouvelles bases, avec un niveau de difficulté Spider
+              <code>hard</code> et <code>extra</code> réparti exactement à
+              50&nbsp;% par niveau :
+            </p>
+            <div
+              class="difficulty-comparison"
+              aria-label="Répartition Spider du dataset D"
+            >
+              <div>
+                <div class="difficulty-bubbles">
+                  <span
+                    ><code>hard</code><strong>2&nbsp;500</strong
+                    ><small>50&nbsp;% des 5&nbsp;000</small></span
+                  >
+                  <span
+                    ><code>extra</code><strong>2&nbsp;500</strong
+                    ><small>50&nbsp;%</small></span
+                  >
+                </div>
+              </div>
+              <p>
+                Chaque nouvelle base comporte exactement 50 paires valides,
+                partagées à parts égales entre <code>hard</code> et
+                <code>extra</code>.
+              </p>
+            </div>
+            <p class="train-distribution-reminder">
+              Le juge sémantique Terra a validé directement 4&nbsp;809 paires.
+              Parmi les 191 restantes, 187 ont été validées après un premier
+              cycle de correction et de re-jugement, puis 3 après un deuxième
+              et 1 après un troisième&nbsp;: les 5&nbsp;000 paires sont donc
+              finalisées.
             </p>
           </div>
         </div>
@@ -1354,6 +1608,6 @@
       </section>
     </main>
     <script src="app.js?v=20260929-7"></script>
-    <script src="new-database-examples.js?v=20261005-8"></script>
+    <script src="new-database-examples.js?v=20261005-11"></script>
   </body>
 </html>

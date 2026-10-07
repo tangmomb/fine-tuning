@@ -34,25 +34,66 @@
     "data-response": {
       title: "Extrait de la première réponse réelle du Batch A · A:academic:easy",
       encoded: "eyJjdXN0b21faWQiOiJBOmFjYWRlbWljOmVhc3kiLCJyZXNwb25zZSI6eyJzdGF0dXNfY29kZSI6MjAwLCJib2R5Ijp7ImlkIjoicmVzcF8wMjI2ZGMwNjJhZTNmMzc4MDA2YWJhYTBlMjg4MTQ4N2QxOGNlNTIxMDc3MjZhYjg1YiIsIm9iamVjdCI6InJlc3BvbnNlIiwic3RhdHVzIjoiY29tcGxldGVkIiwibW9kZWwiOiJncHQtNS42LWx1bmEiLCJvdXRwdXQiOlt7InR5cGUiOiJtZXNzYWdlIiwic3RhdHVzIjoiY29tcGxldGVkIiwiY29udGVudCI6W3sidHlwZSI6Im91dHB1dF90ZXh0IiwidGV4dCI6IntcImV4YW1wbGVzXCI6W3tcInF1ZXN0aW9uXCI6XCJRdWVscyBzb250IGxlcyBub21zIGRlcyBhdXRldXJzID9cIixcInNxbFwiOlwiU0VMRUNUIG5hbWUgRlJPTSBhdXRob3I7XCJ9LHtcInF1ZXN0aW9uXCI6XCJRdWVsbGVzIHNvbnQgbGVzIHBhZ2VzIGQnYWNjdWVpbCBkZXMgYXV0ZXVycyBkb250IGwnaWRlbnRpZmlhbnQgZXN0IDEwID9cIixcInNxbFwiOlwiU0VMRUNUIGhvbWVwYWdlIEZST00gYXV0aG9yIFdIRVJFIGFpZCA9IDEwO1wifSx7XCJxdWVzdGlvblwiOlwiUXVlbHMgaWRlbnRpZmlhbnRzIGRlIHB1YmxpY2F0aW9ucyBzb250IGNpdMOpcyA/XCIsXCJzcWxcIjpcIlNFTEVDVCBjaXRlZCBGUk9NIGNpdGU7XCJ9LHtcInF1ZXN0aW9uXCI6XCJRdWVscyBzb250IGxlcyBub21zIGRlcyBjb25mw6lyZW5jZXMgP1wiLFwic3FsXCI6XCJTRUxFQ1QgbmFtZSBGUk9NIGNvbmZlcmVuY2U7XCJ9LHtcInF1ZXN0aW9uXCI6XCJRdWVsbGUgcGFnZSBkJ2FjY3VlaWwgY29ycmVzcG9uZCDDoCBsYSBjb25mw6lyZW5jZSBkJ2lkZW50aWZpYW50IDMgP1wiLFwic3FsXCI6XCJTRUxFQ1QgaG9tZXBhZ2UgRlJPTSBjb25mZXJlbmNlIFdIRVJFIGNpZCA9IDM7XCJ9LHtcInF1ZXN0aW9uXCI6XCJRdWVscyBzb250IGxlcyBub21zIGRlcyBkb21haW5lcyA/XCIsXCJzcWxcIjpcIlNFTEVDVCBuYW1lIEZST00gZG9tYWluO1wifV19In1dfV19fX0="
+    },
+    "terra-refusal": {
+      title: "Exemple de refus du juge Terra",
+      text: `{
+  "question": "Combien de conférences sont regroupées par organisation pour les conférences dont l’identifiant est supérieur à 3 et le nom différent de 'Workshop' ?",
+  "sql": "SELECT name, COUNT(*) FROM conference WHERE cid > 3 AND name != 'Workshop' GROUP BY name",
+  "verdict": "fail",
+  "issues": [
+    "La question demande un regroupement par organisation, alors que le SQL regroupe les conférences par leur nom (GROUP BY name). La table conference ne contient d'ailleurs aucune colonne d'organisation."
+  ]
+}`
     }
   };
+  const firstSftExample = {
+    title: "Premier exemple exporté au format SFT · A:academic:easy:1:0",
+    build() {
+      const request = decode(examples["data-request"].encoded);
+      const prompt = request.body.input.find(item => item.role === "user")?.content || "";
+      const marker = "SCHÉMA (academic):\n";
+      const schemaStart = prompt.lastIndexOf(marker);
+      const schema = schemaStart >= 0 ? prompt.slice(schemaStart + marker.length) : "";
+      const response = decode(dataResponseExamples["data-response"].encoded);
+      const modelText = response.response.body.output.find(item => item.type === "message")?.content.find(item => item.type === "output_text")?.text;
+      const pair = JSON.parse(modelText || "{\"examples\":[]}").examples[0];
+      return {
+        id: "A:academic:easy:1:0",
+        source_id: "A:academic:easy:1:0",
+        db_id: "academic",
+        hardness: "easy",
+        messages: [
+          { role: "system", content: "Tu génères une requête SQL SQLite à partir d'une question en français et du schéma fourni.\nRetourne uniquement la requête SQL valide, sans explication ni balise Markdown." },
+          { role: "user", content: JSON.stringify({ question: pair.question, schema }) },
+          { role: "assistant", content: pair.sql },
+        ],
+      };
+    },
+  };
   document.querySelectorAll(".new-database-example-button").forEach(button => button.addEventListener("click", () => {
-    const example = examples[button.dataset.example] || dataResponseExamples[button.dataset.example];
+    const example = examples[button.dataset.example] || dataResponseExamples[button.dataset.example] || (button.dataset.example === "sft-example" ? firstSftExample : null);
     if (!example) return;
-    const content = example.text ? null : decode(example.encoded);
+    const content = example.build ? example.build() : example.text ? null : decode(example.encoded);
     const displayContent = button.dataset.example === "catalog"
       ? (({ source_examples, table_row_counts, ...catalog }) => catalog)(content)
       : content;
     const isRequestExample = ["request", "data-request"].includes(button.dataset.example);
     const isResponseExample = ["response", "data-response"].includes(button.dataset.example);
+    const isSftExample = button.dataset.example === "sft-example";
     const modelText = isResponseExample
       ? content.response.body.output.find(item => item.type === "message")?.content.find(item => item.type === "output_text")?.text
+      : null;
+    const userContent = isSftExample
+      ? content.messages.find(message => message.role === "user")?.content
       : null;
     const html = isRequestExample
       ? `<div class="request-example-split"><section><h3>Requête Batch complète</h3><pre class="json-code">${colorJson(content)}</pre></section><section><h3>Clé <code>input</code></h3><pre class="json-code request-input-code">${colorJson(content.body.input)}</pre></section></div>`
       : isResponseExample
         ? `<div class="request-example-split"><section><h3>Réponse Batch complète</h3><pre class="json-code">${colorJson(content)}</pre></section><section><h3>Clé <code>text</code> · réponse du modèle</h3><pre class="json-code response-text-code">${modelText ? formatModelJson(modelText) : "Réponse texte introuvable."}</pre></section></div>`
-      : `<pre class="json-code">${example.text ? escapeHtml(example.text) : colorJson(displayContent)}</pre>`;
+        : isSftExample
+          ? `<div class="request-example-split"><section><h3>Enregistrement SFT complet</h3><pre class="json-code">${colorJson(content)}</pre></section><section><h3>Clé <code>content</code> · message <code>user</code></h3><pre class="json-code request-input-code">${userContent ? formatModelJson(userContent) : "Contenu utilisateur introuvable."}</pre></section></div>`
+          : `<pre class="json-code">${example.text ? escapeHtml(example.text) : colorJson(displayContent)}</pre>`;
     window.reportLightbox.open({
       title: example.title,
       source: button,

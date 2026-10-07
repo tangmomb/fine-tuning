@@ -9,7 +9,7 @@ Ce dossier prépare les quatre expériences du compte rendu.
 | C | 50&nbsp;% hard / 50&nbsp;% extra | déjà présentes dans le train |
 | D | 50&nbsp;% hard / 50&nbsp;% extra | nouvelles |
 
-Un seul job OpenAI Batch peut contenir plusieurs requêtes par base. Pour A, le comportement standard sépare automatiquement les difficultés : 566 prompts couvrent les 146 schémas Spider et demandent exactement 6 250 paires (25 % de marge). Chaque prompt cible une seule difficulté et les demandes supérieures à 80 exemples sont découpées. Les contrôles conservent ensuite au plus 5 000 exemples selon les quotas par schéma et par difficulté. Pour C et D, le quota de chaque base est partagé à 50/50 entre `hard` et `extra` ; les arrondis des quotas impairs sont distribués entre les bases afin de garder un équilibre global exact. Chaque SQL généré est exécuté sur SQLite avant export.
+Un seul job OpenAI Batch peut contenir plusieurs requêtes par base. Le comportement standard sépare automatiquement les difficultés et demande 8 500 paires pour viser 5 000 exemples finaux (70 % de marge). Chaque prompt cible une seule difficulté et les demandes supérieures à 80 exemples sont découpées. Les contrôles conservent ensuite au plus 5 000 exemples selon les quotas par schéma et par difficulté. Pour C et D, le quota de chaque base est partagé à 50/50 entre `hard` et `extra` ; les arrondis des quotas impairs sont distribués entre les bases afin de garder un équilibre global exact. Chaque SQL généré est exécuté sur SQLite avant export.
 
 ## Contrat d'entrée
 
@@ -46,5 +46,5 @@ Dans `03_03_02_batch`, `03_03_02_01_requests` contient le JSONL exact envoyé, `
 - Le modèle est `gpt-5.6-luna`, configurable avec `--model`.
 - La génération autorise jusqu’à 128&nbsp;000 tokens de sortie par prompt, pour que les bases aux quotas élevés puissent fermer leur JSON structuré.
 - Le contrôle déterministe exclut les questions vides ou dupliquées et les SQL qui ne sont pas des lectures SQLite exécutables, mais conserve les surplus valides comme réserve.
-- Un second Batch, confié à GPT-5.6 Terra, juge 200 paires question/SQL via un échantillon stratifié par difficulté et réparti entre les bases, afin de mesurer la fidélité sémantique sans facturer un jugement exhaustif.
+- Un second Batch, confié à GPT-5.6 Terra, juge exhaustivement les 5 000 paires question/SQL sélectionnées par expérience afin de valider leur fidélité sémantique.
 - Une revue humaine/LLM est recommandée avant un entraînement définitif.

@@ -5,7 +5,7 @@ import argparse, json, mimetypes, os, uuid
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib import request
+from urllib import error, request
 
 ROOT = Path(__file__).resolve().parents[3]
 WORK = Path(__file__).resolve().parent
@@ -46,8 +46,12 @@ def get(url: str, token: str) -> bytes:
 
 def post(url: str, payload: dict, token: str) -> dict:
     req = request.Request(url, data=json.dumps(payload).encode(), method="POST", headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
-    with request.urlopen(req) as response:
-        return json.load(response)
+    try:
+        with request.urlopen(req) as response:
+            return json.load(response)
+    except error.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"OpenAI a refusé la requête ({exc.code}) : {detail}") from exc
 
 def upload(path: Path, token: str) -> dict:
     boundary = f"----correction{uuid.uuid4().hex}"
@@ -67,44 +71,50 @@ def output_text(response: dict) -> str | None:
                 return content["text"]
     return None
 
-def prepare(experiment: str, model: str, retry: bool = False) -> Path:
-    source = (ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_rejudged.jsonl") if retry else (ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_04_judgments" / f"{experiment}_judged.jsonl")
-    verdict_key, issues_key = ("recheck_verdict", "recheck_issues") if retry else ("verdict", "issues")
-    rejected = [row for row in read(source) if row[verdict_key] in {"fail", "uncertain"}]
+def prepare(experiment: str, model: str, retry: bool = False, missing: bool = False, final: bool = False) -> Path:
+    if final:
+        source = ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_retry_rejudged.jsonl"
+        rejected = [row for row in read(source) if row.get("recheck_verdict") in {"fail", "uncertain"}]
+        issues_key = "recheck_issues"
+    elif missing:
+        source = WORK / "03_03_03_02_05_04_corrections" / f"{experiment}_corrected.jsonl"
+        rejected = [row for row in read(source) if row.get("correction_status") == "missing"]
+        issues_key = "issues"
+    else:
+        source = (ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_rejudged.jsonl") if retry else (ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_04_judgments" / f"{experiment}_judged.jsonl")
+        verdict_key, issues_key = ("recheck_verdict", "recheck_issues") if retry else ("verdict", "issues")
+        rejected = [row for row in read(source) if row[verdict_key] in {"fail", "uncertain"}]
     if not rejected:
         raise RuntimeError("Aucun exemple fail ou uncertain à corriger.")
-    prefix = "retry_" if retry else ""
+    prefix = "final_" if final else ("missing_" if missing else ("retry_" if retry else ""))
     write(WORK / "03_03_03_02_05_01_requests" / f"{experiment}_{prefix}to_correct.jsonl", rejected)
-    grouped: dict[str, list[dict]] = defaultdict(list)
-    for row in rejected:
-        grouped[row["db_id"]].append(row)
     lines = []
-    for db_id, examples in sorted(grouped.items()):
+    for index, row in enumerate(rejected, 1):
         payload = {
-            "schema": examples[0]["schema"],
-            "examples": [{"id": row["id"], "question_originale": row["question"], "sql": row["sql"], "diagnostic": row[issues_key]} for row in examples],
+            "schema": row["schema"],
+            "examples": [{"id": row["id"], "question_originale": row["question"], "sql": row["sql"], "diagnostic": row[issues_key]}],
         }
         prompt = (
             "Réécris chaque question française pour qu'elle décrive exactement le SQL associé. "
             "Le SQL est la vérité : ne le modifie jamais. Utilise le schéma et le diagnostic du juge. "
             "Conserve une formulation naturelle, sans mentionner le diagnostic, le SQL ni les tables si cela n'est pas nécessaire. "
-            "Retourne une correction pour chaque id, y compris si le diagnostic semble discutable.\n\n"
+            "La requête contient une seule paire : retourne exactement une correction pour cet identifiant, y compris si le diagnostic semble discutable.\n\n"
             + json.dumps(payload, ensure_ascii=False)
         )
         body = {"model": model, "input": [{"role": "system", "content": "Tu corriges strictement des paires text-to-SQL en français."}, {"role": "user", "content": prompt}], "max_output_tokens": 8000, "text": {"format": {"type": "json_schema", "name": "semantic_corrections", "strict": True, "schema": SCHEMA}}}
-        lines.append(json.dumps({"custom_id": f"correct:{experiment}:{db_id}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
+        lines.append(json.dumps({"custom_id": f"correct:{experiment}:{row['db_id']}:{index}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
     path = WORK / "03_03_03_02_05_01_requests" / f"{experiment}_{prefix}correction_requests.jsonl"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{len(rejected)} exemples à corriger dans {len(lines)} requêtes : {path}")
     return path
 
-def submit(experiment: str, model: str, path: Path, retry: bool = False) -> None:
+def submit(experiment: str, model: str, path: Path, retry: bool = False, missing: bool = False, final: bool = False) -> None:
     token = api_key()
     uploaded = upload(path, token)
     batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "more-data-semantic-correction", "experiment": experiment, "model": model}}, token)
-    state = {"experiment": experiment, "model": model, "retry": retry, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
-    prefix = "retry_" if retry else ""
+    state = {"experiment": experiment, "model": model, "retry": retry, "missing": missing, "final": final, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
+    prefix = "final_" if final else ("missing_" if missing else ("retry_" if retry else ""))
     state_path = WORK / "03_03_03_02_05_02_submissions" / f"{experiment}_{prefix}correction_state.json"
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
@@ -124,11 +134,16 @@ def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: 
         for answer in answers:
             if isinstance(answer.get("id"), str) and isinstance(answer.get("question"), str) and answer["question"].strip():
                 corrections[answer["id"]] = answer["question"].strip()
-    prefix = "retry_" if state.get("retry") else ""
+    prefix = "final_" if state.get("final") else ("missing_" if state.get("missing") else ("retry_" if state.get("retry") else ""))
     originals = read(WORK / "03_03_03_02_05_01_requests" / f"{experiment}_{prefix}to_correct.jsonl")
     corrected = [{**row, "question_originale": row.get("question_originale", row["question"]), "question": corrections.get(row["id"], row["question"]), "correction_status": "corrected" if row["id"] in corrections else "missing"} for row in originals]
     output_dir = WORK / "03_03_03_02_05_04_corrections"
     write(output_dir / f"{experiment}_{prefix}corrected.jsonl", corrected)
+    if state.get("missing"):
+        base = output_dir / f"{experiment}_corrected.jsonl"
+        merged = {row["id"]: row for row in read(base)}
+        merged.update({row["id"]: row for row in corrected})
+        write(base, list(merged.values()))
     manifest = {"experiment": experiment, "input_count": len(originals), "correction_status": dict(Counter(row["correction_status"] for row in corrected)), "raw_response": raw.name}
     (output_dir / f"{experiment}_{prefix}manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     state["status"] = "collected"
@@ -142,17 +157,21 @@ def main() -> None:
     parser.add_argument("--model")
     parser.add_argument("--submit", action="store_true")
     parser.add_argument("--retry", action="store_true", help="Corrige les échecs du re-jugement.")
+    parser.add_argument("--missing", action="store_true", help="Reprend les corrections absentes, une paire par requête.")
+    parser.add_argument("--final", action="store_true", help="Corrige les échecs du second re-jugement.")
     args = parser.parse_args()
     experiment = args.experiment or input("Expérience à corriger [A/B/C/D] : ").strip().upper()
     if experiment not in "ABCD":
         raise ValueError("Choix attendu : A, B, C ou D.")
     model = args.model or input(f"Modèle correcteur [{MODEL}] : ").strip() or MODEL
-    prefix = "retry_" if args.retry else ""
+    if sum((args.retry, args.missing, args.final)) > 1:
+        raise ValueError("--retry, --missing et --final ne peuvent pas être combinés.")
+    prefix = "final_" if args.final else ("missing_" if args.missing else ("retry_" if args.retry else ""))
     state_path = WORK / "03_03_03_02_05_02_submissions" / f"{experiment}_{prefix}correction_state.json"
     if not state_path.is_file():
-        path = prepare(experiment, model, args.retry)
+        path = prepare(experiment, model, args.retry, args.missing, args.final)
         if args.submit or input("Soumettre le Batch de correction à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}:
-            submit(experiment, model, path, args.retry)
+            submit(experiment, model, path, args.retry, args.missing, args.final)
         return
     token = api_key()
     state = json.loads(state_path.read_text(encoding="utf-8"))

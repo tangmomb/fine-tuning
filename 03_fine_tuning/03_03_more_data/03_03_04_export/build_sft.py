@@ -17,17 +17,22 @@ def ask_experiment(value: str | None) -> str:
 def read(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
+def read_if_exists(path: Path) -> list[dict]:
+    return read(path) if path.is_file() else []
+
 def accepted_questions(experiment: str, selected: list[dict]) -> dict[str, str]:
     """Retourne la question retenue par id, avec les corrections revalidées."""
     quality = ROOT / "03_03_03_quality"
     judge = quality / "03_03_03_02_semantic_judge"
     initial = read(judge / "03_03_03_02_04_judgments" / f"{experiment}_judged.jsonl")
-    rejudged = read(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_rejudged.jsonl")
-    retry = read(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_retry_rejudged.jsonl")
+    rejudged = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_rejudged.jsonl")
+    retry = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_retry_rejudged.jsonl")
+    final = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{experiment}_final_rejudged.jsonl")
 
     questions = {row["id"]: row["question"] for row in initial if row.get("verdict") == "pass"}
     questions.update({row["id"]: row["question"] for row in rejudged if row.get("recheck_verdict") == "pass"})
     questions.update({row["id"]: row["question"] for row in retry if row.get("recheck_verdict") == "pass"})
+    questions.update({row["id"]: row["question"] for row in final if row.get("recheck_verdict") == "pass"})
     selected_ids = {row["id"] for row in selected}
     if set(questions) != selected_ids:
         missing = len(selected_ids - set(questions)); extra = len(set(questions) - selected_ids)
@@ -48,7 +53,12 @@ def main() -> None:
         user = json.dumps({"question": questions[row["id"]], "schema": row["schema"]}, ensure_ascii=False)
         examples.append({"id": row["id"], "source_id": row["id"], "db_id": row["db_id"], "hardness": row.get("hardness"), "messages": [{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": user}, {"role": "assistant", "content": row["sql"].strip()}]})
     output.write_text("".join(json.dumps(row, ensure_ascii=False) + "\n" for row in examples), encoding="utf-8")
-    manifest = {"experiment": args.experiment, "examples": len(examples), "format": "chat_messages_jsonl_text_to_sql", "semantic_validation": {"initial_pass": 4876, "corrected_pass": 119, "retry_corrected_pass": 5}}
+    judge = ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge"
+    initial = read(judge / "03_03_03_02_04_judgments" / f"{args.experiment}_judged.jsonl")
+    rejudged = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{args.experiment}_rejudged.jsonl")
+    retry = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{args.experiment}_retry_rejudged.jsonl")
+    final = read_if_exists(judge / "03_03_03_02_06_semantic_rejudge" / "03_03_03_02_06_04_rejudgments" / f"{args.experiment}_final_rejudged.jsonl")
+    manifest = {"experiment": args.experiment, "examples": len(examples), "format": "chat_messages_jsonl_text_to_sql", "semantic_validation": {"initial_pass": sum(row.get("verdict") == "pass" for row in initial), "corrected_pass": sum(row.get("recheck_verdict") == "pass" for row in rejudged), "retry_corrected_pass": sum(row.get("recheck_verdict") == "pass" for row in retry), "final_corrected_pass": sum(row.get("recheck_verdict") == "pass" for row in final)}}
     (output.parent / f"synthetic_data_{args.experiment}_manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"{len(examples)} exemples SFT écrits dans {output}")
 

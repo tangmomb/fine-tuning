@@ -1,0 +1,10 @@
+{
+  "experiment": "D",
+  "input_count": 4,
+  "verdicts": {
+    "fail": 1,
+    "pass": 3
+  },
+  "missing_verdicts": 0,
+  "raw_response": "D_batch_6ac64291ecf88190b534cc316e08e3b0_rejudge_output.jsonl"
+}

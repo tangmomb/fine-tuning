@@ -68,7 +68,7 @@ def load_spider_evaluator() -> Any:
         if not path.is_file(): path.write_bytes(urlopen(url).read())
     if str(SPIDER_VENDOR) not in sys.path: sys.path.insert(0, str(SPIDER_VENDOR))
     process_sql = importlib.import_module("process_sql")
-    classifier_path = HERE.parent / "02_train_data_scaling" / "build_train_with_hardness.py"
+    classifier_path = HERE.parent / "03_02_train_data_scaling" / "build_train_with_hardness.py"
     spec = importlib.util.spec_from_file_location("train_hardness", classifier_path)
     if spec is None or spec.loader is None: raise RuntimeError("Impossible de charger la règle de difficulté du train.")
     classifier = importlib.util.module_from_spec(spec); spec.loader.exec_module(classifier)
@@ -104,15 +104,15 @@ def show_progress(current: int, total: int) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--overwrite", action="store_true"); args = parser.parse_args(); args.experiment = ask_experiment(args.experiment)
     seed_source = "existing" if args.experiment in {"A", "C"} else "new"
-    seeds = {f"{args.experiment}:{row['db_id']}": row for row in read(HERE / "01_prepare" / f"{seed_source}_sql_bases.jsonl")}
+    seeds = {f"{args.experiment}:{row['db_id']}": row for row in read(HERE / "03_03_01_prepare" / f"{seed_source}_sql_bases.jsonl")}
     quota_plan = difficulty_quota_plan(seeds, args.experiment)
     generation_mode = "hard" if args.experiment in {"C", "D"} else "random"
-    state_path = HERE / "02_batch" / "02_submissions" / f"{args.experiment}_batch_state.json"
+    state_path = HERE / "03_03_02_batch" / "03_03_02_02_submissions" / f"{args.experiment}_batch_state.json"
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.is_file() else {}
     raw_name = state.get("raw_output_file", f"{args.experiment}.jsonl")
     accepted, rejected, returned, questions, pairs, count_by_db = [], [], set(), set(), set(), Counter()
     raw_names = state.get("raw_output_files") or [raw_name]
-    responses = [response for name in raw_names for response in read(HERE / "02_batch" / "03_responses" / name)]
+    responses = [response for name in raw_names for response in read(HERE / "03_03_02_batch" / "03_03_02_03_responses" / name)]
     total_responses = len(responses)
     for response_number, response in enumerate(responses, start=1):
         identifier = response.get("custom_id")

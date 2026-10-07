@@ -1,0 +1,12 @@
+{
+  "experiment": "C",
+  "model": "gpt-5.6-terra",
+  "retry": false,
+  "missing": true,
+  "submitted_at": "2026-10-06T15:13:34.696153+00:00",
+  "request_file": "C_missing_rejudge_requests.jsonl",
+  "input_file_id": "file-FnhkU8i9EEKZiHgYLv37p9",
+  "batch_id": "batch_6ac5101eb5048190aeb70a8db71a2db5",
+  "status": "collected",
+  "raw_output_file": "C_batch_6ac5101eb5048190aeb70a8db71a2db5_rejudge_output.jsonl"
+}

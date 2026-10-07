@@ -1,0 +1,11 @@
+{
+  "experiment": "B",
+  "model": "gpt-5.6-terra",
+  "retry": false,
+  "submitted_at": "2026-10-06T13:35:17.345474+00:00",
+  "request_file": "B_correction_requests.jsonl",
+  "input_file_id": "file-5mCDUsrGSSLBUncxjeXeRL",
+  "batch_id": "batch_6ac4f91501c48190bf5c0f7cb2e12421",
+  "status": "collected",
+  "raw_output_file": "B_batch_6ac4f91501c48190bf5c0f7cb2e12421_correction_output.jsonl"
+}

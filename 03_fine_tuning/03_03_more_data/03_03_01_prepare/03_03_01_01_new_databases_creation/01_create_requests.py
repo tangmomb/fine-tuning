@@ -86,7 +86,7 @@ def main() -> None:
         raise ValueError("--count doit être positif.")
     requests: list[tuple[int, str]]
     if args.retry_rejected:
-        report = json.loads((HERE / "04_final" / "materialized_report.json").read_text(encoding="utf-8"))
+        report = json.loads((HERE / "03_03_01_01_04_final" / "materialized_report.json").read_text(encoding="utf-8"))
         requests = []
         for row in report.get("rejections", []):
             match = re.fullmatch(r"new-db:(\d{3}):(synthetic_\d{3})", str(row.get("id", "")))
@@ -94,10 +94,10 @@ def main() -> None:
                 requests.append((int(match.group(1)), match.group(2)))
         if not requests:
             raise ValueError("Aucune base rejetée réutilisable dans materialized_report.json.")
-        output = HERE / "01_requests" / "new_databases_complement_requests.jsonl"
+        output = HERE / "03_03_01_01_01_requests" / "new_databases_complement_requests.jsonl"
     else:
         requests = [(number, f"synthetic_{number:03d}") for number in range(1, args.count + 1)]
-        output = HERE / "01_requests" / "new_databases_requests.jsonl"
+        output = HERE / "03_03_01_01_01_requests" / "new_databases_requests.jsonl"
     if output.exists() and not args.overwrite:
         raise FileExistsError(f"{output} existe déjà ; utilisez --overwrite pour le remplacer.")
     lines = []
@@ -115,7 +115,7 @@ def main() -> None:
     batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "new-databases-creation", "mode": mode, "model": args.model, "count": str(len(requests))}}, token)
     state = {"mode": mode, "model": args.model, "requested_databases": len(requests), "request_file": output.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status"), "submitted_at": datetime.now(timezone.utc).isoformat()}
     state_name = "complement_batch_state.json" if args.retry_rejected else "batch_state.json"
-    state_path = HERE / "02_batch" / state_name; state_path.parent.mkdir(parents=True, exist_ok=True)
+    state_path = HERE / "03_03_01_01_02_batch" / state_name; state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(f"Batch soumis : {batch['id']}")
 

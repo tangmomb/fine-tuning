@@ -1,0 +1,11 @@
+{
+  "experiment": "C",
+  "model": "gpt-5.6-terra",
+  "exhaustive": true,
+  "submitted_at": "2026-10-06T12:50:39.484001+00:00",
+  "request_file": "C_judge_requests.jsonl",
+  "input_file_id": "file-TQZfCm3CBNtCbd1ZpMzdGg",
+  "batch_id": "batch_6ac4ee9f083c8190bb4bc358cc30c693",
+  "status": "collected",
+  "raw_output_file": "C_batch_6ac4ee9f083c8190bb4bc358cc30c693_judge_output.jsonl"
+}

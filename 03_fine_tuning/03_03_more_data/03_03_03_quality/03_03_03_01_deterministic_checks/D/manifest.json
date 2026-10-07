@@ -1,0 +1,4114 @@
+{
+  "experiment": "D",
+  "requested": 8500,
+  "target": 5000,
+  "valid_candidates": 8660,
+  "selected": 5000,
+  "hardness_candidates": {
+    "extra": 4307,
+    "hard": 4353
+  },
+  "hardness_target": {
+    "hard": 2500,
+    "extra": 2500
+  },
+  "hardness_selected": {
+    "extra": 2500,
+    "hard": 2500
+  },
+  "hardness_shortfall": {},
+  "target_shortfall": 0,
+  "shortfall_by_database": {},
+  "rejected": 1021,
+  "reasons": {
+    "sql_execution_error": 1010,
+    "spider_parse_error": 1,
+    "duplicate": 10
+  },
+  "rejections": [
+    {
+      "id": "D:synthetic_001:hard:1:1:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_001:hard:1:1:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_006:hard:1:11:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_008:hard:1:15:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:25:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_017:hard:1:33:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:37:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_024:extra:1:48:30",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "D:synthetic_026:hard:1:51:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_032:hard:1:63:37",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_032:hard:1:63:39",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_032:hard:1:63:40",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_038:hard:1:75:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_043:hard:1:85:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_045:hard:1:89:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_047:hard:1:93:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_049:hard:1:97:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_053:hard:1:105:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:27",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_055:hard:1:109:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_057:hard:1:113:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_068:hard:1:135:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:151:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_082:hard:1:163:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_082:hard:1:163:1",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:179:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:181:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_096:hard:1:191:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:193:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:46",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:47",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:48",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:49",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:50",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:51",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:52",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:53",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:54",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_013:hard:1:204:55",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_019:hard:1:206:44",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_076:hard:1:215:10",
+      "reason": "duplicate"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:46",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:47",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:48",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:49",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:50",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:51",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:52",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:53",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_090:hard:1:217:54",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:46",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:47",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:48",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:49",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:50",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:51",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:52",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:53",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:54",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_091:hard:1:218:55",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:46",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "D:synthetic_097:hard:1:220:47",
+      "reason": "sql_execution_error"
+    }
+  ]
+}

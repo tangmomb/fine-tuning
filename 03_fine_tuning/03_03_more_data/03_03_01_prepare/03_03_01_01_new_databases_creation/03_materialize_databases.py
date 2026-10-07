@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any
 
 HERE = Path(__file__).resolve().parent
-FINAL = HERE / "04_final"
+FINAL = HERE / "03_03_01_01_04_final"
 DATABASES = FINAL / "databases"
 CATALOG = FINAL / "new_databases.jsonl"
 
@@ -66,8 +66,8 @@ def main() -> None:
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
     if args.input is None:
-        state = json.loads((HERE / "02_batch" / "batch_state.json").read_text(encoding="utf-8"))
-        args.input = HERE / "03_responses" / state["raw_output_file"]
+        state = json.loads((HERE / "03_03_01_01_02_batch" / "batch_state.json").read_text(encoding="utf-8"))
+        args.input = HERE / "03_03_01_01_03_responses" / state["raw_output_file"]
     if CATALOG.exists() and not args.overwrite and not args.append:
         raise FileExistsError(f"{CATALOG} existe déjà ; utilisez --overwrite pour le remplacer.")
     accepted, rejected = [], []

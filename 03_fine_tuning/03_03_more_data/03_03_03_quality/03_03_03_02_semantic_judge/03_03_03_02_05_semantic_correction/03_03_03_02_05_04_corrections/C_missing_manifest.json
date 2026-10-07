@@ -1,0 +1,8 @@
+{
+  "experiment": "C",
+  "input_count": 325,
+  "correction_status": {
+    "corrected": 325
+  },
+  "raw_response": "C_batch_6ac50a8763c08190934eb6728442198f_correction_output.jsonl"
+}

@@ -1,0 +1,12 @@
+{
+  "experiment": "D",
+  "exhaustive": true,
+  "audited_size": 5000,
+  "sample_seed": null,
+  "verdicts": {
+    "fail": 191,
+    "pass": 4809
+  },
+  "missing_verdicts": 0,
+  "raw_response": "D_batch_6ac63317d0708190887fc43bf3e582b8_judge_output.jsonl"
+}

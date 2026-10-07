@@ -1,0 +1,958 @@
+{
+  "experiment": "C",
+  "requested": 8500,
+  "target": 5000,
+  "valid_candidates": 8572,
+  "selected": 5000,
+  "hardness_candidates": {
+    "hard": 4280,
+    "extra": 4292
+  },
+  "hardness_target": {
+    "hard": 2500,
+    "extra": 2500
+  },
+  "hardness_selected": {
+    "hard": 2500,
+    "extra": 2500
+  },
+  "hardness_shortfall": {},
+  "target_shortfall": 0,
+  "shortfall_by_database": {},
+  "rejected": 232,
+  "reasons": {
+    "duplicate": 12,
+    "sql_execution_error": 213,
+    "spider_parse_error": 7
+  },
+  "rejections": [
+    {
+      "id": "C:academic:hard:1:1:69",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:academic:hard:1:1:74",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:academic:hard:2:2:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:academic:hard:2:2:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:aircraft:hard:1:7:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:aircraft:extra:1:8:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:cinema:hard:1:33:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:46",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:47",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:48",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:49",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:50",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:51",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:52",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:53",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:54",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:55",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:56",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:57",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:58",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:59",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:60",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:61",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:62",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:63",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:64",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:65",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:66",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:67",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:68",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:college_1:hard:1:43:69",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:county_public_safety:extra:1:59:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:county_public_safety:extra:1:59:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:county_public_safety:extra:1:59:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:33",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:34",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:35",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:36",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:37",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:38",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:39",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:40",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:41",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:42",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:43",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:44",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:driving_school:hard:1:102:45",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:flight_4:hard:1:124:14",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:flight_company:hard:1:126:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:geo:extra:3:142:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:geo:extra:3:142:13",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:geo:extra:4:143:0",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:geo:extra:4:143:11",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:geo:extra:4:143:16",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:19",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:20",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:21",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:22",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:23",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:24",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:25",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:26",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:27",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:28",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:29",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:30",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:31",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:icfp_1:hard:1:150:32",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:13",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:14",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:15",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:musical:hard:1:192:18",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:scholar:hard:2:237:26",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:scholar:hard:3:238:41",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:scholar:hard:3:238:60",
+      "reason": "duplicate"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:1",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:2",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:3",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:4",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:5",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:6",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:7",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:8",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:10",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:11",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_finance:hard:1:246:12",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_player:hard:1:248:16",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:school_player:hard:1:248:17",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:workshop_paper:extra:1:305:0",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:wrestler:hard:1:306:9",
+      "reason": "sql_execution_error"
+    },
+    {
+      "id": "C:yelp:hard:1:308:16",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:hard:1:308:20",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:extra:1:309:8",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:extra:1:309:9",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:extra:1:309:10",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:extra:1:309:36",
+      "reason": "spider_parse_error"
+    },
+    {
+      "id": "C:yelp:extra:1:309:37",
+      "reason": "spider_parse_error"
+    }
+  ]
+}

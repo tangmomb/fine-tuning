@@ -4,7 +4,8 @@ A/C utilisent les bases existantes, B/D un catalogue externe. Les quotas sont
 pondérés selon ``source_examples`` pour les bases existantes et uniformes pour
 les nouvelles bases ; ils
 totalisent 5 000 exemples validés par défaut. ``request_quota`` applique une
-surproduction (1,25×) pour couvrir les rejets de validation.
+surproduction (1,70×) pour couvrir les rejets de validation et les écarts de
+classification de difficulté.
 """
 from __future__ import annotations
 import argparse, json
@@ -57,11 +58,9 @@ def main() -> None:
     parser.add_argument("--input", type=Path); parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(); args.source = ask_source(args.source)
     args.count = args.count if args.count is not None else int(input("Nombre final visé [5000] : ").strip() or "5000")
-    args.oversample_factor = args.oversample_factor if args.oversample_factor is not None else float(input("Facteur de surproduction [1.25] : ").strip() or "1.25")
+    args.oversample_factor = args.oversample_factor if args.oversample_factor is not None else float(input("Facteur de surproduction [1.70] : ").strip() or "1.70")
     default_input = PREPARE / "03_03_01_01_new_databases_creation" / "03_03_01_01_04_final" / "new_databases.jsonl"
-    input_path = args.input
-    if args.source == "new" and input_path is None:
-        input_path = Path(input(f"Catalogue des nouvelles bases [{default_input}] : ").strip() or default_input)
+    input_path = args.input or default_input
     databases = existing_databases() if args.source == "existing" else external_databases(input_path)
     if not databases: raise ValueError(f"Aucune base disponible pour {args.source}.")
     weights = {row["db_id"]: int(row["source_examples"]) for row in databases} if args.source == "existing" else {row["db_id"]: 1 for row in databases}

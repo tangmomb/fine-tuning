@@ -41,26 +41,29 @@ def output_text(response: dict) -> str | None:
             if content.get("type") == "output_text" and isinstance(content.get("text"), str): return content["text"]
     return None
 
-def prepare(experiment: str, model: str, retry: bool = False) -> Path:
-    prefix = "retry_" if retry else ""
-    source = ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_05_semantic_correction" / "03_03_03_02_05_04_corrections" / f"{experiment}_{prefix}corrected.jsonl"
-    corrected = [row for row in read(source) if row.get("correction_status") == "corrected"]
+def prepare(experiment: str, model: str, retry: bool = False, missing: bool = False, final: bool = False) -> Path:
+    prefix = "final_" if final else ("missing_" if missing else ("retry_" if retry else ""))
+    if missing:
+        source = WORK / "03_03_03_02_06_04_rejudgments" / f"{experiment}_rejudged.jsonl"
+        corrected = [row for row in read(source) if row.get("recheck_issues") == ["Verdict absent."]]
+    else:
+        correction_prefix = "final_" if final else ("retry_" if retry else "")
+        source = ROOT / "03_03_03_quality" / "03_03_03_02_semantic_judge" / "03_03_03_02_05_semantic_correction" / "03_03_03_02_05_04_corrections" / f"{experiment}_{correction_prefix}corrected.jsonl"
+        corrected = [row for row in read(source) if row.get("correction_status") == "corrected"]
     if not corrected: raise RuntimeError("Aucune correction disponible à re-juger.")
     write(WORK / "03_03_03_02_06_01_requests" / f"{experiment}_{prefix}to_rejudge.jsonl", corrected)
-    grouped: dict[str, list[dict]] = defaultdict(list)
-    for row in corrected: grouped[row["db_id"]].append(row)
     lines = []
-    for db_id, examples in sorted(grouped.items()):
-        prompt = ("Évalue chaque paire question/SQL pour ce schéma SQLite. Une paire est pass seulement si la question française décrit exactement le SQL ; fail si elle ajoute, retire ou modifie une contrainte ; uncertain si tu ne peux pas décider. Vérifie agrégations, filtres, jointures, négations, tris, limites et nombres.\n\n" + json.dumps({"schema": examples[0]["schema"], "examples": [{"id": row["id"], "question": row["question"], "sql": row["sql"]} for row in examples]}, ensure_ascii=False))
+    for index, row in enumerate(corrected, 1):
+        prompt = ("Évalue chaque paire question/SQL pour ce schéma SQLite. Une paire est pass seulement si la question française décrit exactement le SQL ; fail si elle ajoute, retire ou modifie une contrainte ; uncertain si tu ne peux pas décider. Vérifie agrégations, filtres, jointures, négations, tris, limites et nombres.\n\nLa requête contient une seule paire : retourne exactement un verdict pour cet identifiant.\n\n" + json.dumps({"schema": row["schema"], "examples": [{"id": row["id"], "question": row["question"], "sql": row["sql"]}]}, ensure_ascii=False))
         body = {"model": model, "input": [{"role": "system", "content": "Tu es un juge qualité text-to-SQL strict et indépendant."}, {"role": "user", "content": prompt}], "max_output_tokens": 8000, "text": {"format": {"type": "json_schema", "name": "semantic_recheck_verdicts", "strict": True, "schema": SCHEMA}}}
-        lines.append(json.dumps({"custom_id": f"rejudge:{experiment}:{db_id}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
+        lines.append(json.dumps({"custom_id": f"rejudge:{experiment}:{row['db_id']}:{index}", "method": "POST", "url": "/v1/responses", "body": body}, ensure_ascii=False))
     path = WORK / "03_03_03_02_06_01_requests" / f"{experiment}_{prefix}rejudge_requests.jsonl"; path.parent.mkdir(parents=True, exist_ok=True); path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"{len(corrected)} corrections à re-juger dans {len(lines)} requêtes : {path}"); return path
 
-def submit(experiment: str, model: str, path: Path, retry: bool = False) -> None:
+def submit(experiment: str, model: str, path: Path, retry: bool = False, missing: bool = False, final: bool = False) -> None:
     token = api_key(); uploaded = upload(path, token); batch = post("https://api.openai.com/v1/batches", {"input_file_id": uploaded["id"], "endpoint": "/v1/responses", "completion_window": "24h", "metadata": {"pipeline": "more-data-semantic-rejudge", "experiment": experiment, "model": model}}, token)
-    state = {"experiment": experiment, "model": model, "retry": retry, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
-    prefix = "retry_" if retry else ""
+    state = {"experiment": experiment, "model": model, "retry": retry, "missing": missing, "final": final, "submitted_at": datetime.now(timezone.utc).isoformat(), "request_file": path.name, "input_file_id": uploaded["id"], "batch_id": batch["id"], "status": batch.get("status")}
+    prefix = "final_" if final else ("missing_" if missing else ("retry_" if retry else ""))
     state_path = WORK / "03_03_03_02_06_02_submissions" / f"{experiment}_{prefix}rejudge_state.json"; state_path.parent.mkdir(parents=True, exist_ok=True); state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"Batch de re-jugement soumis : {batch['id']}")
 
 def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: str) -> None:
@@ -72,21 +75,27 @@ def collect(experiment: str, state_path: Path, state: dict, batch: dict, token: 
         except (json.JSONDecodeError, KeyError, TypeError): continue
         for answer in answers:
             if answer.get("verdict") in {"pass", "fail", "uncertain"} and isinstance(answer.get("id"), str) and isinstance(answer.get("issues"), list): verdicts[answer["id"]] = answer
-    prefix = "retry_" if state.get("retry") else ""
+    prefix = "final_" if state.get("final") else ("missing_" if state.get("missing") else ("retry_" if state.get("retry") else ""))
     corrected = read(WORK / "03_03_03_02_06_01_requests" / f"{experiment}_{prefix}to_rejudge.jsonl")
     rejudged = [{**row, "recheck_verdict": verdicts.get(row["id"], {}).get("verdict", "uncertain"), "recheck_issues": verdicts.get(row["id"], {}).get("issues", ["Verdict absent."])} for row in corrected]
     output_dir = WORK / "03_03_03_02_06_04_rejudgments"; write(output_dir / f"{experiment}_{prefix}rejudged.jsonl", rejudged)
-    manifest = {"experiment": experiment, "input_count": len(rejudged), "verdicts": dict(Counter(row["recheck_verdict"] for row in rejudged)), "raw_response": raw.name}; (output_dir / f"{experiment}_{prefix}manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if state.get("missing"):
+        base = output_dir / f"{experiment}_rejudged.jsonl"
+        merged = {row["id"]: row for row in read(base)}
+        merged.update({row["id"]: row for row in rejudged})
+        write(base, list(merged.values()))
+    manifest = {"experiment": experiment, "input_count": len(rejudged), "verdicts": dict(Counter(row["recheck_verdict"] for row in rejudged)), "missing_verdicts": sum(row["id"] not in verdicts for row in corrected), "raw_response": raw.name}; (output_dir / f"{experiment}_{prefix}manifest.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     state["status"] = "collected"; state["raw_output_file"] = raw.name; state_path.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8"); print(f"{len(rejudged)} re-jugements écrits dans {output_dir}")
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--submit", action="store_true"); parser.add_argument("--retry", action="store_true", help="Rejuge les corrections ciblées."); args = parser.parse_args()
+    parser = argparse.ArgumentParser(description=__doc__); parser.add_argument("--experiment", choices="ABCD"); parser.add_argument("--model"); parser.add_argument("--submit", action="store_true"); parser.add_argument("--retry", action="store_true", help="Rejuge les corrections ciblées."); parser.add_argument("--missing", action="store_true", help="Reprend les verdicts absents, une paire par requête."); parser.add_argument("--final", action="store_true", help="Rejuge le troisième cycle de correction."); args = parser.parse_args()
     experiment = args.experiment or input("Expérience à re-juger [A/B/C/D] : ").strip().upper()
     if experiment not in "ABCD": raise ValueError("Choix attendu : A, B, C ou D.")
-    model = args.model or input(f"Modèle juge [{MODEL}] : ").strip() or MODEL; prefix = "retry_" if args.retry else ""; state_path = WORK / "03_03_03_02_06_02_submissions" / f"{experiment}_{prefix}rejudge_state.json"
+    if sum((args.retry, args.missing, args.final)) > 1: raise ValueError("--retry, --missing et --final ne peuvent pas être combinés.")
+    model = args.model or input(f"Modèle juge [{MODEL}] : ").strip() or MODEL; prefix = "final_" if args.final else ("missing_" if args.missing else ("retry_" if args.retry else "")); state_path = WORK / "03_03_03_02_06_02_submissions" / f"{experiment}_{prefix}rejudge_state.json"
     if not state_path.is_file():
-        path = prepare(experiment, model, args.retry)
-        if args.submit or input("Soumettre le Batch de re-jugement à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}: submit(experiment, model, path, args.retry)
+        path = prepare(experiment, model, args.retry, args.missing, args.final)
+        if args.submit or input("Soumettre le Batch de re-jugement à OpenAI ? [o/N] ").strip().lower() in {"o", "oui"}: submit(experiment, model, path, args.retry, args.missing, args.final)
         return
     token = api_key(); state = json.loads(state_path.read_text(encoding="utf-8")); batch = json.loads(get(f"https://api.openai.com/v1/batches/{state['batch_id']}", token)); counts = batch.get("request_counts", {})
     print(f"Statut : {batch.get('status')} · {counts.get('completed', 0)}/{counts.get('total', 0)} terminées · {counts.get('failed', 0)} échouées")

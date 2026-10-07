@@ -1,0 +1,10 @@
+{
+  "experiment": "B",
+  "examples": 5000,
+  "format": "chat_messages_jsonl_text_to_sql",
+  "semantic_validation": {
+    "initial_pass": 4877,
+    "corrected_pass": 123,
+    "retry_corrected_pass": 0
+  }
+}

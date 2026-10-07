@@ -1,0 +1,12 @@
+{
+  "experiment": "C",
+  "model": "gpt-5.6-luna",
+  "mode": "standard",
+  "requested_examples": 8500,
+  "raw_output_files": [
+    "C_consolidated_output.jsonl"
+  ],
+  "raw_output_file": "C_consolidated_output.jsonl",
+  "request_file": "C_requests.jsonl",
+  "status": "completed"
+}

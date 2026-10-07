@@ -1,0 +1,10 @@
+{
+  "experiment": "C",
+  "input_count": 3,
+  "verdicts": {
+    "pass": 3
+  },
+  "missing_verdicts": 0,
+  "raw_response": "C_batch_6ac633e24fbc8190acceb6934ecb6270_rejudge_output.jsonl",
+  "manual_final_corrections": 1
+}
