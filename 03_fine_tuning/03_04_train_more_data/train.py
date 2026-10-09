@@ -29,6 +29,9 @@ FIXED_MODEL = "Qwen3.5-2B"
 FIXED_EPOCHS = "3"
 FIXED_LORA_PRESET = "A"
 FIXED_LEARNING_RATE = "1e-4"
+FIXED_GPUS = 1
+FIXED_PER_DEVICE_BATCH_SIZE = "8"
+FIXED_GRADIENT_ACCUMULATION_STEPS = "8"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -131,8 +134,8 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
                         help="Expérience du chapitre 06 : A, B, C ou D. Demandée au lancement si absente.")
     parser.add_argument("--rebuild-dataset", action="store_true",
                         help="Reconstruit train_plus_<exp>.jsonl et son manifeste.")
-    parser.add_argument("--gpus", type=int, choices=(1, 2),
-                        help="Nombre de H100 utilisées. Demandé au lancement si absent (2 par défaut).")
+    parser.add_argument("--gpus", type=int, choices=(1,),
+                        help="Compatibilité CLI : ce protocole utilise une seule H100.")
     return parser.parse_known_args()
 
 
@@ -155,8 +158,7 @@ def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -
     """Demande le choix d'expérience puis applique la configuration retenue."""
     if args.experiment is None:
         args.experiment = prompt_choice("Expérience", EXPERIMENTS, "A")
-    if args.gpus is None:
-        args.gpus = int(prompt_choice("Nombre de GPU H100", ("1", "2"), "2"))
+    args.gpus = FIXED_GPUS
 
     # Ce protocole compare les expériences A à D avec une configuration strictement identique.
     if has_option(trainer_args, "--models"):
@@ -177,6 +179,8 @@ def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -
         ("--epochs", FIXED_EPOCHS),
         ("--lora-preset", FIXED_LORA_PRESET),
         ("--learning-rate", FIXED_LEARNING_RATE),
+        ("--per-device-batch-size", FIXED_PER_DEVICE_BATCH_SIZE),
+        ("--gradient-accumulation-steps", FIXED_GRADIENT_ACCUMULATION_STEPS),
     )
     for option, value in fixed_options:
         if has_option(trainer_args, option):
@@ -184,7 +188,9 @@ def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -
         trainer_args.extend((option, value))
     print(
         f"Configuration fixe : {FIXED_MODEL} · LoRA r=8, alpha=16 · "
-        f"learning rate {FIXED_LEARNING_RATE} · {FIXED_EPOCHS} époques"
+        f"learning rate {FIXED_LEARNING_RATE} · {FIXED_EPOCHS} époques · "
+        f"1 H100 · batch local {FIXED_PER_DEVICE_BATCH_SIZE} · "
+        f"accumulation {FIXED_GRADIENT_ACCUMULATION_STEPS} · batch effectif 64"
     )
 
 
@@ -194,13 +200,6 @@ def main() -> None:
     dataset = build_combined_dataset(args.experiment, args.rebuild_dataset)
     campaign_dir = campaign_artifacts_dir()
     campaign_dir.mkdir(parents=True, exist_ok=True)
-    # 2 GPU × batch local 4 × accumulation 8 = batch effectif 64, identique
-    # au protocole mono-GPU historique (1 × 2 × 32), mais avec deux fois moins
-    # de micro-batches. Les valeurs explicitement fournies sont respectées.
-    if args.gpus == 2 and not has_option(trainer_args, "--per-device-batch-size"):
-        trainer_args.extend(("--per-device-batch-size", "4"))
-    if args.gpus == 2 and not has_option(trainer_args, "--gradient-accumulation-steps"):
-        trainer_args.extend(("--gradient-accumulation-steps", "8"))
     if not has_option(trainer_args, "--run-name"):
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
         trainer_args.extend(("--run-name", f"more-data-{args.experiment.lower()}-{timestamp}"))
@@ -214,7 +213,7 @@ def main() -> None:
         "--output-root", str(campaign_dir / args.experiment),
         *trainer_args,
     ]
-    print(f"Lancement distribué sur {args.gpus} H100 avec le dataset enrichi…")
+    print("Lancement sur une H100 avec le dataset enrichi…")
     subprocess.run(command, check=True)
 
 

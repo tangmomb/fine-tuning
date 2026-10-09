@@ -21,7 +21,7 @@ python 03_fine_tuning/03_03_more_data/03_03_04_export/build_sft.py --experiment 
 
 ## Lancement
 
-Depuis la racine du dépôt, le lanceur demande uniquement l'expérience et le nombre de GPU. La configuration est fixe pour que les résultats A à D soient comparables : **Qwen 3.5 2B · LoRA A (`r=8`, `alpha=16`) · learning rate `1e-4` · 3 époques**.
+Depuis la racine du dépôt, le lanceur demande uniquement l'expérience. La configuration est fixe pour que les résultats A à D soient comparables : **Qwen 3.5 2B · LoRA A (`r=8`, `alpha=16`) · learning rate `1e-4` · 3 époques · 1 H100 80 Go · batch local 8 · accumulation 8 · batch effectif 64**.
 
 ```powershell
 python 03_fine_tuning/03_04_train_more_data/train.py
@@ -30,7 +30,7 @@ python 03_fine_tuning/03_04_train_more_data/train.py
 Pour un lancement non interactif reproductible :
 
 ```powershell
-python 03_fine_tuning/03_04_train_more_data/train.py --experiment A --gpus 2
+python 03_fine_tuning/03_04_train_more_data/train.py --experiment A
 ```
 
 Le lanceur :
@@ -40,11 +40,11 @@ Le lanceur :
 - délègue ensuite à `01_train_main/train.py`, avec le même entraînement LoRA, la même validation et les mêmes garde-fous pour le test ;
 - regroupe les expériences lancées le même jour dans `03_fine_tuning/artifacts/data-scaling-new-data-YYYYMMDD/`, puis les sépare dans les sous-dossiers `A/`, `B/`, `C/` et `D/`.
 
-Par défaut, le lancement utilise les **deux H100** de l'instance Scaleway `H100-2-80G`, via `torchrun`. Le batch par GPU est porté à 4 et l'accumulation de gradients passe automatiquement à 8 : le batch effectif demeure donc 64 (`2 GPU × 4 × 8`), comme dans le protocole mono-GPU historique (`1 × 2 × 32`). Cela réduit le nombre de micro-batches et exploite mieux les H100, tout en gardant des résultats comparables.
+Le lancement utilise exclusivement **une H100 80 Go**, via `torchrun`. Le batch local est fixé à 8 et l'accumulation de gradients à 8 : le batch effectif demeure 64 (`1 GPU × 8 × 8`). Cette configuration exploite mieux la mémoire disponible que le profil historique (`1 × 2 × 32`) tout en préservant un batch effectif comparable.
 
-Les questions sont posées **avant** le démarrage de `torchrun`. Les deux processus GPU reçoivent ensuite les options déjà résolues et ne lisent jamais le terminal en parallèle.
+La question est posée **avant** le démarrage de `torchrun`. Le processus GPU reçoit ensuite les options déjà résolues et ne lit jamais le terminal pendant l'entraînement.
 
-Pour garder un lancement mono-GPU, ajoutez `--gpus 1`. Si vous fournissez explicitement `--gradient-accumulation-steps`, cette valeur est conservée.
+Le nombre de GPU, le batch local et l'accumulation sont verrouillés par le protocole afin de conserver des comparaisons A à D cohérentes.
 
 Après chaque entraînement, consultez `artifacts/<exp>/<run>/logs/gpu_rank-0_telemetry.jsonl` et `gpu_rank-1_telemetry.jsonl`. Ils consignent le débit par fenêtre de logs ainsi que la mémoire allouée, réservée et de pic. Pour un résumé :
 
