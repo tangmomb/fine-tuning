@@ -190,6 +190,7 @@ body.has-open-lightbox { overflow: hidden; }
 .scaling-bubbles strong { color: var(--text); font-weight: 600; }
 .difficulty-comparison { display: grid; gap: 9px; margin-top: 9px; }
 .difficulty-source { color: #b5c4d7; font-size: .7rem; font-weight: 750; letter-spacing: .05em; text-transform: uppercase; }
+.historical-proportions-note { color: #73bff5; font-weight: 200; }
 .difficulty-bubbles { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 5px; }
 .difficulty-bubbles span { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid #31556b; border-radius: 999px; background: #101c28; color: var(--muted); font-size: .72rem; }
 .difficulty-bubbles code { color: #60d3ff; font-size: .7rem; }
@@ -197,8 +198,8 @@ body.has-open-lightbox { overflow: hidden; }
 .difficulty-bubbles span:nth-child(2) { border-color: #9c8240; background: #302817; }.difficulty-bubbles span:nth-child(2) code { color: #ffda72; }
 .difficulty-bubbles span:nth-child(3) { border-color: #9f6740; background: #332015; }.difficulty-bubbles span:nth-child(3) code { color: #ffa468; }
 .difficulty-bubbles span:nth-child(4) { border-color: #974b57; background: #32181d; }.difficulty-bubbles span:nth-child(4) code { color: #ff9298; }
-.dataset-card-c .difficulty-bubbles span:nth-child(1) { border-color: #9f6740; background: #332015; }.dataset-card-c .difficulty-bubbles span:nth-child(1) code { color: #ffa468; }
-.dataset-card-c .difficulty-bubbles span:nth-child(2) { border-color: #974b57; background: #32181d; }.dataset-card-c .difficulty-bubbles span:nth-child(2) code { color: #ff9298; }
+.dataset-card-c .difficulty-bubbles span:nth-child(1),.dataset-card-d .difficulty-bubbles span:nth-child(1) { border-color: #9f6740; background: #332015; }.dataset-card-c .difficulty-bubbles span:nth-child(1) code,.dataset-card-d .difficulty-bubbles span:nth-child(1) code { color: #ffa468; }
+.dataset-card-c .difficulty-bubbles span:nth-child(2),.dataset-card-d .difficulty-bubbles span:nth-child(2) { border-color: #974b57; background: #32181d; }.dataset-card-c .difficulty-bubbles span:nth-child(2) code,.dataset-card-d .difficulty-bubbles span:nth-child(2) code { color: #ff9298; }
 .difficulty-bubbles strong { color: var(--text); font-size: .76rem; }
 .difficulty-bubbles small { color: var(--text); font-size: .68rem; font-weight: 400; }
 .difficulty-bars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 14px; }

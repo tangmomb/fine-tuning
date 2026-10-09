@@ -22,9 +22,13 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE_TRAIN = ROOT / "01_data" / "01_06_training_dataset" / "01_06_03_production" / "train.jsonl"
 SYNTHETIC_DIR = ROOT / "03_fine_tuning" / "03_03_more_data" / "03_03_04_export"
 COMBINED_DIR = Path(__file__).resolve().parent / "01_datasets"
-ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
+ARTIFACTS_ROOT = ROOT / "03_fine_tuning" / "artifacts"
 MAIN_TRAINER = ROOT / "03_fine_tuning" / "03_01_train_main" / "train.py"
 EXPERIMENTS = ("A", "B", "C", "D")
+FIXED_MODEL = "Qwen3.5-2B"
+FIXED_EPOCHS = "3"
+FIXED_LORA_PRESET = "A"
+FIXED_LEARNING_RATE = "1e-4"
 
 
 def read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -55,6 +59,12 @@ def validate_rows(rows: list[dict[str, Any]], path: Path) -> None:
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def campaign_artifacts_dir() -> Path:
+    """Réunit les expériences A à D lancées le même jour dans une campagne."""
+    date_tag = datetime.now(timezone.utc).strftime("%Y%m%d")
+    return ARTIFACTS_ROOT / f"data-scaling-new-data-{date_tag}"
 
 
 def build_combined_dataset(experiment: str, rebuild: bool) -> Path:
@@ -117,12 +127,12 @@ def parse_args() -> tuple[argparse.Namespace, list[str]]:
         description=__doc__,
         epilog="Les autres options sont transmises à 01_train_main/train.py, par exemple --models Qwen3.5-2B --epochs 3 --lora-preset A --learning-rate 1e-4.",
     )
-    parser.add_argument("--experiment", required=True, choices=EXPERIMENTS,
-                        help="Expérience du chapitre 06 : A, B, C ou D.")
+    parser.add_argument("--experiment", choices=EXPERIMENTS,
+                        help="Expérience du chapitre 06 : A, B, C ou D. Demandée au lancement si absente.")
     parser.add_argument("--rebuild-dataset", action="store_true",
                         help="Reconstruit train_plus_<exp>.jsonl et son manifeste.")
-    parser.add_argument("--gpus", type=int, choices=(1, 2), default=2,
-                        help="Nombre de H100 utilisées (2 par défaut ; 1 pour un lancement mono-GPU).")
+    parser.add_argument("--gpus", type=int, choices=(1, 2),
+                        help="Nombre de H100 utilisées. Demandé au lancement si absent (2 par défaut).")
     return parser.parse_known_args()
 
 
@@ -130,18 +140,60 @@ def has_option(arguments: list[str], option: str) -> bool:
     return any(argument == option or argument.startswith(f"{option}=") for argument in arguments)
 
 
+def prompt_choice(label: str, choices: tuple[str, ...], default: str) -> str:
+    """Demande un choix simple avant de démarrer torchrun."""
+    displayed = "/".join(choices)
+    while True:
+        choice = input(f"{label} [{default}] ({displayed}) : ").strip() or default
+        matching_choice = next((item for item in choices if item.lower() == choice.lower()), None)
+        if matching_choice is not None:
+            return matching_choice
+        print(f"Choix invalide : entrez l'une des valeurs suivantes : {displayed}.")
+
+
+def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -> None:
+    """Demande le choix d'expérience puis applique la configuration retenue."""
+    if args.experiment is None:
+        args.experiment = prompt_choice("Expérience", EXPERIMENTS, "A")
+    if args.gpus is None:
+        args.gpus = int(prompt_choice("Nombre de GPU H100", ("1", "2"), "2"))
+
+    # Ce protocole compare les expériences A à D avec une configuration strictement identique.
+    if has_option(trainer_args, "--models"):
+        model_index = next(index for index, value in enumerate(trainer_args) if value == "--models")
+        supplied_models = []
+        for value in trainer_args[model_index + 1:]:
+            if value.startswith("--"):
+                break
+            supplied_models.append(value)
+        if supplied_models != [FIXED_MODEL]:
+            raise ValueError(f"Ce lanceur entraîne uniquement {FIXED_MODEL}. Retirez --models ou utilisez --models {FIXED_MODEL}.")
+    else:
+        trainer_args.extend(("--models", FIXED_MODEL))
+
+    if has_option(trainer_args, "--evaluate-run"):
+        return
+    fixed_options = (
+        ("--epochs", FIXED_EPOCHS),
+        ("--lora-preset", FIXED_LORA_PRESET),
+        ("--learning-rate", FIXED_LEARNING_RATE),
+    )
+    for option, value in fixed_options:
+        if has_option(trainer_args, option):
+            raise ValueError(f"{option} est fixé à {value} pour ce protocole et ne peut pas être modifié.")
+        trainer_args.extend((option, value))
+    print(
+        f"Configuration fixe : {FIXED_MODEL} · LoRA r=8, alpha=16 · "
+        f"learning rate {FIXED_LEARNING_RATE} · {FIXED_EPOCHS} époques"
+    )
+
+
 def main() -> None:
     args, trainer_args = parse_args()
+    prompt_training_options(args, trainer_args)
     dataset = build_combined_dataset(args.experiment, args.rebuild_dataset)
-    ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
-    if args.gpus == 2 and not has_option(trainer_args, "--evaluate-run"):
-        interactive_options = ("--models", "--epochs", "--lora-preset", "--learning-rate")
-        missing = [option for option in interactive_options if not has_option(trainer_args, option)]
-        if missing:
-            raise ValueError(
-                "Un lancement sur deux GPU doit être non interactif pour garder les deux rangs synchronisés. "
-                f"Ajoutez : {' '.join(missing)}"
-            )
+    campaign_dir = campaign_artifacts_dir()
+    campaign_dir.mkdir(parents=True, exist_ok=True)
     # 2 GPU × batch local 4 × accumulation 8 = batch effectif 64, identique
     # au protocole mono-GPU historique (1 × 2 × 32), mais avec deux fois moins
     # de micro-batches. Les valeurs explicitement fournies sont respectées.
@@ -159,7 +211,7 @@ def main() -> None:
         sys.executable, "-m", "torch.distributed.run", "--standalone",
         "--nproc_per_node", str(launch_gpus), str(MAIN_TRAINER),
         "--dataset", str(dataset),
-        "--output-root", str(ARTIFACTS_DIR / args.experiment),
+        "--output-root", str(campaign_dir / args.experiment),
         *trainer_args,
     ]
     print(f"Lancement distribué sur {args.gpus} H100 avec le dataset enrichi…")

@@ -1329,13 +1329,14 @@
             <br />
             <p>
               5&nbsp;000 paires valides, réparties sur les 146 bases existantes,
-              en respecant les proportions historiques
-              <i
-                >(si la base 1 avait 15 exemples, elle en aura aussi 15 dans ce
+              en respectant les proportions historiques.
+              <i class="historical-proportions-note"
+                >Si la base 1 avait 15 exemples, elle en aura aussi 15 dans ce
                 nouveau dataset, et si dans ces 15 exemples, il y en avait 5
-                hard, il y en aura à peu près 5 aussi)</i
-              >, avec un niveau de difficulté Spider <code>easy</code> à
-              <code>extra</code>, réparti ainsi :
+                hard, il y en aura à peu près 5 aussi.</i
+              >
+              On obtient donc une répartition Spider proche de celle du train
+              set initial, avec un léger écart dû aux arrondis.:
             </p>
             <div
               class="difficulty-comparison"
@@ -1410,7 +1411,7 @@
               5&nbsp;000 paires valides, réparties sur les 100 nouvelles bases
               de manière équitable, avec un niveau de difficulté Spider
               <code>easy</code> à <code>extra</code>, réparti exactement à
-              25&nbsp;% par niveau de difficulté." :
+              25&nbsp;% par niveau de difficulté :
             </p>
             <div
               class="difficulty-comparison"
@@ -1477,10 +1478,16 @@
             </p>
             <br />
             <p>
-              5&nbsp;000 paires finales, réparties sur les 146 bases
-              existantes selon leurs quotas historiques, avec un niveau de
-              difficulté Spider <code>hard</code> et <code>extra</code>
-              réparti exactement à 50&nbsp;% par niveau :
+              5&nbsp;000 paires finales, réparties sur les 146 bases existantes
+              selon leurs quotas historiques totaux, puis répartition à parts
+              égales entre les deux niveaux de difficulté Spider
+              <code>hard</code> et <code>extra</code>.
+              <i class="historical-proportions-note"
+                >Si la base 1 avait 16 exemples (peu importe les niveaux), elle
+                en aura aussi 16 dans ce nouveau dataset, avec 8 exemples de
+                chaque difficulté.</i
+              >
+              On obtient au final cette répartition exacte :
             </p>
             <div
               class="difficulty-comparison"
@@ -1498,21 +1505,7 @@
                   >
                 </div>
               </div>
-              <p>
-                Chaque base conserve son quota historique, partagé aussi
-                équitablement que possible entre <code>hard</code> et
-                <code>extra</code>.
-              </p>
             </div>
-            <p class="train-distribution-reminder">
-              Le juge sémantique Terra a validé directement 4&nbsp;539 paires.
-              Parmi les 461 restantes, 438 ont été validées après un premier
-              cycle de correction et de re-jugement, 20 après un deuxième,
-              puis 2 après un troisième. Le dernier cas a été corrigé
-              manuellement pour expliciter la conservation des doublons,
-              conformément au SQL&nbsp;: les 5&nbsp;000 paires sont donc
-              finalisées.
-            </p>
           </div>
           <div class="training-parameters dataset-card dataset-card-d">
             <p>Dataset D</p>
@@ -1571,18 +1564,11 @@
                 </div>
               </div>
               <p>
-                Chaque nouvelle base comporte exactement 50 paires valides,
-                partagées à parts égales entre <code>hard</code> et
-                <code>extra</code>.
+                Chaque base a donc exactement 50 paires valides, 25 paires de
+                chaque niveau de difficulté, partagées à parts égales entre
+                <code>hard</code> et <code>extra</code>.
               </p>
             </div>
-            <p class="train-distribution-reminder">
-              Le juge sémantique Terra a validé directement 4&nbsp;809 paires.
-              Parmi les 191 restantes, 187 ont été validées après un premier
-              cycle de correction et de re-jugement, puis 3 après un deuxième
-              et 1 après un troisième&nbsp;: les 5&nbsp;000 paires sont donc
-              finalisées.
-            </p>
           </div>
         </div>
         <div

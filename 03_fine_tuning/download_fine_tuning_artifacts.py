@@ -1,8 +1,9 @@
-"""Télécharge les artefacts de fine-tuning produits sur une H100.
+"""Télécharge sans écrasement les nouveaux artefacts de fine-tuning d'une H100.
 
-Les dossiers de runs distants sous ``03_fine_tuning/artifacts/`` sont copiés
-dans le même dossier du dépôt local. Les artefacts restent volontairement hors
-de Git : ils incluent des poids LoRA, checkpoints, prédictions et logs.
+Seuls les dossiers de runs absents du dossier local sont copiés. Un dossier
+ayant le même nom est ignoré, afin de ne jamais fusionner ou écraser des poids,
+checkpoints, prédictions ou logs déjà téléchargés. Les artefacts restent
+volontairement hors de Git.
 """
 
 from __future__ import annotations
@@ -51,7 +52,18 @@ def list_remote_runs(target: str, options: list[str]) -> list[str]:
     except subprocess.CalledProcessError as error:
         detail = error.stderr.strip() or f"code {error.returncode}"
         raise SystemExit(f"Impossible de lister les artefacts distants : {detail}") from error
-    return [line for line in result.stdout.splitlines() if line.strip()]
+    runs = [line for line in result.stdout.splitlines() if line.strip()]
+    invalid = [run for run in runs if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", run)]
+    if invalid:
+        raise SystemExit(f"Nom(s) de dossier distant invalide(s) : {', '.join(invalid)}")
+    return runs
+
+
+def new_runs(runs: list[str]) -> tuple[list[str], list[str]]:
+    """Sépare les nouveaux dossiers de ceux déjà présents localement."""
+    pending = [run for run in runs if not (DESTINATION / run).exists()]
+    skipped = [run for run in runs if (DESTINATION / run).exists()]
+    return pending, skipped
 
 
 def main() -> None:
@@ -66,17 +78,33 @@ def main() -> None:
         print(f"  - {run}")
 
     DESTINATION.mkdir(parents=True, exist_ok=True)
-    print(f"Téléchargement dans {DESTINATION}…")
-    command = [
-        "scp", *options, "-r",
-        f"{target}:{REMOTE_ARTIFACTS}/.",
-        str(DESTINATION),
-    ]
-    try:
-        subprocess.run(command, check=True)
-    except subprocess.CalledProcessError as error:
-        raise SystemExit(f"Téléchargement échoué (code {error.returncode}).") from error
-    print(f"Artefacts téléchargés dans : {DESTINATION}")
+    pending, skipped = new_runs(runs)
+    if skipped:
+        print("Runs déjà présents, ignorés sans modification :")
+        for run in skipped:
+            print(f"  - {run}")
+    if not pending:
+        print("Aucun nouvel artefact à télécharger.")
+        return
+
+    print(f"Téléchargement sans écrasement dans {DESTINATION}…")
+    for run in pending:
+        # Vérification répétée juste avant la copie, pour éviter un conflit créé
+        # entre l'inventaire initial et la commande scp.
+        if (DESTINATION / run).exists():
+            print(f"  - {run} ignoré : présent localement depuis l'inventaire.")
+            continue
+        command = [
+            "scp", *options, "-r",
+            f"{target}:{REMOTE_ARTIFACTS}/{run}",
+            str(DESTINATION),
+        ]
+        try:
+            subprocess.run(command, check=True)
+        except subprocess.CalledProcessError as error:
+            raise SystemExit(f"Téléchargement de {run} échoué (code {error.returncode}).") from error
+        print(f"  - {run} téléchargé")
+    print(f"Artefacts disponibles dans : {DESTINATION}")
 
 
 if __name__ == "__main__":
