@@ -51,6 +51,9 @@
 .training-parameters strong { color: var(--text); white-space: nowrap; }
 .dataset-card { margin-top: 0; padding: 20px; border-color: var(--border); border-left: 4px solid var(--border); background: #141d28; line-height: 1.6; }
 .dataset-card > p:first-child { display: inline-block; margin: 0 0 13px; padding: 3px 10px; border: 1px solid #27799b; border-radius: 999px; color: #60d3ff; font-size: .72rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.dataset-badge { display: inline-block; padding: 3px 10px; border: 1px solid; border-radius: 999px; font-size: .72rem; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.dataset-badge-a { border-color: #8b54bf; color: #c084fc; }.dataset-badge-b { border-color: #168ba0; color: #22d3ee; }.dataset-badge-c { border-color: #b34b97; color: #f472d0; }.dataset-badge-d { border-color: #0050d8; color: #005ffe; }
+.dataset-badge-note { display: block; margin-top: 3px; }
 .dataset-card > strong { display: block; margin: 14px 0 3px; color: #60d3ff; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; }
 .dataset-card > strong:first-of-type { margin-top: 0; }
 .dataset-card > p:not(:first-child) { margin: 0; }
@@ -170,6 +173,7 @@ body.has-open-lightbox { overflow: hidden; }
 @media (max-width: 720px) { .data-creation-carousel .new-database-step:first-child { flex-basis: calc(100% - 46px); }.quota-variants { grid-template-columns: 1fr; } }
 .evaluation-table .model-qwen-0-8b td { background: #172938; }.evaluation-table .model-qwen-0-8b:hover td { background: #213b50; }
 .evaluation-table .model-qwen-2b td { background: #182f36; }.evaluation-table .model-qwen-2b:hover td { background: #22434c; }
+.evaluation-table .baseline-row td { background: var(--surface); }.evaluation-table .baseline-row:hover td { background: #1a2939; }
 .evaluation-table .model-qwen-4b td { background: #252b40; }.evaluation-table .model-qwen-4b:hover td { background: #353f5c; }
 .evaluation-table .model-qwen-9b td { background: #33283f; }.evaluation-table .model-qwen-9b:hover td { background: #4a385a; }
 .evaluation-table .model-gpt-5-6-luna td { background: #050505; }.evaluation-table .model-gpt-5-6-luna:hover td { background: #101010; }

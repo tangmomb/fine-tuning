@@ -1571,6 +1571,146 @@
             </div>
           </div>
         </div>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.2 · Résultats des entraînements</p>
+          <h3>Quel ajout de données améliore réellement la validation&nbsp;?</h3>
+        </div>
+        <p>
+          Les quatre expériences ajoutent 5&nbsp;000 exemples synthétiques au
+          train Spider initial (8&nbsp;651 exemples), avec la même configuration
+          Qwen&nbsp;3.5&nbsp;2B, LoRA <code>r=8</code> · <code>α=16</code>,
+          learning rate <code>1e-4</code> et 3 époques. Le tableau retient le
+          meilleur checkpoint de chaque expérience sur les 1&nbsp;034 exemples
+          du jeu de validation.
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Train</th>
+                  <th>Nombre d’exemples</th>
+                  <th>Meilleur checkpoint</th>
+                  <th>Execution Accuracy · validation</th>
+                  <th>Gain vs. baseline</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Train set Spider initial uniquement</td>
+                  <td>8&nbsp;651</td>
+                  <td>Epoch 3</td>
+                  <td>66,44&nbsp;%</td>
+                  <td>—</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A</span> + Train set Spider initial<small class="dataset-badge-note">Bases existantes<br />Tous niveaux</small></td>
+                  <td>13&nbsp;651</td>
+                  <td>Epoch 3</td>
+                  <td class="best">67,70&nbsp;%</td>
+                  <td>+1,26 points</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-b">Dataset B</span> + Train set Spider initial<small class="dataset-badge-note">Nouvelles bases<br />Tous niveaux</small></td>
+                  <td>13&nbsp;651</td>
+                  <td>Epoch 3</td>
+                  <td>66,63&nbsp;%</td>
+                  <td>+0,19 point</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-c">Dataset C</span> + Train set Spider initial<small class="dataset-badge-note">Bases existantes<br />Données difficiles</small></td>
+                  <td>13&nbsp;651</td>
+                  <td>Epoch 2</td>
+                  <td>66,92&nbsp;%</td>
+                  <td>+0,48 point</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-d">Dataset D</span> + Train set Spider initial<small class="dataset-badge-note">Nouvelles bases<br />Données difficiles</small></td>
+                  <td>13&nbsp;651</td>
+                  <td>Epoch 3</td>
+                  <td>65,86&nbsp;%</td>
+                  <td class="worst">−0,58 point</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <aside class="conclusion-box" aria-labelledby="conclusion-nouvelles-donnees">
+          <h3 id="conclusion-nouvelles-donnees">Que peut-on en conclure&nbsp;?</h3>
+          <ul>
+            <li>
+              C’est décevant : les données ajoutées produisent très peu de
+              différence par rapport au train set Spider initial.
+            </li>
+          </ul>
+        </aside>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.3 · Analyse par difficulté</p>
+          <h3>Les résultats changent-ils selon la difficulté Spider&nbsp;?</h3>
+        </div>
+        <p>
+          Execution Accuracy sur les 1&nbsp;034 exemples de validation,
+          ventilée selon la difficulté Spider. Le nombre entre parenthèses
+          correspond aux requêtes correctes sur le total de la catégorie.
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Train</th>
+                  <th>Easy · 248 exemples</th>
+                  <th>Medium · 446 exemples</th>
+                  <th>Hard · 174 exemples</th>
+                  <th>Extra · 166 exemples</th>
+                  <th>Total · 1&nbsp;034 exemples</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Train set Spider initial uniquement</td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>67,71&nbsp;% <small>302 / 446</small></td>
+                  <td>58,05&nbsp;% <small>101 / 174</small></td>
+                  <td>45,18&nbsp;% <small>75 / 166</small></td>
+                  <td>66,44&nbsp;% <small>687 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A</span> + Train set Spider initial<small class="dataset-badge-note">Bases existantes<br />Tous niveaux</small></td>
+                  <td class="best">85,89&nbsp;% <small>213 / 248</small></td>
+                  <td>68,39&nbsp;% <small>305 / 446</small></td>
+                  <td>63,79&nbsp;% <small>111 / 174</small></td>
+                  <td>42,77&nbsp;% <small>71 / 166</small></td>
+                  <td class="best">67,70&nbsp;% <small>700 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-b">Dataset B</span> + Train set Spider initial<small class="dataset-badge-note">Nouvelles bases<br />Tous niveaux</small></td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>66,59&nbsp;% <small>297 / 446</small></td>
+                  <td class="best">64,37&nbsp;% <small>112 / 174</small></td>
+                  <td>42,77&nbsp;% <small>71 / 166</small></td>
+                  <td>66,63&nbsp;% <small>689 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-c">Dataset C</span> + Train set Spider initial<small class="dataset-badge-note">Bases existantes<br />Données difficiles</small></td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td class="best">68,61&nbsp;% <small>306 / 446</small></td>
+                  <td>59,77&nbsp;% <small>104 / 174</small></td>
+                  <td>43,98&nbsp;% <small>73 / 166</small></td>
+                  <td>66,92&nbsp;% <small>692 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-d">Dataset D</span> + Train set Spider initial<small class="dataset-badge-note">Nouvelles bases<br />Données difficiles</small></td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>68,16&nbsp;% <small>304 / 446</small></td>
+                  <td>59,77&nbsp;% <small>104 / 174</small></td>
+                  <td class="worst">38,55&nbsp;% <small>64 / 166</small></td>
+                  <td>65,86&nbsp;% <small>681 / 1&nbsp;034</small></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         <div
           class="report-lightbox"
           id="report-lightbox"
