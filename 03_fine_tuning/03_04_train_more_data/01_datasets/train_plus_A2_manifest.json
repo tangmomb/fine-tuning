@@ -1,0 +1,13 @@
+{
+  "experiment": "A2",
+  "base_dataset": "E:\\cooking\\fine-tuning\\01_data\\01_06_training_dataset\\01_06_03_production\\train.jsonl",
+  "base_dataset_sha256": "491768ac0d67e679604f9191b7d7268f7f7d6ae8503501ceb09768043203806d",
+  "base_examples": 8651,
+  "synthetic_dataset": "E:\\cooking\\fine-tuning\\03_fine_tuning\\03_03_more_data\\03_03_04_export\\synthetic_data_A2.jsonl",
+  "synthetic_dataset_sha256": "2dc2f4bca197d6477ef1137174817f48d60899c87449fb1ce169205bdd0b03fc",
+  "synthetic_examples_before_deduplication": 5000,
+  "synthetic_duplicates_already_in_train": 6,
+  "synthetic_examples_added": 4994,
+  "combined_examples": 13645,
+  "combined_dataset_sha256": "b78edd1e24d660231a0d1625a0b536860d1c575c9056e2ce2901faa6d399eb33"
+}

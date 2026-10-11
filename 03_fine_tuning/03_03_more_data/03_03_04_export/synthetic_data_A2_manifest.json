@@ -1,0 +1,21 @@
+{
+  "experiment": "A2",
+  "pipeline": "03_06_diverse_data",
+  "source": "03_fine_tuning\\03_06_diverse_data\\A_v2",
+  "examples": 5000,
+  "target": 5000,
+  "judged": 6024,
+  "verdicts": {
+    "pass": 5286,
+    "fail": 519,
+    "uncertain": 219
+  },
+  "databases": 146,
+  "hardness": {
+    "hard": 1202,
+    "medium": 1874,
+    "extra": 789,
+    "easy": 1135
+  },
+  "format": "chat_messages_jsonl_text_to_sql"
+}
