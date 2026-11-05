@@ -1644,6 +1644,12 @@
             </li>
           </ul>
         </aside>
+        <aside class="conclusion-box alert-box">
+          <p>
+            <strong>On fait face à un gros souci&nbsp;:</strong> les nouvelles
+            données n’apportent quasi rien. Essayons de comprendre pourquoi.
+          </p>
+        </aside>
         <div class="lora-subsection">
           <p class="eyebrow">06.3 · Analyse par difficulté</p>
           <h3>Les résultats changent-ils selon la difficulté Spider&nbsp;?</h3>
@@ -1717,13 +1723,79 @@
         </div>
         <p>
           La cause se trouve dans notre pipeline de génération. Pour que le
-          classifieur Spider accepte les requêtes, le prompt imposait
-          <strong>une seule forme de SQL par difficulté</strong>. Par exemple,
-          le niveau <code>hard</code> demandait de recopier
-          <code>SELECT col FROM t WHERE cle IN (SELECT cle FROM t)</code>, une
-          sous-requête sur la même table qui ne filtre rien. Ces requêtes sont
-          difficiles pour le classifieur, mais pas pour le modèle.
+          classifieur Spider accepte les requêtes, les prompts envoyés à
+          GPT-5.6 Luna imposaient
+          <strong>une seule forme de SQL par difficulté</strong>. Ces requêtes
+          sont difficiles pour le classifieur, mais pas pour le modèle.
         </p>
+        <div class="table-card training-results prompt-recipes">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Difficulté</th>
+                  <th>Ce que demandait le prompt envoyé à GPT-5.6 Luna</th>
+                  <th>Ce qu’on obtenait (datasets A à D)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Easy<small>2&nbsp;399 exemples</small></td>
+                  <td>
+                    Une seule table, une seule expression dans le
+                    <code>SELECT</code>, au plus un filtre simple. Ni agrégat, ni
+                    jointure, ni tri, ni sous-requête.
+                  </td>
+                  <td>
+                    <code>SELECT col FROM t</code> (42,5&nbsp;%) et
+                    <code>SELECT col FROM t WHERE col = valeur</code> (39,8&nbsp;%)
+                    <small>10 structures, dont 2 couvrent 82&nbsp;% des exemples</small>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Medium<small>2&nbsp;978 exemples</small></td>
+                  <td>
+                    Exactement
+                    <code>SELECT col, COUNT(*) FROM t GROUP BY col</code>. Rien
+                    d’autre.
+                  </td>
+                  <td>
+                    <code>SELECT col, COUNT(*) FROM t GROUP BY col</code> (100&nbsp;%)
+                    <small>1 seule structure</small>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Hard<small>7&nbsp;362 exemples</small></td>
+                  <td>
+                    Recopier
+                    <code>SELECT col FROM t WHERE cle IN (SELECT cle FROM t)</code>,
+                    avec la même table et la même clé dans la sous-requête. Ni
+                    alias, ni agrégat, ni jointure, ni tri.
+                  </td>
+                  <td>
+                    <code>SELECT col FROM t WHERE cle IN (SELECT cle FROM …)</code>
+                    (99,4&nbsp;%, avec ses variantes <code>NOT IN</code> et
+                    <code>DISTINCT</code>)
+                    <small>85&nbsp;% sur la même table et la même clé&nbsp;: le filtre ne filtre rien</small>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Extra<small>7&nbsp;261 exemples</small></td>
+                  <td>
+                    Exactement
+                    <code>SELECT col, COUNT(*) FROM t WHERE filtre1 AND filtre2 GROUP BY col</code>.
+                    Ni jointure, ni sous-requête, ni tri.
+                  </td>
+                  <td>
+                    <code>SELECT col, COUNT(*) FROM t WHERE filtre1 AND filtre2 GROUP BY col</code>
+                    (99,2&nbsp;%)
+                    <small>61 structures, qui ne diffèrent presque que par les opérateurs (=, &gt;, !=…)</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
         <div class="table-card training-results">
           <div class="table-scroll">
             <table class="evaluation-table">
@@ -1789,16 +1861,6 @@
                   <td>0&nbsp;%</td>
                   <td>50,0&nbsp;%</td>
                   <td>0&nbsp;%</td>
-                </tr>
-                <tr class="model-qwen-2b">
-                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span><small class="dataset-badge-note">Nouvelle génération (06.5)</small></td>
-                  <td class="best">1&nbsp;030</td>
-                  <td>41,6&nbsp;%</td>
-                  <td>14,0&nbsp;%</td>
-                  <td>21,4&nbsp;%</td>
-                  <td>13,8&nbsp;%</td>
-                  <td>22,0&nbsp;%</td>
-                  <td>6,6&nbsp;%</td>
                 </tr>
               </tbody>
             </table>
@@ -1897,16 +1959,24 @@
           Les contrôles de résultat vide ne s’appliquent pas aux 7 bases Spider
           livrées sans aucune ligne.
         </p>
+        <p>
+          Les 5&nbsp;000 paires de A2 retrouvent la diversité de Spider&nbsp;:
+          1&nbsp;030 structures SQL distinctes contre 1&nbsp;012 sur un échantillon
+          de même taille, 41,6&nbsp;% de <code>JOIN</code> (43,6&nbsp;% dans
+          Spider), 21,4&nbsp;% d’<code>ORDER BY</code> (20,2&nbsp;%) et 6,6&nbsp;%
+          d’opérations ensemblistes (6,4&nbsp;%). Seules les requêtes à 2
+          <code>JOIN</code> ou plus restent en retrait, à 14,0&nbsp;% contre
+          18,6&nbsp;%.
+        </p>
         <div class="lora-subsection">
           <p class="eyebrow">06.6 · Résultats de A2</p>
           <h3>Le gain se confirme-t-il sur deux graines&nbsp;?</h3>
         </div>
         <p>
           Nous comparons A2 au train Spider seul avec deux graines aléatoires,
-          à l’époque 3 et avec la même configuration que 06.2. Chaque paire a
-          tourné dans le même environnement&nbsp;: en Pologne pour la graine 42, à
-          Paris pour la graine 7. Il ne faut donc comparer les runs qu’à
-          l’intérieur d’une paire.
+          à l’époque 3 et avec la même configuration que 06.2. Les deux graines
+          n’ont pas tourné sur la même machine&nbsp;: il ne faut donc comparer les
+          runs qu’à l’intérieur d’une même graine.
         </p>
         <div class="table-card training-results">
           <div class="table-scroll">
@@ -1926,7 +1996,7 @@
               </thead>
               <tbody>
                 <tr class="model-qwen-2b">
-                  <td>42 · Pologne</td>
+                  <td>42</td>
                   <td>66,44&nbsp;%</td>
                   <td>70,41&nbsp;%</td>
                   <td class="best">+3,97 points</td>
@@ -1937,7 +2007,7 @@
                   <td>[+1,65&nbsp;; +6,73]</td>
                 </tr>
                 <tr class="model-qwen-2b">
-                  <td>7 · Paris</td>
+                  <td>7</td>
                   <td>65,67&nbsp;%</td>
                   <td>69,34&nbsp;%</td>
                   <td class="best">+3,67 points</td>

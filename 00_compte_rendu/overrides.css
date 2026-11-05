@@ -34,6 +34,12 @@
 .conclusion-box p { margin: 0; color: #f5f5f5; font-size: .88rem; }
 .conclusion-box ul { margin: 0; padding-left: 1.2rem; color: #f5f5f5; font-size: .88rem; }
 .conclusion-box li + li { margin-top: 5px; }
+.alert-box { border-color: #8f3b3b; border-left-color: #ef5350; background: linear-gradient(110deg, #3a1a1c, #1f1617); }
+.alert-box strong { color: #ff9c98; }
+.prompt-recipes + .table-card { margin-top: 16px; }
+.prompt-recipes .evaluation-table { min-width: 0; white-space: normal; }
+.prompt-recipes .evaluation-table th,.prompt-recipes .evaluation-table td { width: 42%; text-align: left; vertical-align: top; }
+.prompt-recipes .evaluation-table th:first-child,.prompt-recipes .evaluation-table td:first-child { width: 16%; white-space: nowrap; }
 .distribution-box { border-color: #27799b; border-left-color: #26c3ff; background: linear-gradient(110deg, #123443, #171d22); }
 
 #entrainements .section-heading,#optimisation-lora .section-heading,#data-scaling .section-heading,#quelles-donnees .section-heading { max-width: none; }
