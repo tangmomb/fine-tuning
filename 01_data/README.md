@@ -3,7 +3,7 @@
 Les dossiers suivent toujours l’ordre réel du pipeline. À chaque niveau, le préfixe numérique fixe la lecture : scripts, environnement (`pilot`, puis `production`), puis artefacts.
 
 ```text
-00_documentation/pipeline_visualisation/       documentation HTML du pipeline
+../00_compte_rendu/pipeline_visualisation/      documentation HTML du pipeline
 00_documentation/dataset_statistics/            interface de statistiques des datasets finaux
 01_00_shared/01_00_01_python/                           utilitaires Python partagés
 01_prepare/
