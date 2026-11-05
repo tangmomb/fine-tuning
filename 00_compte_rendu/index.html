@@ -1711,6 +1711,358 @@
             </table>
           </div>
         </div>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.4 · Diagnostic</p>
+          <h3>Pourquoi ces données n’ont-elles presque rien apporté&nbsp;?</h3>
+        </div>
+        <p>
+          La cause se trouve dans notre pipeline de génération. Pour que le
+          classifieur Spider accepte les requêtes, le prompt imposait
+          <strong>une seule forme de SQL par difficulté</strong>. Par exemple,
+          le niveau <code>hard</code> demandait de recopier
+          <code>SELECT col FROM t WHERE cle IN (SELECT cle FROM t)</code>, une
+          sous-requête sur la même table qui ne filtre rien. Ces requêtes sont
+          difficiles pour le classifieur, mais pas pour le modèle.
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>5&nbsp;000 exemples</th>
+                  <th>Structures SQL distinctes</th>
+                  <th>JOIN</th>
+                  <th>2 JOIN ou plus</th>
+                  <th>ORDER BY</th>
+                  <th>LIMIT</th>
+                  <th>GROUP BY</th>
+                  <th>UNION, INTERSECT, EXCEPT</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Train set Spider initial<small class="dataset-badge-note">Échantillon de 5&nbsp;000 exemples</small></td>
+                  <td>1&nbsp;012</td>
+                  <td>43,6&nbsp;%</td>
+                  <td>18,6&nbsp;%</td>
+                  <td>20,2&nbsp;%</td>
+                  <td>13,0&nbsp;%</td>
+                  <td>21,8&nbsp;%</td>
+                  <td>6,4&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A</span></td>
+                  <td class="worst">71</td>
+                  <td>1,2&nbsp;%</td>
+                  <td>0,3&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>53,6&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-b">Dataset B</span></td>
+                  <td class="worst">45</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>50,0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-c">Dataset C</span></td>
+                  <td class="worst">40</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>50,0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-d">Dataset D</span></td>
+                  <td class="worst">44</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                  <td>50,0&nbsp;%</td>
+                  <td>0&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span><small class="dataset-badge-note">Nouvelle génération (06.5)</small></td>
+                  <td class="best">1&nbsp;030</td>
+                  <td>41,6&nbsp;%</td>
+                  <td>14,0&nbsp;%</td>
+                  <td>21,4&nbsp;%</td>
+                  <td>13,8&nbsp;%</td>
+                  <td>22,0&nbsp;%</td>
+                  <td>6,6&nbsp;%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          Or ces opérations absentes sont justement celles que le modèle rate.
+          Sur les 347 erreurs du baseline (comparaison stricte), 75 sont des
+          erreurs <code>no such column</code>, souvent une colonne cherchée dans
+          la mauvaise table lors d’une jointure.
+        </p>
+        <p>
+          Deux éléments rendaient aussi la lecture de 06.2 difficile&nbsp;:
+        </p>
+        <ul>
+          <li>
+            <strong>Le bruit de mesure.</strong> Un simple changement
+            d’hyperparamètre fait déjà basculer environ 90 exemples de
+            validation, sur 1&nbsp;034. Un écart de 1 ou 2 points sur un seul run
+            ne prouve donc rien.
+          </li>
+          <li>
+            <strong>Un évaluateur trop strict.</strong> Il compare les résultats
+            dans l’ordre exact, y compris l’ordre des lignes sans
+            <code>ORDER BY</code> et celui des colonnes. Une comparaison façon
+            Spider, sans ordre des lignes quand la référence n’a pas
+            d’<code>ORDER BY</code> et avec colonnes permutables, ajoute environ
+            3 points à tous les runs, sans changer leur classement.
+          </li>
+        </ul>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.5 · Nouvelle génération</p>
+          <h3>Dataset A2&nbsp;: générer à partir d’exemples Spider</h3>
+        </div>
+        <p>
+          A2 reprend les conditions du dataset A (146 bases existantes,
+          5&nbsp;000 exemples, tous niveaux, au prorata de chaque base). Seule la
+          méthode de génération change&nbsp;:
+        </p>
+        <ul>
+          <li>
+            <strong>Plus de forme imposée.</strong> Chaque prompt montre
+            16&nbsp;exemples réels du train Spider, pris sur d’autres bases, et
+            demande pour chacun une paire de même structure sur la base cible.
+          </li>
+          <li>
+            <strong>Des valeurs réelles.</strong> Le prompt contient 3 lignes par
+            table, pour que les valeurs utilisées dans les filtres existent.
+          </li>
+          <li>
+            <strong>Un juge différent.</strong> La question posée est&nbsp;: un
+            expert écrirait-il une requête au résultat identique&nbsp;? Les
+            conventions de Spider sont acceptées, et les paires rejetées sont
+            écartées plutôt que réécrites. Le juge est Claude Haiku&nbsp;5.5,
+            testé au préalable contre GPT-5.6 Terra sur 168 paires.
+          </li>
+        </ul>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Étape</th>
+                  <th>Paires</th>
+                  <th>Détail</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Génération · GPT-5.6 Luna</td>
+                  <td>6&nbsp;337</td>
+                  <td>401 prompts de 16 paires demandées</td>
+                </tr>
+                <tr>
+                  <td>Contrôles automatiques</td>
+                  <td>6&nbsp;024</td>
+                  <td>Exécution SQLite, parseur Spider, doublons, résultats vides</td>
+                </tr>
+                <tr>
+                  <td>Juge sémantique · Haiku 5.5</td>
+                  <td>5&nbsp;286</td>
+                  <td>519 refusées, 219 incertaines</td>
+                </tr>
+                <tr>
+                  <td>Export</td>
+                  <td>5&nbsp;000</td>
+                  <td>Easy 1&nbsp;135 · Medium 1&nbsp;874 · Hard 1&nbsp;202 · Extra 789</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Le niveau <code>extra</code> représente 15,8&nbsp;% de l’export contre
+          20,3&nbsp;% dans le train Spider, car le juge le rejette plus souvent.
+          Les contrôles de résultat vide ne s’appliquent pas aux 7 bases Spider
+          livrées sans aucune ligne.
+        </p>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.6 · Résultats de A2</p>
+          <h3>Le gain se confirme-t-il sur deux graines&nbsp;?</h3>
+        </div>
+        <p>
+          Nous comparons A2 au train Spider seul avec deux graines aléatoires,
+          à l’époque 3 et avec la même configuration que 06.2. Chaque paire a
+          tourné dans le même environnement&nbsp;: en Pologne pour la graine 42, à
+          Paris pour la graine 7. Il ne faut donc comparer les runs qu’à
+          l’intérieur d’une paire.
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Graine</th>
+                  <th>Baseline · stricte</th>
+                  <th>A2 · stricte</th>
+                  <th>Gain · strict</th>
+                  <th>Baseline · façon Spider</th>
+                  <th>A2 · façon Spider</th>
+                  <th>Gain · façon Spider</th>
+                  <th>Exemples gagnés / perdus</th>
+                  <th>IC 95&nbsp;% du gain</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="model-qwen-2b">
+                  <td>42 · Pologne</td>
+                  <td>66,44&nbsp;%</td>
+                  <td>70,41&nbsp;%</td>
+                  <td class="best">+3,97 points</td>
+                  <td>69,83&nbsp;%</td>
+                  <td>74,18&nbsp;%</td>
+                  <td class="best">+4,35 points</td>
+                  <td>+72 / −27</td>
+                  <td>[+1,65&nbsp;; +6,73]</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>7 · Paris</td>
+                  <td>65,67&nbsp;%</td>
+                  <td>69,34&nbsp;%</td>
+                  <td class="best">+3,67 points</td>
+                  <td>69,54&nbsp;%</td>
+                  <td>73,21&nbsp;%</td>
+                  <td class="best">+3,68 points</td>
+                  <td>+69 / −31</td>
+                  <td>[+0,85&nbsp;; +6,16]</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Exemples gagnés et perdus et IC&nbsp;95&nbsp;% en comparaison façon Spider.
+          L’intervalle provient d’un bootstrap par base de validation. Le test de
+          McNemar apparié donne p&nbsp;&lt;&nbsp;0,01 sur les deux paires.
+        </p>
+        <p>Par difficulté Spider, en comparaison stricte&nbsp;:</p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Train</th>
+                  <th>Easy · 248 exemples</th>
+                  <th>Medium · 446 exemples</th>
+                  <th>Hard · 174 exemples</th>
+                  <th>Extra · 166 exemples</th>
+                  <th>Total · 1&nbsp;034 exemples</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Baseline · graine 42</td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>67,71&nbsp;% <small>302 / 446</small></td>
+                  <td>58,05&nbsp;% <small>101 / 174</small></td>
+                  <td>45,18&nbsp;% <small>75 / 166</small></td>
+                  <td>66,44&nbsp;% <small>687 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span> · graine 42</td>
+                  <td>87,10&nbsp;% <small>216 / 248</small></td>
+                  <td>71,08&nbsp;% <small>317 / 446</small></td>
+                  <td>64,94&nbsp;% <small>113 / 174</small></td>
+                  <td>49,40&nbsp;% <small>82 / 166</small></td>
+                  <td>70,41&nbsp;% <small>728 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="baseline-row">
+                  <td>Baseline · graine 7</td>
+                  <td>85,08&nbsp;% <small>211 / 248</small></td>
+                  <td>67,26&nbsp;% <small>300 / 446</small></td>
+                  <td>58,05&nbsp;% <small>101 / 174</small></td>
+                  <td>40,36&nbsp;% <small>67 / 166</small></td>
+                  <td>65,67&nbsp;% <small>679 / 1&nbsp;034</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span> · graine 7</td>
+                  <td>85,89&nbsp;% <small>213 / 248</small></td>
+                  <td>71,97&nbsp;% <small>321 / 446</small></td>
+                  <td>62,07&nbsp;% <small>108 / 174</small></td>
+                  <td>45,18&nbsp;% <small>75 / 166</small></td>
+                  <td>69,34&nbsp;% <small>717 / 1&nbsp;034</small></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          Par type de requête, en comparaison façon Spider et en moyenne sur les
+          deux graines&nbsp;:
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Type de requête</th>
+                  <th>Exemples</th>
+                  <th>Baseline</th>
+                  <th>A2</th>
+                  <th>Écart</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1 table</td><td>626</td><td>80,59&nbsp;%</td><td>83,63&nbsp;%</td><td>+3,04 points</td></tr>
+                <tr><td>JOIN</td><td>408</td><td>52,94&nbsp;%</td><td>58,46&nbsp;%</td><td class="best">+5,51 points</td></tr>
+                <tr><td>2 JOIN ou plus</td><td>88</td><td>34,09&nbsp;%</td><td>36,36&nbsp;%</td><td>+2,27 points</td></tr>
+                <tr><td>ORDER BY / LIMIT</td><td>237</td><td>71,31&nbsp;%</td><td>75,32&nbsp;%</td><td>+4,01 points</td></tr>
+                <tr><td>GROUP BY</td><td>277</td><td>64,98&nbsp;%</td><td>69,31&nbsp;%</td><td>+4,33 points</td></tr>
+                <tr><td>Sous-requête</td><td>83</td><td>51,20&nbsp;%</td><td>55,42&nbsp;%</td><td>+4,22 points</td></tr>
+                <tr><td>UNION, INTERSECT, EXCEPT</td><td>80</td><td>50,00&nbsp;%</td><td>55,00&nbsp;%</td><td>+5,00 points</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Un même exemple peut compter dans plusieurs lignes. Les petites
+          catégories restent peu précises. Erreurs <code>no such column</code>&nbsp;:
+          75 → 60 en graine 42, 74 → 52 en graine 7.
+        </p>
+        <aside class="conclusion-box" aria-labelledby="conclusion-dataset-a2">
+          <h3 id="conclusion-dataset-a2">Que peut-on en conclure&nbsp;?</h3>
+          <ul>
+            <li>
+              <strong>Le volume n’était pas le problème, la diversité l’était.</strong>
+              À bases et volume comparables, A2 apporte environ 4 points sur les
+              deux graines, là où A, B, C et D n’apportaient aucun gain établi.
+            </li>
+            <li>
+              Les erreurs <code>no such column</code> reculent d’environ 25&nbsp;%,
+              et les jointures progressent nettement, ce qui correspond au
+              diagnostic.
+            </li>
+            <li>
+              Les requêtes à 2 JOIN ou plus restent le point faible, avec
+              seulement 36&nbsp;% de réussite.
+            </li>
+            <li>
+              Ces scores portent sur la validation, qui ne compte que 20 bases. Le
+              jeu de test n’a pas encore été consulté.
+            </li>
+          </ul>
+        </aside>
         <div
           class="report-lightbox"
           id="report-lightbox"
