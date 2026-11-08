@@ -39,3 +39,14 @@ En résumé :
 - `test.json` sert uniquement à l'évaluation finale.
 - `database/` contient les bases train/dev.
 - `test_database/` contient ces mêmes bases et les 40 bases du test.
+
+## Publication du rapport
+
+Le rapport `00_compte_rendu/` est publié sur https://fine-tuning.tanguym.fr, servi par Caddy sur le VPS
+Contabo (95.111.224.166). Le VPS garde dans `/srv/fine-tuning` une copie partielle de ce dépôt, limitée à
+`00_compte_rendu/`, mise à jour depuis `master` toutes les 10 minutes par le timer systemd
+`fine-tuning-pull.timer`. Il suffit donc de pousser sur `master` ; pour publier tout de suite :
+`sudo systemctl start fine-tuning-pull.service`.
+
+La configuration du serveur (bloc Caddy et timer) se trouve dans `deploy/` du dépôt
+`tangmomb/agent_video_edit_detection`.
