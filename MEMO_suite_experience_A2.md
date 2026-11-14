@@ -2,6 +2,8 @@
 
 *Rédigé le 2026-11-14. À coller ou à référencer au début d'une nouvelle session Claude Code ouverte dans `E:\cooking\fine-tuning`.*
 
+> **Mise à jour du 2026-11-14 : les étapes 1 à 4 sont terminées.** Les 4 runs ont été évalués une seule fois sur le test, à l'époque 3, sur le H100 de Pologne (`qwen-h100-finetuning`). A2 gagne +3,03 points (graine 42) et +2,98 points (graine 7) en comparaison stricte, p < 0,001. Les résultats sont au chapitre 06.6 du compte rendu et se recalculent avec `03_fine_tuning/03_05_diagnostic/compare_test_runs.py`. Ce mémo est conservé pour l'historique ; seules les « Pistes après cette expérience » restent ouvertes.
+
 ## Prompt de démarrage à coller
 
 > Lis `MEMO_suite_experience_A2.md` à la racine du dépôt. Il décrit l'état de l'expérience A2 et ce qu'il reste à faire. Commence par l'étape 1 (option `--test-epoch`), puis guide-moi pour les évaluations sur le H100. Ne consulte pas le jeu de test en dehors de ce protocole.

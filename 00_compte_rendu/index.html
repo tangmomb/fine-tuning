@@ -2110,26 +2110,176 @@
           catégories restent peu précises. Erreurs <code>no such column</code>&nbsp;:
           75 → 60 en graine 42, 74 → 52 en graine 7.
         </p>
+        <p>
+          <strong>Vérification sur le jeu de test.</strong> Les quatre runs ont
+          ensuite été évalués une seule fois sur les 2&nbsp;147 exemples du test
+          (40 bases), à l’époque 3 fixée à l’avance et sur une même machine.
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Graine</th>
+                  <th>Baseline · stricte</th>
+                  <th>A2 · stricte</th>
+                  <th>Gain · strict</th>
+                  <th>Baseline · façon Spider</th>
+                  <th>A2 · façon Spider</th>
+                  <th>Gain · façon Spider</th>
+                  <th>Exemples gagnés / perdus</th>
+                  <th>IC 95&nbsp;% du gain</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="model-qwen-2b">
+                  <td>42</td>
+                  <td>66,65&nbsp;%</td>
+                  <td>69,68&nbsp;%</td>
+                  <td class="best">+3,03 points</td>
+                  <td>70,89&nbsp;%</td>
+                  <td>74,43&nbsp;%</td>
+                  <td class="best">+3,54 points</td>
+                  <td>+153 / −77</td>
+                  <td>[+1,95&nbsp;; +5,00]</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td>7</td>
+                  <td>65,95&nbsp;%</td>
+                  <td>68,93&nbsp;%</td>
+                  <td class="best">+2,98 points</td>
+                  <td>70,42&nbsp;%</td>
+                  <td>73,36&nbsp;%</td>
+                  <td class="best">+2,93 points</td>
+                  <td>+156 / −93</td>
+                  <td>[+1,02&nbsp;; +5,00]</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Jeu de test. Exemples gagnés et perdus et IC&nbsp;95&nbsp;% en comparaison
+          façon Spider, par bootstrap sur les 40 bases de test. Le test de McNemar
+          apparié donne p&nbsp;&lt;&nbsp;0,001 sur les deux paires, en comparaison
+          stricte comme façon Spider.
+        </p>
+        <p>Par difficulté Spider sur le test, en comparaison stricte&nbsp;:</p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Train</th>
+                  <th>Easy · 470 exemples</th>
+                  <th>Medium · 857 exemples</th>
+                  <th>Hard · 463 exemples</th>
+                  <th>Extra · 357 exemples</th>
+                  <th>Total · 2&nbsp;147 exemples</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Baseline · graine 42</td>
+                  <td>83,19&nbsp;% <small>391 / 470</small></td>
+                  <td>67,56&nbsp;% <small>579 / 857</small></td>
+                  <td>61,12&nbsp;% <small>283 / 463</small></td>
+                  <td>49,86&nbsp;% <small>178 / 357</small></td>
+                  <td>66,65&nbsp;% <small>1&nbsp;431 / 2&nbsp;147</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span> · graine 42</td>
+                  <td>85,74&nbsp;% <small>403 / 470</small></td>
+                  <td>70,36&nbsp;% <small>603 / 857</small></td>
+                  <td>62,63&nbsp;% <small>290 / 463</small></td>
+                  <td>56,02&nbsp;% <small>200 / 357</small></td>
+                  <td>69,68&nbsp;% <small>1&nbsp;496 / 2&nbsp;147</small></td>
+                </tr>
+                <tr class="baseline-row">
+                  <td>Baseline · graine 7</td>
+                  <td>82,77&nbsp;% <small>389 / 470</small></td>
+                  <td>66,28&nbsp;% <small>568 / 857</small></td>
+                  <td>59,83&nbsp;% <small>277 / 463</small></td>
+                  <td>50,98&nbsp;% <small>182 / 357</small></td>
+                  <td>65,95&nbsp;% <small>1&nbsp;416 / 2&nbsp;147</small></td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span> · graine 7</td>
+                  <td>85,11&nbsp;% <small>400 / 470</small></td>
+                  <td>70,25&nbsp;% <small>602 / 857</small></td>
+                  <td>61,77&nbsp;% <small>286 / 463</small></td>
+                  <td>53,78&nbsp;% <small>192 / 357</small></td>
+                  <td>68,93&nbsp;% <small>1&nbsp;480 / 2&nbsp;147</small></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p>
+          Par type de requête sur le test, en comparaison façon Spider et en
+          moyenne sur les deux graines&nbsp;:
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Type de requête</th>
+                  <th>Exemples</th>
+                  <th>Baseline</th>
+                  <th>A2</th>
+                  <th>Écart</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1 table</td><td>1&nbsp;285</td><td>81,63&nbsp;%</td><td>83,58&nbsp;%</td><td>+1,95 point</td></tr>
+                <tr><td>JOIN</td><td>862</td><td>54,29&nbsp;%</td><td>59,45&nbsp;%</td><td class="best">+5,16 points</td></tr>
+                <tr><td>2 JOIN ou plus</td><td>304</td><td>38,49&nbsp;%</td><td>41,28&nbsp;%</td><td>+2,80 points</td></tr>
+                <tr><td>ORDER BY / LIMIT</td><td>510</td><td>72,75&nbsp;%</td><td>75,69&nbsp;%</td><td>+2,94 points</td></tr>
+                <tr><td>GROUP BY</td><td>613</td><td>67,62&nbsp;%</td><td>72,76&nbsp;%</td><td>+5,14 points</td></tr>
+                <tr><td>Sous-requête</td><td>175</td><td>66,57&nbsp;%</td><td>69,14&nbsp;%</td><td>+2,57 points</td></tr>
+                <tr><td>UNION, INTERSECT, EXCEPT</td><td>181</td><td>66,30&nbsp;%</td><td>66,85&nbsp;%</td><td>+0,55 point</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Jeu de test. Erreurs <code>no such column</code>&nbsp;: 145 → 117 en
+          graine 42, 143 → 115 en graine 7. À titre de repère, le 2B en
+          r&nbsp;=&nbsp;16 du chapitre 03 obtenait 67,44&nbsp;% en comparaison
+          stricte sur ce même test, et le 4B 73,17&nbsp;%.
+        </p>
         <aside class="conclusion-box" aria-labelledby="conclusion-dataset-a2">
           <h3 id="conclusion-dataset-a2">Que peut-on en conclure&nbsp;?</h3>
           <ul>
             <li>
               <strong>Le volume n’était pas le problème, la diversité l’était.</strong>
-              À bases et volume comparables, A2 apporte environ 4 points sur les
-              deux graines, là où A, B, C et D n’apportaient aucun gain établi.
+              À bases et volume comparables, A2 apporte environ 4 points sur la
+              validation avec les deux graines, là où A, B, C et D n’apportaient
+              aucun gain établi.
             </li>
             <li>
-              Les erreurs <code>no such column</code> reculent d’environ 25&nbsp;%,
-              et les jointures progressent nettement, ce qui correspond au
-              diagnostic.
+              <strong>Le gain se confirme sur le jeu de test</strong>, consulté une
+              seule fois&nbsp;: environ 3 points sur les deux graines, avec
+              p&nbsp;&lt;&nbsp;0,001 et un intervalle à 95&nbsp;% qui reste au-dessus
+              de +1 point. Il est un peu plus faible que sur la validation, qui ne
+              compte que 20 bases.
             </li>
             <li>
-              Les requêtes à 2 JOIN ou plus restent le point faible, avec
-              seulement 36&nbsp;% de réussite.
+              Les erreurs <code>no such column</code> reculent d’environ 25&nbsp;%
+              sur la validation et 20&nbsp;% sur le test. Les requêtes avec
+              <code>JOIN</code> et <code>GROUP BY</code> gagnent environ 5 points
+              sur le test, ce qui correspond au diagnostic.
             </li>
             <li>
-              Ces scores portent sur la validation, qui ne compte que 20 bases. Le
-              jeu de test n’a pas encore été consulté.
+              Les requêtes à 2 JOIN ou plus restent le point faible, avec 36&nbsp;%
+              de réussite sur la validation et 41&nbsp;% sur le test. Sur le test,
+              les opérations ensemblistes ne progressent pas.
+            </li>
+            <li>
+              Avec A2, le 2B en r&nbsp;=&nbsp;8 atteint 69&nbsp;% sur le test, soit
+              plus que le 2B en r&nbsp;=&nbsp;16 sans données ajoutées
+              (67,44&nbsp;%), mais il reste sous le 4B (73,17&nbsp;%).
             </li>
           </ul>
         </aside>

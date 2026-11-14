@@ -1,0 +1,160 @@
+{
+  "epoch": 3,
+  "pairs": {
+    "42": {
+      "baseline_run": "qwen3.5-2b-20260926-125948Z_r8_alpha16_lr1e-4",
+      "candidate_run": "data-scaling-new-data-20261011/A2/more-data-a2-20261011-205817Z",
+      "strict": {
+        "baseline": 66.65114112715416,
+        "candidate": 69.6786213320913,
+        "delta": 3.0274802049371217,
+        "gained": 142,
+        "lost": 77,
+        "mcnemar_p": 1.3319345966246491e-05,
+        "ci95": [
+          1.4949279231179926,
+          4.468275245755138
+        ]
+      },
+      "spider": {
+        "baseline": 70.88961341406613,
+        "candidate": 74.4294364229157,
+        "delta": 3.5398230088495577,
+        "gained": 153,
+        "lost": 77,
+        "mcnemar_p": 6.066408952331453e-07,
+        "ci95": [
+          1.9453207150368033,
+          5.002359603586598
+        ]
+      },
+      "hardness_strict": {
+        "easy": {
+          "n": 470,
+          "baseline": 391,
+          "candidate": 403
+        },
+        "medium": {
+          "n": 857,
+          "baseline": 579,
+          "candidate": 603
+        },
+        "hard": {
+          "n": 463,
+          "baseline": 283,
+          "candidate": 290
+        },
+        "extra": {
+          "n": 357,
+          "baseline": 178,
+          "candidate": 200
+        },
+        "total": {
+          "n": 2147,
+          "baseline": 1431,
+          "candidate": 1496
+        }
+      },
+      "no_such_column": {
+        "baseline": 145,
+        "candidate": 117
+      }
+    },
+    "7": {
+      "baseline_run": "baseline-r8-seed7",
+      "candidate_run": "data-scaling-new-data-20261104/A2/more-data-a2-seed7",
+      "strict": {
+        "baseline": 65.95249184909176,
+        "candidate": 68.93339543549138,
+        "delta": 2.9809035863996276,
+        "gained": 156,
+        "lost": 92,
+        "mcnemar_p": 5.791255721922911e-05,
+        "ci95": [
+          1.1922503725782414,
+          4.881266490765172
+        ]
+      },
+      "spider": {
+        "baseline": 70.4238472286912,
+        "candidate": 73.35817419655334,
+        "delta": 2.934326967862133,
+        "gained": 156,
+        "lost": 93,
+        "mcnemar_p": 7.863793047701785e-05,
+        "ci95": [
+          1.0185185185185186,
+          5.00208420175073
+        ]
+      },
+      "hardness_strict": {
+        "easy": {
+          "n": 470,
+          "baseline": 389,
+          "candidate": 400
+        },
+        "medium": {
+          "n": 857,
+          "baseline": 568,
+          "candidate": 602
+        },
+        "hard": {
+          "n": 463,
+          "baseline": 277,
+          "candidate": 286
+        },
+        "extra": {
+          "n": 357,
+          "baseline": 182,
+          "candidate": 192
+        },
+        "total": {
+          "n": 2147,
+          "baseline": 1416,
+          "candidate": 1480
+        }
+      },
+      "no_such_column": {
+        "baseline": 143,
+        "candidate": 115
+      }
+    }
+  },
+  "query_types_spider": {
+    "1 table": {
+      "n": 1285,
+      "baseline": 81.63424124513618,
+      "candidate": 83.57976653696498
+    },
+    "JOIN": {
+      "n": 862,
+      "baseline": 54.292343387471,
+      "candidate": 59.45475638051044
+    },
+    "2+ JOIN": {
+      "n": 304,
+      "baseline": 38.48684210526316,
+      "candidate": 41.2828947368421
+    },
+    "ORDER BY / LIMIT": {
+      "n": 510,
+      "baseline": 72.74509803921569,
+      "candidate": 75.68627450980392
+    },
+    "GROUP BY": {
+      "n": 613,
+      "baseline": 67.61827079934747,
+      "candidate": 72.75693311582381
+    },
+    "sous-requête": {
+      "n": 175,
+      "baseline": 66.57142857142857,
+      "candidate": 69.14285714285714
+    },
+    "UNION/INTERSECT/EXCEPT": {
+      "n": 181,
+      "baseline": 66.29834254143647,
+      "candidate": 66.85082872928177
+    }
+  }
+}
