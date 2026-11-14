@@ -57,3 +57,11 @@ Si le pic reste largement sous 80 Go, augmentez progressivement `--per-device-ba
 Par défaut, un dataset fusionné existant est réutilisé afin de rendre un run reproductible. Utilisez `--rebuild-dataset` uniquement après avoir réexporté ou remplacé le dataset synthétique correspondant.
 
 Toutes les options de `01_train_main/train.py` restent disponibles après `--experiment`, y compris `--evaluate-run` et `--evaluate-test`.
+
+Avec `--evaluate-run`, le lanceur ne demande pas d'expérience, ne reconstruit aucun dataset et ne crée aucun dossier de campagne : il ajoute seulement `--models Qwen3.5-2B` et transmet le reste. Pour évaluer le seul jeu de test sur une époque fixée à l'avance, sans réévaluer ni réécrire la validation :
+
+```powershell
+python 03_fine_tuning/03_04_train_more_data/train.py --evaluate-run 03_fine_tuning/artifacts/<campagne>/A2/<run> --test-epoch 3
+```
+
+Les résultats vont dans `eval/epoch-3/final_test/`. Si ce dossier contient déjà des résultats, le script s'arrête sans rien relancer.

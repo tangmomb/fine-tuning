@@ -121,7 +121,17 @@ def parse_args() -> argparse.Namespace:
                         help="Évalue les checkpoints déjà présents dans un dossier de run, sans réentraîner.")
     parser.add_argument("--evaluate-test", action="store_true",
                         help="Évalue le split test final après sélection sur validation. Désactivé par défaut pour éviter toute consultation du test durant les expériences.")
-    return parser.parse_args()
+    parser.add_argument("--test-epoch", type=int, metavar="N",
+                        help="Avec --evaluate-run : évalue uniquement le split test sur checkpoints/epoch-N, "
+                             "sans question interactive et sans réévaluer ni réécrire la validation. "
+                             "Refuse de tourner si eval/epoch-N/final_test/ contient déjà des résultats.")
+    args = parser.parse_args()
+    if args.test_epoch is not None:
+        if args.evaluate_run is None:
+            parser.error("--test-epoch s'utilise avec --evaluate-run <dossier de run>.")
+        if args.test_epoch <= 0:
+            parser.error("--test-epoch attend un numéro d'époque strictement positif.")
+    return args
 
 
 def choose_epochs() -> float:
@@ -662,6 +672,73 @@ def train_model(
     trainer.accelerator.wait_for_everyone()
 
 
+def existing_run_model_name(run_dir: Path, args: argparse.Namespace) -> str:
+    """Identifie le modèle de base d'un run existant via --models ou le nom du dossier."""
+    if args.models:
+        if len(args.models) != 1:
+            raise ValueError("--evaluate-run accepte exactement un modèle avec --models.")
+        return args.models[0]
+    matches = [name for name in DEFAULT_MODELS if run_dir.name.lower().startswith(name.lower())]
+    if len(matches) != 1:
+        raise ValueError("Impossible d'identifier le modèle du run. Ajoutez --models Qwen3.5-4B.")
+    return matches[0]
+
+
+def prepare_test_only_evaluation(run_dir: Path, args: argparse.Namespace) -> tuple[str, Path, Path]:
+    """Valide une demande --test-epoch avant tout chargement de modèle.
+
+    Renvoie le nom du modèle, le checkpoint à charger et le dossier final_test.
+    Le test n'est consulté qu'une fois par checkpoint : un résultat déjà
+    présent bloque le lancement au lieu d'être écrasé.
+    """
+    if not run_dir.is_dir():
+        raise FileNotFoundError(f"Dossier de run introuvable : {run_dir}")
+    model_name = existing_run_model_name(run_dir, args)
+    checkpoint = run_dir / "checkpoints" / f"epoch-{args.test_epoch}"
+    if not (checkpoint / "adapter_config.json").is_file():
+        raise FileNotFoundError(f"Adaptateur LoRA introuvable : {checkpoint}")
+    final_test_dir = run_dir / "eval" / f"epoch-{args.test_epoch}" / "final_test"
+    existing = [name for name in ("test_metrics.json", "test_predictions.jsonl") if (final_test_dir / name).exists()]
+    if existing:
+        raise FileExistsError(
+            f"Test déjà évalué pour ce checkpoint ({', '.join(existing)} dans {final_test_dir}). "
+            "Le protocole prévoit une seule évaluation : rien n'est relancé ni écrasé."
+        )
+    model_path = ROOT / "models" / model_name
+    if not model_path.is_dir():
+        raise FileNotFoundError(f"Checkpoint absent : {model_path}")
+    return model_name, checkpoint, final_test_dir
+
+
+def evaluate_test_only(run_dir: Path, args: argparse.Namespace) -> None:
+    """Évalue le seul split test sur checkpoints/epoch-N d'un run existant.
+
+    Ne charge que cet adaptateur, n'exécute aucune inférence de validation et
+    n'écrit que dans eval/epoch-N/final_test/ : les val_predictions.jsonl et
+    val_metrics.json du run restent intacts.
+    """
+    model_name, checkpoint, final_test_dir = prepare_test_only_evaluation(run_dir, args)
+    epoch = args.test_epoch
+    model_path = ROOT / "models" / model_name
+    processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
+    base_model = AutoModelForCausalLM.from_pretrained(
+        model_path, torch_dtype=torch.bfloat16, local_files_only=True,
+        attn_implementation=preferred_attention_implementation(),
+    )
+    restore_fp32_checkpoint_parameters(base_model, model_path)
+    model = PeftModel.from_pretrained(base_model, str(checkpoint), adapter_name=f"epoch-{epoch}")
+    model.to(torch.device("cuda"))
+    print(f"Inférence test seule avec {run_dir.name}/checkpoints/epoch-{epoch} ({model_name})…")
+    test_predictions, test_metrics = evaluate_test_execution(model, processor)
+    final_test_dir.mkdir(parents=True, exist_ok=True)
+    write_jsonl(final_test_dir / "test_predictions.jsonl", test_predictions)
+    write_json(final_test_dir / "test_metrics.json", {
+        "checkpoint": f"checkpoints/epoch-{epoch}",
+        "test_examples": len(test_predictions), **test_metrics,
+    })
+    print(f"Évaluation test terminée : {final_test_dir}")
+
+
 def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_rows: list[dict[str, Any]]) -> None:
     """Reprend uniquement les évaluations d'un run déjà entraîné et checkpointé."""
     if not run_dir.is_dir():
@@ -674,15 +751,7 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
         raise FileNotFoundError(f"Rapports epoch-N-validation.json introuvables dans : {run_dir / 'eval'}")
     for report in reports:
         report["epoch"] = int(round(float(report["epoch"])))
-    if args.models:
-        if len(args.models) != 1:
-            raise ValueError("--evaluate-run accepte exactement un modèle avec --models.")
-        model_name = args.models[0]
-    else:
-        matches = [name for name in DEFAULT_MODELS if run_dir.name.lower().startswith(name.lower())]
-        if len(matches) != 1:
-            raise ValueError("Impossible d'identifier le modèle du run. Ajoutez --models Qwen3.5-4B.")
-        model_name = matches[0]
+    model_name = existing_run_model_name(run_dir, args)
     model_path = ROOT / "models" / model_name
     processor = AutoProcessor.from_pretrained(model_path, local_files_only=True)
     first_epoch = reports[0]["epoch"]
@@ -734,10 +803,17 @@ def evaluate_existing_run(run_dir: Path, args: argparse.Namespace, validation_ro
 
 def main() -> None:
     args = parse_args()
+    if args.test_epoch is not None:
+        # Vérifie le run, le checkpoint et l'absence de résultat test avant
+        # d'exiger la GPU : une erreur de chemin se voit immédiatement.
+        prepare_test_only_evaluation(args.evaluate_run, args)
     if not torch.cuda.is_available():
         raise RuntimeError("GPU CUDA requise : ce lanceur est prévu pour la H100.")
     if not torch.cuda.is_bf16_supported():
         raise RuntimeError("BF16 non pris en charge par cette GPU.")
+    if args.test_epoch is not None:
+        evaluate_test_only(args.evaluate_run, args)
+        return
     validation_rows = read_jsonl(args.validation_dataset)
     if not validation_rows:
         raise ValueError("Le dataset de validation est vide.")

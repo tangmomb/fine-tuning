@@ -156,7 +156,10 @@ def prompt_choice(label: str, choices: tuple[str, ...], default: str) -> str:
 
 def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -> None:
     """Demande le choix d'expérience puis applique la configuration retenue."""
-    if args.experiment is None:
+    evaluation_only = has_option(trainer_args, "--evaluate-run")
+    if has_option(trainer_args, "--test-epoch") and not evaluation_only:
+        raise ValueError("--test-epoch s'utilise avec --evaluate-run <dossier de run>.")
+    if args.experiment is None and not evaluation_only:
         args.experiment = prompt_choice("Expérience", EXPERIMENTS, "A")
     args.gpus = FIXED_GPUS
 
@@ -173,7 +176,7 @@ def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -
     else:
         trainer_args.extend(("--models", FIXED_MODEL))
 
-    if has_option(trainer_args, "--evaluate-run"):
+    if evaluation_only:
         return
     fixed_options = (
         ("--epochs", FIXED_EPOCHS),
@@ -197,18 +200,27 @@ def prompt_training_options(args: argparse.Namespace, trainer_args: list[str]) -
 def main() -> None:
     args, trainer_args = parse_args()
     prompt_training_options(args, trainer_args)
+    if has_option(trainer_args, "--evaluate-run"):
+        # Évaluation d'un run existant (--evaluate-run, éventuellement avec
+        # --test-epoch N) : le run porte déjà son dataset et son dossier. On ne
+        # reconstruit donc rien et on ne crée aucun dossier de campagne daté ;
+        # les options sont transmises telles quelles au lanceur principal.
+        command = [
+            sys.executable, "-m", "torch.distributed.run", "--standalone",
+            "--nproc_per_node", "1", str(MAIN_TRAINER), *trainer_args,
+        ]
+        print("Évaluation d'un run existant sur une H100 : " + " ".join(trainer_args))
+        subprocess.run(command, check=True)
+        return
     dataset = build_combined_dataset(args.experiment, args.rebuild_dataset)
     campaign_dir = campaign_artifacts_dir()
     campaign_dir.mkdir(parents=True, exist_ok=True)
     if not has_option(trainer_args, "--run-name"):
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
         trainer_args.extend(("--run-name", f"more-data-{args.experiment.lower()}-{timestamp}"))
-    launch_gpus = 1 if has_option(trainer_args, "--evaluate-run") else args.gpus
-    if launch_gpus != args.gpus:
-        print("--evaluate-run : évaluation relancée sur une seule H100 (l'inférence de récupération n'est pas distribuée).")
     command = [
         sys.executable, "-m", "torch.distributed.run", "--standalone",
-        "--nproc_per_node", str(launch_gpus), str(MAIN_TRAINER),
+        "--nproc_per_node", str(args.gpus), str(MAIN_TRAINER),
         "--dataset", str(dataset),
         "--output-root", str(campaign_dir / args.experiment),
         *trainer_args,
