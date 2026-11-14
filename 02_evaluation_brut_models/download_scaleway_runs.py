@@ -15,7 +15,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DESTINATION = PROJECT_ROOT / "02_evaluation_brut_models" / "runs_scaleway"
 REMOTE_RUNS = "/root/fine-tuning/evaluation_brut_models/runs/."
-SSH_KEY = Path.home() / ".ssh" / "id_ed25519"
+SSH_KEY = Path.home() / ".ssh" / "scaleway_fine_tuning"
 
 
 def ask_ip_address() -> str:

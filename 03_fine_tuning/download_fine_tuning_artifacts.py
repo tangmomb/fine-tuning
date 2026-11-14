@@ -16,7 +16,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 DESTINATION = PROJECT_ROOT / "03_fine_tuning" / "artifacts"
 REMOTE_ARTIFACTS = "/root/fine-tuning/03_fine_tuning/artifacts"
-SSH_KEY = Path.home() / ".ssh" / "id_ed25519"
+SSH_KEY = Path.home() / ".ssh" / "scaleway_fine_tuning"
 
 
 def ask_ssh_target() -> str:
