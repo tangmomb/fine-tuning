@@ -2283,6 +2283,166 @@
             </li>
           </ul>
         </aside>
+        <div class="lora-subsection">
+          <p class="eyebrow">06.7 · Contre-épreuve</p>
+          <h3>Dataset D2&nbsp;: plus difficile et sur de nouvelles bases, est-ce mieux&nbsp;?</h3>
+        </div>
+        <p>
+          A2 reprenait le dataset A avec une meilleure méthode. Nous refaisons ici
+          le dataset D, à l’opposé du plan initial&nbsp;: 5&nbsp;000 paires générées
+          avec la méthode d’A2, mais uniquement à partir d’exemples Spider
+          <em>hard</em> et <em>extra</em>, et sur les 100 bases fictives au lieu des
+          146 bases du train. La génération et le jugement ont coûté 1,61&nbsp;$.
+        </p>
+        <p>
+          Avant d’entraîner, nous vérifions que D2 ne retombe pas dans le défaut de
+          l’ancien D, dont les requêtes n’étaient difficiles que pour le
+          classifieur&nbsp;:
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Mesure</th>
+                  <th>Spider · hard et extra</th>
+                  <th>Ancien D</th>
+                  <th>D2</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Squelettes SQL distincts pour 100 exemples</td><td>20,4</td><td>1,1</td><td>23,0</td></tr>
+                <tr><td>Part du squelette le plus fréquent</td><td>4,7&nbsp;%</td><td>50,2&nbsp;%</td><td>4,7&nbsp;%</td></tr>
+                <tr><td>Au moins un JOIN</td><td>65,4&nbsp;%</td><td>0&nbsp;%</td><td>60,0&nbsp;%</td></tr>
+                <tr><td>2 JOIN ou plus</td><td>41,8&nbsp;%</td><td>0&nbsp;%</td><td>35,1&nbsp;%</td></tr>
+                <tr><td>Sous-requête</td><td>22,9&nbsp;%</td><td>50,2&nbsp;%</td><td>26,4&nbsp;%</td></tr>
+                <tr><td>UNION, INTERSECT, EXCEPT</td><td>14,2&nbsp;%</td><td>0&nbsp;%</td><td>14,2&nbsp;%</td></tr>
+                <tr><td>Sous-requête tautologique sur la même table</td><td>0&nbsp;%</td><td>50,2&nbsp;%</td><td>0&nbsp;%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Comparaison à taille égale (3&nbsp;673 requêtes par colonne). Avant le
+          jugement, 729 paires de D2 ont été écartées parce qu’elles joignaient une
+          table dont aucune colonne ne servait.
+        </p>
+        <p>
+          D2 est donc réellement difficile. Nous l’entraînons en graine 42, sur la
+          même machine que le baseline et A2 de cette graine, et nous comparons à
+          l’époque 3 sur la validation&nbsp;:
+        </p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Train</th>
+                  <th>Easy · 248 exemples</th>
+                  <th>Medium · 446 exemples</th>
+                  <th>Hard · 174 exemples</th>
+                  <th>Extra · 166 exemples</th>
+                  <th>Total · stricte</th>
+                  <th>Total · façon Spider</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="baseline-row">
+                  <td>Baseline · graine 42</td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>67,71&nbsp;% <small>302 / 446</small></td>
+                  <td>58,05&nbsp;% <small>101 / 174</small></td>
+                  <td>45,18&nbsp;% <small>75 / 166</small></td>
+                  <td>66,44&nbsp;% <small>687 / 1&nbsp;034</small></td>
+                  <td>69,83&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-a">Dataset A2</span> · graine 42</td>
+                  <td>87,10&nbsp;% <small>216 / 248</small></td>
+                  <td>71,08&nbsp;% <small>317 / 446</small></td>
+                  <td>64,94&nbsp;% <small>113 / 174</small></td>
+                  <td>49,40&nbsp;% <small>82 / 166</small></td>
+                  <td class="best">70,41&nbsp;% <small>728 / 1&nbsp;034</small></td>
+                  <td class="best">74,18&nbsp;%</td>
+                </tr>
+                <tr class="model-qwen-2b">
+                  <td><span class="dataset-badge dataset-badge-d">Dataset D2</span> · graine 42</td>
+                  <td>84,27&nbsp;% <small>209 / 248</small></td>
+                  <td>69,06&nbsp;% <small>308 / 446</small></td>
+                  <td>62,64&nbsp;% <small>109 / 174</small></td>
+                  <td>46,39&nbsp;% <small>77 / 166</small></td>
+                  <td>67,99&nbsp;% <small>703 / 1&nbsp;034</small></td>
+                  <td>71,86&nbsp;%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Difficulté en comparaison stricte. En comparaison façon Spider, D2 est à
+          −2,32 points d’A2 (+39 / −63 exemples, McNemar p&nbsp;=&nbsp;0,02, IC&nbsp;95&nbsp;%
+          [−4,54&nbsp;; −0,19]) et à +2,03 points du baseline (+67 / −46,
+          p&nbsp;=&nbsp;0,06, IC&nbsp;95&nbsp;% [−0,47&nbsp;; +4,20]).
+        </p>
+        <p>Par type de requête, en comparaison façon Spider&nbsp;:</p>
+        <div class="table-card training-results">
+          <div class="table-scroll">
+            <table class="evaluation-table">
+              <thead>
+                <tr>
+                  <th>Type de requête</th>
+                  <th>Exemples</th>
+                  <th>Baseline</th>
+                  <th>A2</th>
+                  <th>D2</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>1 table</td><td>626</td><td>80,83&nbsp;%</td><td class="best">84,03&nbsp;%</td><td>81,95&nbsp;%</td></tr>
+                <tr><td>JOIN</td><td>408</td><td>52,94&nbsp;%</td><td class="best">59,07&nbsp;%</td><td>56,37&nbsp;%</td></tr>
+                <tr><td>2 JOIN ou plus</td><td>88</td><td>32,95&nbsp;%</td><td>36,36&nbsp;%</td><td class="best">38,64&nbsp;%</td></tr>
+                <tr><td>ORDER BY / LIMIT</td><td>237</td><td>71,31&nbsp;%</td><td class="best">76,79&nbsp;%</td><td>75,53&nbsp;%</td></tr>
+                <tr><td>GROUP BY</td><td>277</td><td>66,06&nbsp;%</td><td class="best">70,76&nbsp;%</td><td>68,23&nbsp;%</td></tr>
+                <tr><td>Sous-requête</td><td>83</td><td>53,01&nbsp;%</td><td class="best">55,42&nbsp;%</td><td>54,22&nbsp;%</td></tr>
+                <tr><td>UNION, INTERSECT, EXCEPT</td><td>80</td><td>51,25&nbsp;%</td><td>52,50&nbsp;%</td><td class="best">55,00&nbsp;%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <p class="caption">
+          Graine 42 uniquement. Un même exemple peut compter dans plusieurs lignes.
+          Erreurs <code>no such column</code>&nbsp;: 75 pour le baseline, 60 pour
+          A2, 71 pour D2.
+        </p>
+        <aside class="conclusion-box" aria-labelledby="conclusion-dataset-d2">
+          <h3 id="conclusion-dataset-d2">Que peut-on en conclure&nbsp;?</h3>
+          <ul>
+            <li>
+              <strong>Des données plus difficiles ne font pas mieux.</strong> D2
+              reste 2,4 points sous A2 en comparaison stricte, et l’écart est
+              significatif. Son avance sur le baseline n’est pas établie avec une
+              seule graine.
+            </li>
+            <li>
+              D2 ne dépasse A2 que sur ce qu’il visait, les requêtes à 2 JOIN ou
+              plus et les opérations ensemblistes. Ces catégories comptent moins de
+              90 exemples&nbsp;: l’écart tient à deux exemples chacune.
+            </li>
+            <li>
+              D2 ne réduit presque pas les erreurs <code>no such column</code>,
+              alors que c’était le principal apport d’A2.
+            </li>
+            <li>
+              Le gain d’A2 vient donc de la diversité à répartition réaliste, pas de
+              la difficulté. Ce run change deux choses à la fois, les bases et la
+              difficulté&nbsp;: il ne dit pas laquelle pénalise.
+            </li>
+            <li>
+              Conformément au protocole, D2 n’a été ni rejoué en graine 7 ni évalué
+              sur le jeu de test.
+            </li>
+          </ul>
+        </aside>
         <div
           class="report-lightbox"
           id="report-lightbox"

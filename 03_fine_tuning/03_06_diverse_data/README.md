@@ -83,3 +83,30 @@ python ../03_04_train_more_data/train.py --experiment A2 --seed 42
 
 Entraîner baseline et A2 avec 2 graines chacun, puis comparer avec
 `03_05_diagnostic/rescore_validation.py` (comparaison façon Spider, test apparié).
+
+## Dataset D2 (100 bases fictives, exemples hard et extra)
+
+```bash
+python create_requests.py --bases new --prompts-per-base 5 --hardness hard extra --output D_v2 --submit
+python create_requests.py --output D_v2 --download
+python check_pilot.py --input D_v2                            # validated.jsonl
+python check_degenerate.py --input D_v2 --drop-superfluous-joins
+python semantic_judge.py --input D_v2 --prepare
+python haiku_judge.py --input D_v2 --effort high --submit     # Message Batches API
+python haiku_judge.py --input D_v2 --collect                  # judged.jsonl
+python export_sft.py --input D_v2 --name D2
+python ../03_04_train_more_data/train.py --experiment D2 --seed 42
+```
+
+`check_degenerate.py` compare le lot aux exemples hard et extra de Spider, à l'ancien D et à A2
+(diversité des squelettes, jointures, opérations ensemblistes, sous-requêtes tautologiques). Il
+sert de garde-fou avant de payer le juge et le GPU : l'ancien D était classé hard / extra sans
+contenir une seule jointure.
+
+Résultat : 7 943 paires reçues, 7 414 valides, 729 écartées pour jointure superflue, 5 405 acceptées
+par le juge, 5 000 exportées. Coût : 1,16 $ de génération et 0,45 $ de jugement. Sur la validation
+(graine 42, époque 3), D2 obtient 67,99 % contre 70,41 % pour A2 et 66,44 % pour le baseline : voir
+le chapitre 06.7 du compte rendu.
+
+Si le SDK Anthropic renvoie une erreur 401 depuis une session Claude Code, lancer le juge avec
+`env -u ANTHROPIC_BASE_URL` : la session définit cette variable et détourne les appels.
